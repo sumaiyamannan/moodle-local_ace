@@ -19,14 +19,15 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use core_reportbuilder\local\entities\user;
+use local_ace\local\entities\user;
+use local_ace\local\entities\course;
 use core_reportbuilder\local\helpers\database;
 
 /**
  * Users datasource
  *
- * @package   core_reportbuilder
- * @copyright 2021 David Matamoros <davidmc@moodle.com>
+ * @package   local_ace
+ * @copyright 2021 Ant
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class activity extends datasource {
