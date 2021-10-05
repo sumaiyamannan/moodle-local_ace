@@ -31,3 +31,4 @@ $string['manage'] = 'Manage analytics for course engagement';
 $string['allloglifetime'] = 'Keep logs for';
 $string['configallloglifetime'] = 'This specifies the length of time you want to keep logs about user activity. Logs that are older than this age are automatically deleted. It will delete all logs not relevant to Analytics. Currently supports deletion of cli and restore logs only.';
 $string['acetaskcleanup'] = 'Ace Log table cleanup';
+$string['privacy:metadata'] = 'The Analytics for course engagement plugin does not store any personal data.';
