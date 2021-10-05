@@ -15,7 +15,6 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin administration pages are defined here.
  * Adds admin settings for the plugin.
  * @package     local_ace
  * @category    admin
@@ -46,6 +45,7 @@ if ($hassiteconfig) {
         5    => new lang_string('numdays', '', 5),
         2    => new lang_string('numdays', '', 2),
         1    => new lang_string('numdays', '', 1));
+
     $settings->add(new admin_setting_configselect(
         'local_ace/allloglifetime',
         new lang_string('allloglifetime', 'local_ace'),

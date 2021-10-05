@@ -30,7 +30,7 @@ use context_system;
 defined('MOODLE_INTERNAL') || die();
 
 /**
- * Scheduled task to delete logs with origin cli and restore
+ * Scheduled task to delete logs with origin cli and restore.
  */
 
 class ace_cleanup_task extends \core\task\scheduled_task {
@@ -61,12 +61,11 @@ class ace_cleanup_task extends \core\task\scheduled_task {
         $lifetimep = array($loglifetime);
         $start = time();
 
-        while ($min = $DB->get_field_select("logstore_standard_log", "MIN(timecreated)", "timecreated < ?", $lifetimep)) {
-            // Break this down into chunks to avoid transaction for too long and generally thrashing database.
-            // Experiments suggest deleting one day takes up to a few seconds; probably a reasonable chunk size usually.
-            // If the cleanup has just been enabled, it might take e.g a month to clean the years of logs.          
+        while ($min = $DB->get_field_select("logstore_standard_log", "MIN(timecreated)", "timecreated < ? AND (origin='cli' or origin='restore')", $lifetimep)) {
+      
 
             $params = array(min($min + 3600 * 24, $loglifetime));
+            //delete cli and restore logs 
             $DB->delete_records_select("logstore_standard_log", "timecreated < ? AND (origin='cli' or origin='restore') ", $params);
             if (time() > $start + 300) {
                 // Do not churn on log deletion for too long each run.
