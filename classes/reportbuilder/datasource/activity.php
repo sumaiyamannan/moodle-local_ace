@@ -16,7 +16,7 @@
 
 declare(strict_types=1);
 
-namespace local_ace\datasource;
+namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
 use core_reportbuilder\local\entities\user;
@@ -58,11 +58,10 @@ class activity extends datasource {
 
         // Join user entity for "User modified" column.
         $userentity = new user();
-        $usertablealias = $entityuser->get_table_alias('user');
+        $usertablealias = $userentity->get_table_alias('user');
         
         $this->add_entity($userentity
                 ->add_join("
-                            JOIN {user} {$usertablealias} ON {$usertablealias}.id = rb.usermodified
                             INNER JOIN {user_enrolments} ue ON ue.userid = u.id
                             INNER JOIN {enrol} e ON e.id = ue.enrolid
                             INNER JOIN {course} c ON e.courseid = c.id
