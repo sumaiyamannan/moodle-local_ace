@@ -59,6 +59,8 @@ class course extends base {
         return [
             'course' => 'c',
             'context' => 'cctx',
+            'course_modules' => 'cm',
+            'modules' => 'm',
         ];
     }
 
@@ -80,17 +82,17 @@ class course extends base {
         return new lang_string('entitycourse', 'core_reportbuilder');
     }
 
-    /**
-     * Get custom fields helper
-     *
-     * @return custom_fields
-     */
-    protected function get_custom_fields(): custom_fields {
-        $customfields = new custom_fields($this->get_table_alias('course') . '.id', $this->get_entity_name(),
-            'core_course', 'course');
-        $customfields->add_joins($this->get_joins());
-        return $customfields;
-    }
+    // /**
+    //  * Get custom fields helper
+    //  *
+    //  * @return custom_fields
+    //  */
+    // protected function get_custom_fields(): custom_fields {
+    //     $customfields = new custom_fields($this->get_table_alias('course') . '.id', $this->get_entity_name(),
+    //         'core_course', 'course');
+    //     $customfields->add_joins($this->get_joins());
+    //     return $customfields;
+    // }
 
     /**
      * Initialise the entity, adding all course and custom course fields
@@ -98,14 +100,14 @@ class course extends base {
      * @return base
      */
     public function initialise(): base {
-        $customfields = $this->get_custom_fields();
+        // $customfields = $this->get_custom_fields();
 
-        $columns = array_merge($this->get_all_columns(), $customfields->get_columns());
+        $columns = $this->get_all_columns();
         foreach ($columns as $column) {
             $this->add_column($column);
         }
 
-        $filters = array_merge($this->get_all_filters(), $customfields->get_filters());
+        $filters = $this->get_all_filters();
         foreach ($filters as $filter) {
             $this->add_filter($filter);
         }
@@ -113,85 +115,85 @@ class course extends base {
         return $this;
     }
 
-    /**
-     * Course fields.
-     *
-     * @return array
-     */
-    protected function get_course_fields(): array {
-        return [
-            'fullname' => new lang_string('fullnamecourse'),
-            'shortname' => new lang_string('shortnamecourse'),
-            'category' => new lang_string('coursecategory'),
-            'idnumber' => new lang_string('idnumbercourse'),
-            'summary' => new lang_string('coursesummary'),
-            'format' => new lang_string('format'),
-            'startdate' => new lang_string('startdate'),
-            'enddate' => new lang_string('enddate'),
-            'visible' => new lang_string('coursevisibility'),
-            'groupmode' => new lang_string('groupmode', 'group'),
-            'groupmodeforce' => new lang_string('groupmodeforce', 'group'),
-            'lang' => new lang_string('forcelanguage'),
-            'calendartype' => new lang_string('forcecalendartype', 'calendar'),
-            'theme' => new lang_string('forcetheme'),
-            'enablecompletion' => new lang_string('enablecompletion', 'completion'),
-        ];
-    }
+    // /**
+    //  * Course fields.
+    //  *
+    //  * @return array
+    //  */
+    // protected function get_course_fields(): array {
+    //     return [
+    //         'fullname' => new lang_string('fullnamecourse'),
+    //         'shortname' => new lang_string('shortnamecourse'),
+    //         'category' => new lang_string('coursecategory'),
+    //         'idnumber' => new lang_string('idnumbercourse'),
+    //         'summary' => new lang_string('coursesummary'),
+    //         'format' => new lang_string('format'),
+    //         'startdate' => new lang_string('startdate'),
+    //         'enddate' => new lang_string('enddate'),
+    //         'visible' => new lang_string('coursevisibility'),
+    //         'groupmode' => new lang_string('groupmode', 'group'),
+    //         'groupmodeforce' => new lang_string('groupmodeforce', 'group'),
+    //         'lang' => new lang_string('forcelanguage'),
+    //         'calendartype' => new lang_string('forcecalendartype', 'calendar'),
+    //         'theme' => new lang_string('forcetheme'),
+    //         'enablecompletion' => new lang_string('enablecompletion', 'completion'),
+    //     ];
+    // }
 
-    /**
-     * Check if this field is sortable
-     *
-     * @param string $fieldname
-     * @return bool
-     */
-    protected function is_sortable(string $fieldname): bool {
-        // Some columns can't be sorted, like longtext or images.
-        $nonsortable = [
-            'summary',
-        ];
+    // /**
+    //  * Check if this field is sortable
+    //  *
+    //  * @param string $fieldname
+    //  * @return bool
+    //  */
+    // protected function is_sortable(string $fieldname): bool {
+    //     // Some columns can't be sorted, like longtext or images.
+    //     $nonsortable = [
+    //         'summary',
+    //     ];
 
-        return !in_array($fieldname, $nonsortable);
-    }
+    //     return !in_array($fieldname, $nonsortable);
+    // }
 
-    /**
-     * Return appropriate column type for given user field
-     *
-     * @param string $coursefield
-     * @return int
-     */
-    protected function get_course_field_type(string $coursefield): int {
-        switch ($coursefield) {
-            case 'downloadcontent':
-            case 'enablecompletion':
-            case 'groupmodeforce':
-            case 'visible':
-                $fieldtype = column::TYPE_BOOLEAN;
-                break;
-            case 'startdate':
-            case 'enddate':
-                $fieldtype = column::TYPE_TIMESTAMP;
-                break;
-            case 'summary':
-                $fieldtype = column::TYPE_LONGTEXT;
-                break;
-            case 'category':
-            case 'groupmode':
-                $fieldtype = column::TYPE_INTEGER;
-                break;
-            case 'calendartype':
-            case 'idnumber':
-            case 'format':
-            case 'fullname':
-            case 'lang':
-            case 'shortname':
-            case 'theme':
-            default:
-                $fieldtype = column::TYPE_TEXT;
-                break;
-        }
+    // /**
+    //  * Return appropriate column type for given user field
+    //  *
+    //  * @param string $coursefield
+    //  * @return int
+    //  */
+    // protected function get_course_field_type(string $coursefield): int {
+    //     switch ($coursefield) {
+    //         case 'downloadcontent':
+    //         case 'enablecompletion':
+    //         case 'groupmodeforce':
+    //         case 'visible':
+    //             $fieldtype = column::TYPE_BOOLEAN;
+    //             break;
+    //         case 'startdate':
+    //         case 'enddate':
+    //             $fieldtype = column::TYPE_TIMESTAMP;
+    //             break;
+    //         case 'summary':
+    //             $fieldtype = column::TYPE_LONGTEXT;
+    //             break;
+    //         case 'category':
+    //         case 'groupmode':
+    //             $fieldtype = column::TYPE_INTEGER;
+    //             break;
+    //         case 'calendartype':
+    //         case 'idnumber':
+    //         case 'format':
+    //         case 'fullname':
+    //         case 'lang':
+    //         case 'shortname':
+    //         case 'theme':
+    //         default:
+    //             $fieldtype = column::TYPE_TEXT;
+    //             break;
+    //     }
 
-        return $fieldtype;
-    }
+    //     return $fieldtype;
+    // }
 
     /**
      * Returns list of all available columns.
@@ -203,59 +205,26 @@ class course extends base {
     protected function get_all_columns(): array {
         $columns = [];
         $coursefields = $this->get_course_fields();
-        $tablealias = $this->get_table_alias('course');
+        $coursealias = $this->get_table_alias('course');
+        $coursemodulesalias = $this->get_table_alias('course_modules');
+        $modulesalias = $this->get_table_alias('modules');
+
         $contexttablealias = $this->get_table_alias('context');
 
-        // Columns course full name with link, course short name with link and course id with link.
-        $fields = [
-            'coursefullnamewithlink' => 'fullname',
-            'courseshortnamewithlink' => 'shortname',
-            'courseidnumberewithlink' => 'idnumber',
-        ];
-        foreach ($fields as $key => $field) {
-            $columns[] = (new column(
-                $key,
-                new lang_string($key, 'core_reportbuilder'),
-                $this->get_entity_name()
-            ))
-                ->add_joins($this->get_joins())
-                ->set_type(column::TYPE_TEXT)
-                ->add_fields("{$tablealias}.{$field} as $key, {$tablealias}.id")
-                ->set_is_sortable(true)
-                ->add_callback(static function(?string $value, stdClass $row): string {
-                    if ($value === null) {
-                        return '';
-                    }
-
-                    return html_writer::link(course_get_url($row->id), $value);
-                });
-        }
-
-        foreach ($coursefields as $coursefield => $coursefieldlang) {
-            $column = (new column(
-                $coursefield,
-                $coursefieldlang,
-                $this->get_entity_name()
-            ))
-                ->add_joins($this->get_joins())
-                ->set_type($this->get_course_field_type($coursefield))
-                ->add_field("$tablealias.$coursefield")
-                ->add_callback([$this, 'format'], $coursefield)
-                ->set_is_sortable($this->is_sortable($coursefield));
-
-            // Join on the context table so that we can use it for formatting these columns later.
-            if ($coursefield === 'summary' || $coursefield === 'shortname' || $coursefield === 'fullname') {
-                $join = "LEFT JOIN {context} {$contexttablealias}
-                           ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
-                          AND {$contexttablealias}.instanceid = {$tablealias}.id";
-
-                $column->add_join($join)
-                    ->add_field("{$tablealias}.id", 'courseid')
-                    ->add_fields(context_helper::get_preload_record_columns_sql($contexttablealias));
-            }
-
-            $columns[] = $column;
-        }
+        // Username column.
+        $columns[] = (new column(
+            'name',
+            new lang_string('name'),
+            $this->get_entity_name()
+        ))
+            ->add_join("
+                        INNER JOIN {course_modules} {$coursemodulesalias} ON
+                        {$coursemodulesalias}.course = {$coursealias}.id
+                        INNER JOIN {modules} {$modulesalias} ON
+                        {$coursemodulesalias}.module = {$modulesalias}.id
+                       ")
+            ->set_is_sortable(true)
+            ->add_field("{$modulesalias}.name");
 
         return $columns;
     }
@@ -271,193 +240,203 @@ class course extends base {
         $filters = [];
         $tablealias = $this->get_table_alias('course');
 
-        $fields = $this->get_course_fields();
-        foreach ($fields as $field => $name) {
-            // Filtering isn't supported for LONGTEXT fields on Oracle.
-            if ($this->get_course_field_type($field) === column::TYPE_LONGTEXT &&
-                    $DB->get_dbfamily() === 'oracle') {
+        // Filter by backup name.
+        // $filter = (new filter(
+        //     text::class,
+        //     'nameselector',
+        //     new lang_string('name'),
+        //     $entityfiles->get_entity_name(),
+        //     "{$filestablealias}.filename"
+        // ))
+        //     ->add_joins($this->get_joins());
 
-                continue;
-            }
+        // $fields = $this->get_course_fields();
+        // foreach ($fields as $field => $name) {
+        //     // Filtering isn't supported for LONGTEXT fields on Oracle.
+        //     if ($this->get_course_field_type($field) === column::TYPE_LONGTEXT &&
+        //             $DB->get_dbfamily() === 'oracle') {
 
-            $optionscallback = [static::class, 'get_options_for_' . $field];
-            if (is_callable($optionscallback)) {
-                $filterclass = select::class;
-            } else if ($this->get_course_field_type($field) === column::TYPE_BOOLEAN) {
-                $filterclass = boolean_select::class;
-            } else if ($this->get_course_field_type($field) === column::TYPE_TIMESTAMP) {
-                $filterclass = date::class;
-            } else {
-                $filterclass = text::class;
-            }
+        //         continue;
+        //     }
 
-            $filter = (new filter(
-                $filterclass,
-                $field,
-                $name,
-                $this->get_entity_name(),
-                "{$tablealias}.$field"
-            ))
-                ->add_joins($this->get_joins());
+        //     $optionscallback = [static::class, 'get_options_for_' . $field];
+        //     if (is_callable($optionscallback)) {
+        //         $filterclass = select::class;
+        //     } else if ($this->get_course_field_type($field) === column::TYPE_BOOLEAN) {
+        //         $filterclass = boolean_select::class;
+        //     } else if ($this->get_course_field_type($field) === column::TYPE_TIMESTAMP) {
+        //         $filterclass = date::class;
+        //     } else {
+        //         $filterclass = text::class;
+        //     }
 
-            // Populate filter options by callback, if available.
-            if (is_callable($optionscallback)) {
-                $filter->set_options_callback($optionscallback);
-            }
+        //     $filter = (new filter(
+        //         $filterclass,
+        //         $field,
+        //         $name,
+        //         $this->get_entity_name(),
+        //         "{$tablealias}.$field"
+        //     ))
+        //         ->add_joins($this->get_joins());
 
-            $filters[] = $filter;
-        }
+        //     // Populate filter options by callback, if available.
+        //     if (is_callable($optionscallback)) {
+        //         $filter->set_options_callback($optionscallback);
+        //     }
 
-        // We add our own custom course selector filter.
-        $filters[] = (new filter(
-            course_selector::class,
-            'courseselector',
-            new lang_string('courses'),
-            $this->get_entity_name(),
-            "{$tablealias}.id"
-        ))
-            ->add_joins($this->get_joins());
+        //     $filters[] = $filter;
+        // }
+
+        // // We add our own custom course selector filter.
+        // $filters[] = (new filter(
+        //     course_selector::class,
+        //     'courseselector',
+        //     new lang_string('courses'),
+        //     $this->get_entity_name(),
+        //     "{$tablealias}.id"
+        // ))
+        //     ->add_joins($this->get_joins());
 
         return $filters;
     }
 
-    /**
-     * Gets list of options if the filter supports it
-     *
-     * @param string $fieldname
-     * @return null|array
-     */
-    protected function get_options_for(string $fieldname): ?array {
-        static $cached = [];
-        if (!array_key_exists($fieldname, $cached)) {
-            $callable = [static::class, 'get_options_for_' . $fieldname];
-            if (is_callable($callable)) {
-                $cached[$fieldname] = $callable();
-            } else {
-                $cached[$fieldname] = null;
-            }
-        }
-        return $cached[$fieldname];
-    }
+    // /**
+    //  * Gets list of options if the filter supports it
+    //  *
+    //  * @param string $fieldname
+    //  * @return null|array
+    //  */
+    // protected function get_options_for(string $fieldname): ?array {
+    //     static $cached = [];
+    //     if (!array_key_exists($fieldname, $cached)) {
+    //         $callable = [static::class, 'get_options_for_' . $fieldname];
+    //         if (is_callable($callable)) {
+    //             $cached[$fieldname] = $callable();
+    //         } else {
+    //             $cached[$fieldname] = null;
+    //         }
+    //     }
+    //     return $cached[$fieldname];
+    // }
 
-    /**
-     * List of options for the field groupmode.
-     *
-     * @return array
-     */
-    public static function get_options_for_groupmode(): array {
-        return [
-            NOGROUPS => get_string('groupsnone', 'group'),
-            SEPARATEGROUPS => get_string('groupsseparate', 'group'),
-            VISIBLEGROUPS => get_string('groupsvisible', 'group'),
-        ];
-    }
+    // /**
+    //  * List of options for the field groupmode.
+    //  *
+    //  * @return array
+    //  */
+    // public static function get_options_for_groupmode(): array {
+    //     return [
+    //         NOGROUPS => get_string('groupsnone', 'group'),
+    //         SEPARATEGROUPS => get_string('groupsseparate', 'group'),
+    //         VISIBLEGROUPS => get_string('groupsvisible', 'group'),
+    //     ];
+    // }
 
-    /**
-     * List of options for the field category.
-     *
-     * @return array
-     */
-    public static function get_options_for_category(): array {
-        return core_course_category::make_categories_list('moodle/category:viewcourselist');
-    }
+    // /**
+    //  * List of options for the field category.
+    //  *
+    //  * @return array
+    //  */
+    // public static function get_options_for_category(): array {
+    //     return core_course_category::make_categories_list('moodle/category:viewcourselist');
+    // }
 
-    /**
-     * List of options for the field format.
-     *
-     * @return array
-     */
-    public static function get_options_for_format(): array {
-        global $CFG;
-        require_once($CFG->dirroot.'/course/lib.php');
+    // /**
+    //  * List of options for the field format.
+    //  *
+    //  * @return array
+    //  */
+    // public static function get_options_for_format(): array {
+    //     global $CFG;
+    //     require_once($CFG->dirroot.'/course/lib.php');
 
-        $options = [];
+    //     $options = [];
 
-        $courseformats = get_sorted_course_formats(true);
-        foreach ($courseformats as $courseformat) {
-            $options[$courseformat] = get_string('pluginname', "format_{$courseformat}");
-        }
+    //     $courseformats = get_sorted_course_formats(true);
+    //     foreach ($courseformats as $courseformat) {
+    //         $options[$courseformat] = get_string('pluginname', "format_{$courseformat}");
+    //     }
 
-        return $options;
-    }
+    //     return $options;
+    // }
 
-    /**
-     * List of options for the field theme.
-     *
-     * @return array
-     */
-    public static function get_options_for_theme(): array {
-        $options = [];
+    // /**
+    //  * List of options for the field theme.
+    //  *
+    //  * @return array
+    //  */
+    // public static function get_options_for_theme(): array {
+    //     $options = [];
 
-        $themeobjects = get_list_of_themes();
-        foreach ($themeobjects as $key => $theme) {
-            if (empty($theme->hidefromselector)) {
-                $options[$key] = get_string('pluginname', "theme_{$theme->name}");
-            }
-        }
+    //     $themeobjects = get_list_of_themes();
+    //     foreach ($themeobjects as $key => $theme) {
+    //         if (empty($theme->hidefromselector)) {
+    //             $options[$key] = get_string('pluginname', "theme_{$theme->name}");
+    //         }
+    //     }
 
-        return $options;
-    }
+    //     return $options;
+    // }
 
-    /**
-     * List of options for the field lang.
-     *
-     * @return array
-     */
-    public static function get_options_for_lang(): array {
-        return get_string_manager()->get_list_of_translations();
-    }
+    // /**
+    //  * List of options for the field lang.
+    //  *
+    //  * @return array
+    //  */
+    // public static function get_options_for_lang(): array {
+    //     return get_string_manager()->get_list_of_translations();
+    // }
 
-    /**
-     * List of options for the field.
-     *
-     * @return array
-     */
-    public static function get_options_for_calendartype(): array {
-        return \core_calendar\type_factory::get_list_of_calendar_types();
-    }
+    // /**
+    //  * List of options for the field.
+    //  *
+    //  * @return array
+    //  */
+    // public static function get_options_for_calendartype(): array {
+    //     return \core_calendar\type_factory::get_list_of_calendar_types();
+    // }
 
-    /**
-     * Formats the course field for display.
-     *
-     * @param mixed $value Current field value.
-     * @param stdClass $row Complete row.
-     * @param string $fieldname Name of the field to format.
-     * @return string
-     */
-    public function format($value, stdClass $row, string $fieldname): string {
-        if ($this->get_course_field_type($fieldname) === column::TYPE_TIMESTAMP) {
-            return format::userdate($value, $row);
-        }
+    // /**
+    //  * Formats the course field for display.
+    //  *
+    //  * @param mixed $value Current field value.
+    //  * @param stdClass $row Complete row.
+    //  * @param string $fieldname Name of the field to format.
+    //  * @return string
+    //  */
+    // public function format($value, stdClass $row, string $fieldname): string {
+    //     if ($this->get_course_field_type($fieldname) === column::TYPE_TIMESTAMP) {
+    //         return format::userdate($value, $row);
+    //     }
 
-        $options = $this->get_options_for($fieldname);
-        if ($options !== null && array_key_exists($value, $options)) {
-            return $options[$value];
-        }
+    //     $options = $this->get_options_for($fieldname);
+    //     if ($options !== null && array_key_exists($value, $options)) {
+    //         return $options[$value];
+    //     }
 
-        if ($this->get_course_field_type($fieldname) === column::TYPE_BOOLEAN) {
-            return format::boolean_as_text($value);
-        }
+    //     if ($this->get_course_field_type($fieldname) === column::TYPE_BOOLEAN) {
+    //         return format::boolean_as_text($value);
+    //     }
 
-        if (in_array($fieldname, ['fullname', 'shortname'])) {
-            if (!$row->courseid) {
-                return '';
-            }
-            context_helper::preload_from_record($row);
-            $context = context_course::instance($row->courseid);
-            return format_string($value, true, ['context' => $context->id, 'escape' => false]);
-        }
+    //     if (in_array($fieldname, ['fullname', 'shortname'])) {
+    //         if (!$row->courseid) {
+    //             return '';
+    //         }
+    //         context_helper::preload_from_record($row);
+    //         $context = context_course::instance($row->courseid);
+    //         return format_string($value, true, ['context' => $context->id, 'escape' => false]);
+    //     }
 
-        if (in_array($fieldname, ['summary'])) {
-            if (!$row->courseid) {
-                return '';
-            }
-            context_helper::preload_from_record($row);
-            $context = context_course::instance($row->courseid);
-            $summary = file_rewrite_pluginfile_urls($row->summary, 'pluginfile.php', $context->id, 'course', 'summary', null);
-            return format_text($summary);
-        }
+    //     if (in_array($fieldname, ['summary'])) {
+    //         if (!$row->courseid) {
+    //             return '';
+    //         }
+    //         context_helper::preload_from_record($row);
+    //         $context = context_course::instance($row->courseid);
+    //         $summary = file_rewrite_pluginfile_urls($row->summary, 'pluginfile.php', $context->id, 'course', 'summary', null);
+    //         return format_text($summary);
+    //     }
 
-        return s($value);
-    }
+    //     return s($value);
+    // }
 }

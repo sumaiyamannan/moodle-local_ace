@@ -60,7 +60,13 @@ class user extends base {
      * @return array
      */
     protected function get_default_table_aliases(): array {
-        return ['user' => 'u'];
+        return [
+                'user' => 'u',
+                'user_enrolments' => 'ue',
+                'course' => 'c',
+                'course_modules' => 'cm',
+                'modules' => 'm',
+               ];
     }
 
     /**
@@ -78,6 +84,10 @@ class user extends base {
      * @return base
      */
     public function initialise(): base {
+
+        $userentity = new user();
+        $usertablealias = $userentity->get_table_alias('user');
+
         $userprofilefields = $this->get_user_profile_fields();
 
         $columns = array_merge($this->get_all_columns(), $userprofilefields->get_columns());
@@ -119,10 +129,17 @@ class user extends base {
      */
     protected function get_all_columns(): array {
         $usertablealias = $this->get_table_alias('user');
+        $userenrolmentsalias = $this->get_table_alias('user_enrolments');
+        $coursealias = $this->get_table_alias('course');
+        $coursemodulesalias = $this->get_table_alias('course_modules');
+        $modulesalias = $this->get_table_alias('modules');
+
 
         $fullnameselect = self::get_name_fields_select($usertablealias);
         $userpictureselect = fields::for_userpic()->get_sql($usertablealias, false, '', '', false)->selects;
         $viewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
+
+        // $this->set_main_table('files', $filestablealias);
 
         // Fullname column.
         $columns[] = (new column(
@@ -142,97 +159,128 @@ class user extends base {
                 return fullname($row, $viewfullnames);
             });
 
-        // Formatted fullname columns (with link, picture or both).
-        $fullnamefields = [
-            'fullnamewithlink' => new lang_string('userfullnamewithlink', 'core_reportbuilder'),
-            'fullnamewithpicture' => new lang_string('userfullnamewithpicture', 'core_reportbuilder'),
-            'fullnamewithpicturelink' => new lang_string('userfullnamewithpicturelink', 'core_reportbuilder'),
-        ];
-        foreach ($fullnamefields as $fullnamefield => $fullnamelang) {
-            $column = (new column(
-                $fullnamefield,
-                $fullnamelang,
-                $this->get_entity_name()
-            ))
-                ->add_joins($this->get_joins())
-                ->add_fields($fullnameselect)
-                ->add_field("{$usertablealias}.id")
-                ->set_type(column::TYPE_TEXT)
-                ->set_is_sortable($this->is_sortable($fullnamefield))
-                ->add_callback(static function(?string $value, stdClass $row) use ($fullnamefield, $viewfullnames): string {
-                    global $OUTPUT;
+                    //                     INNER JOIN {user_enrolments} ue ON ue.userid = u.id
+        //                     INNER JOIN {enrol} e ON e.id = ue.enrolid
+        //                     INNER JOIN {course} c ON e.courseid = c.id
+        //                     INNER JOIN {course_modules} cm ON cm.course = c.id
+        //                     INNER JOIN {modules} m ON cm.module = m.id
 
-                    if ($value === null) {
-                        return '';
-                    }
+        // "LEFT JOIN {user} AS {$entituseralias} ON {$entituseralias}.id = {$filestablealias}.userid"
 
-                    if ($fullnamefield === 'fullnamewithlink') {
-                        return html_writer::link(new moodle_url('/user/profile.php', ['id' => $row->id]),
-                            fullname($row, $viewfullnames));
-                    }
-                    if ($fullnamefield === 'fullnamewithpicture') {
-                        return $OUTPUT->user_picture($row, ['link' => false, 'alttext' => false]) .
-                            fullname($row, $viewfullnames);
-                    }
-                    if ($fullnamefield === 'fullnamewithpicturelink') {
-                        return html_writer::link(new moodle_url('/user/profile.php', ['id' => $row->id]),
-                            $OUTPUT->user_picture($row, ['link' => false, 'alttext' => false]) .
-                            fullname($row, $viewfullnames));
-                    }
-
-                    return $value;
-                });
-
-            // Picture fields need some more data.
-            if (strpos($fullnamefield, 'picture') !== false) {
-                $column->add_fields($userpictureselect);
-            }
-
-            $columns[] = $column;
-        }
-
-        // Picture column.
+        // Username column.
         $columns[] = (new column(
-            'picture',
-            new lang_string('userpicture', 'core_reportbuilder'),
+            'name',
+            new lang_string('name'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
-            ->add_fields($userpictureselect)
-            ->set_type(column::TYPE_INTEGER)
-            ->set_is_sortable($this->is_sortable('picture'))
-            ->add_callback(static function (int $value, stdClass $row): string {
-                global $OUTPUT;
+            ->add_join("
+                        INNER JOIN {user_enrolments} {$userenrolmentsalias} ON {$userenrolmentsalias}.userid = {$usertablealias}.id
+                        INNER JOIN {enrol} e ON e.id = ue.enrolid
+                        INNER JOIN {course} c ON e.courseid = c.id
+                        INNER JOIN {course_modules} {$coursemodulesalias} ON {$coursemodulesalias}.course = {$coursealias}.id
+                        INNER JOIN {modules} {$modulesalias} ON {$coursemodulesalias}.module = {$modulesalias}.id
+                       ")
+            ->set_is_sortable(true)
+            ->add_field("{$modulesalias}.name");
 
-                return !empty($row->id) ? $OUTPUT->user_picture($row, ['link' => false, 'alttext' => false]) : '';
-            });
 
-        // Add all other user fields.
-        $userfields = $this->get_user_fields();
-        foreach ($userfields as $userfield => $userfieldlang) {
-            $columntype = $this->get_user_field_type($userfield);
+                //                     INNER JOIN {user_enrolments} ue ON ue.userid = u.id
+        //                     INNER JOIN {enrol} e ON e.id = ue.enrolid
+        //                     INNER JOIN {course} c ON e.courseid = c.id
+        //                     INNER JOIN {course_modules} cm ON cm.course = c.id
+        //                     INNER JOIN {modules} m ON cm.module = m.id
 
-            $column = (new column(
-                $userfield,
-                $userfieldlang,
-                $this->get_entity_name()
-            ))
-                ->add_joins($this->get_joins())
-                ->add_field("{$usertablealias}.{$userfield}")
-                ->set_type($columntype)
-                ->set_is_sortable($this->is_sortable($userfield))
-                ->add_callback([$this, 'format'], $userfield);
+        // // Formatted fullname columns (with link, picture or both).
+        // $fullnamefields = [
+        //     'fullnamewithlink' => new lang_string('userfullnamewithlink', 'core_reportbuilder'),
+        //     'fullnamewithpicture' => new lang_string('userfullnamewithpicture', 'core_reportbuilder'),
+        //     'fullnamewithpicturelink' => new lang_string('userfullnamewithpicturelink', 'core_reportbuilder'),
+        // ];
+        // foreach ($fullnamefields as $fullnamefield => $fullnamelang) {
+        //     $column = (new column(
+        //         $fullnamefield,
+        //         $fullnamelang,
+        //         $this->get_entity_name()
+        //     ))
+        //         ->add_joins($this->get_joins())
+        //         ->add_fields($fullnameselect)
+        //         ->add_field("{$usertablealias}.id")
+        //         ->set_type(column::TYPE_TEXT)
+        //         ->set_is_sortable($this->is_sortable($fullnamefield))
+        //         ->add_callback(static function(?string $value, stdClass $row) use ($fullnamefield, $viewfullnames): string {
+        //             global $OUTPUT;
 
-            // Some columns also have specific format callbacks.
-            if ($userfield === 'country') {
-                $column->add_callback(static function(string $country): string {
-                    $countries = get_string_manager()->get_list_of_countries(true);
-                    return $countries[$country] ?? '';
-                });
-            }
+        //             if ($value === null) {
+        //                 return '';
+        //             }
 
-            $columns[] = $column;
-        }
+        //             if ($fullnamefield === 'fullnamewithlink') {
+        //                 return html_writer::link(new moodle_url('/user/profile.php', ['id' => $row->id]),
+        //                     fullname($row, $viewfullnames));
+        //             }
+        //             if ($fullnamefield === 'fullnamewithpicture') {
+        //                 return $OUTPUT->user_picture($row, ['link' => false, 'alttext' => false]) .
+        //                     fullname($row, $viewfullnames);
+        //             }
+        //             if ($fullnamefield === 'fullnamewithpicturelink') {
+        //                 return html_writer::link(new moodle_url('/user/profile.php', ['id' => $row->id]),
+        //                     $OUTPUT->user_picture($row, ['link' => false, 'alttext' => false]) .
+        //                     fullname($row, $viewfullnames));
+        //             }
+
+        //             return $value;
+        //         });
+
+        //     // Picture fields need some more data.
+        //     if (strpos($fullnamefield, 'picture') !== false) {
+        //         $column->add_fields($userpictureselect);
+        //     }
+
+        //     $columns[] = $column;
+        // }
+
+        // // Picture column.
+        // $columns[] = (new column(
+        //     'picture',
+        //     new lang_string('userpicture', 'core_reportbuilder'),
+        //     $this->get_entity_name()
+        // ))
+        //     ->add_joins($this->get_joins())
+        //     ->add_fields($userpictureselect)
+        //     ->set_type(column::TYPE_INTEGER)
+        //     ->set_is_sortable($this->is_sortable('picture'))
+        //     ->add_callback(static function (int $value, stdClass $row): string {
+        //         global $OUTPUT;
+
+        //         return !empty($row->id) ? $OUTPUT->user_picture($row, ['link' => false, 'alttext' => false]) : '';
+        //     });
+
+        // // Add all other user fields.
+        // $userfields = $this->get_user_fields();
+        // foreach ($userfields as $userfield => $userfieldlang) {
+        //     $columntype = $this->get_user_field_type($userfield);
+
+        //     $column = (new column(
+        //         $userfield,
+        //         $userfieldlang,
+        //         $this->get_entity_name()
+        //     ))
+        //         ->add_joins($this->get_joins())
+        //         ->add_field("{$usertablealias}.{$userfield}")
+        //         ->set_type($columntype)
+        //         ->set_is_sortable($this->is_sortable($userfield))
+        //         ->add_callback([$this, 'format'], $userfield);
+
+        //     // Some columns also have specific format callbacks.
+        //     if ($userfield === 'country') {
+        //         $column->add_callback(static function(string $country): string {
+        //             $countries = get_string_manager()->get_list_of_countries(true);
+        //             return $countries[$country] ?? '';
+        //         });
+        //     }
+
+        //     $columns[] = $column;
+        // }
 
         return $columns;
     }
