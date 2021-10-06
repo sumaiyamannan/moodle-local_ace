@@ -37,6 +37,7 @@ use core_reportbuilder\local\helpers\user_profile_fields;
 use html_writer;
 use lang_string;
 use stdClass;
+use moodle_url;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -143,29 +144,22 @@ class user extends base {
 
         // Fullname column.
         $columns[] = (new column(
-            'fullname',
-            new lang_string('fullname'),
+            'logo',
+            new lang_string('logo', 'local_ace'),
             $this->get_entity_name()
         ))
-            ->add_joins($this->get_joins())
-            ->add_fields($fullnameselect)
-            ->set_type(column::TYPE_TEXT)
-            ->set_is_sortable($this->is_sortable('fullname'))
-            ->add_callback(static function(?string $value, stdClass $row) use ($viewfullnames): string {
-                if ($value === null) {
-                    return '';
-                }
-
-                return fullname($row, $viewfullnames);
+            ->add_join("
+                        INNER JOIN {user_enrolments} {$userenrolmentsalias} ON {$userenrolmentsalias}.userid = {$usertablealias}.id
+                        INNER JOIN {enrol} e ON e.id = ue.enrolid
+                        INNER JOIN {course} c ON e.courseid = c.id
+                        INNER JOIN {course_modules} {$coursemodulesalias} ON {$coursemodulesalias}.course = {$coursealias}.id
+                        INNER JOIN {modules} {$modulesalias} ON {$coursemodulesalias}.module = {$modulesalias}.id
+                       ")
+            ->set_is_sortable(true)
+            ->add_field("{$modulesalias}.name")
+            ->add_callback(static function ($value): string {
+                return html_writer::img('/mod/'.$value.'/pix/icon.png', new lang_string('logo', 'local_ace'));
             });
-
-                    //                     INNER JOIN {user_enrolments} ue ON ue.userid = u.id
-        //                     INNER JOIN {enrol} e ON e.id = ue.enrolid
-        //                     INNER JOIN {course} c ON e.courseid = c.id
-        //                     INNER JOIN {course_modules} cm ON cm.course = c.id
-        //                     INNER JOIN {modules} m ON cm.module = m.id
-
-        // "LEFT JOIN {user} AS {$entituseralias} ON {$entituseralias}.id = {$filestablealias}.userid"
 
         // Username column.
         $columns[] = (new column(
