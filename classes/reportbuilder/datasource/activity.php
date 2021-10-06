@@ -58,17 +58,15 @@ class activity extends datasource {
         // ]);
 
         // Join user entity for "User modified" column.
-        $userentity = new user();
-        $usertablealias = $userentity->get_table_alias('user');
-        
+
         $this->add_entity($userentity
-                ->add_join("
-                            INNER JOIN {user_enrolments} ue ON ue.userid = u.id
-                            INNER JOIN {enrol} e ON e.id = ue.enrolid
-                            INNER JOIN {course} c ON e.courseid = c.id
-                            INNER JOIN {course_modules} cm ON cm.course = c.id
-                            INNER JOIN {modules} m ON cm.module = m.id
-                        ")
+                // ->add_join("
+                //             INNER JOIN {user_enrolments} ue ON ue.userid = u.id
+                //             INNER JOIN {enrol} e ON e.id = ue.enrolid
+                //             INNER JOIN {course} c ON e.courseid = c.id
+                //             INNER JOIN {course_modules} cm ON cm.course = c.id
+                //             INNER JOIN {modules} m ON cm.module = m.id
+                //         ")
         );
 
         $userentityname = $userentity->get_entity_name();
@@ -83,7 +81,7 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_columns(): array {
-        return ['user:fullname', 'user:username', 'user:email'];
+        return ['user:fullname'];
     }
 
     /**
@@ -92,7 +90,7 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_filters(): array {
-        return ['user:fullname', 'user:username', 'user:email'];
+        return ['user:fullname'];
     }
 
     /**
@@ -101,6 +99,6 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_conditions(): array {
-        return ['user:fullname', 'user:username', 'user:email'];
+        return ['user:fullname'];
     }
 }
