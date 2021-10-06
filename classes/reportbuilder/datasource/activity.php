@@ -81,7 +81,7 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_columns(): array {
-        return ['user:fullname'];
+        return [];
     }
 
     /**
@@ -90,7 +90,7 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_filters(): array {
-        return ['user:fullname'];
+        return [];
     }
 
     /**
@@ -99,6 +99,6 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_conditions(): array {
-        return ['user:fullname'];
+        return [];
     }
 }
