@@ -69,6 +69,7 @@ class user extends base {
                 'course_modules' => 'cm',
                 'modules' => 'm',
                 'assign' => 'a',
+                'assign_submission' => 'asub',
                ];
     }
 
@@ -140,6 +141,7 @@ class user extends base {
         $modulesalias = $this->get_table_alias('modules');
         $enrolalias = $this->get_table_alias('enrol');
         $assignalias = $this->get_table_alias('assign');
+        $assignsubmissionalias = $this->get_table_alias('assign_submission');
 
         $fullnameselect = self::get_name_fields_select($usertablealias);
         $userpictureselect = fields::for_userpic()->get_sql($usertablealias, false, '', '', false)->selects;
@@ -155,7 +157,9 @@ class user extends base {
                     INNER JOIN {course_modules} {$coursemodulesalias}
                     ON {$coursemodulesalias}.course = {$coursealias}.id
                     LEFT JOIN {assign} {$assignalias}
-                    ON {$coursemodulesalias}.instance = {$assignalias}.id 
+                    ON {$coursemodulesalias}.instance = {$assignalias}.id
+                    INNER JOIN {assign_submission} {$assignsubmissionalias}
+                    ON {$assignalias}.id = {$assignsubmissionalias}.assignment 
                     INNER JOIN {modules} {$modulesalias}
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
                 ";
@@ -211,38 +215,33 @@ class user extends base {
             $this->get_entity_name()
         ))
         ->add_join($join)
-            ->set_is_sortable(true)
-            ->add_field("{$modulesalias}.name")
-            ->add_fields("{$assignalias}.duedate")
-            ->add_callback(static function ($value, $row): string {
-                if ($row->name == 'assign') {
-                    return userdate($row->duedate);
-                } else {
-                    return 'N/A';
-                }
-            });
+        ->set_is_sortable(true)
+        ->add_field("{$modulesalias}.name")
+        ->add_fields("{$assignalias}.duedate")
+        ->add_callback(static function ($value, $row): string {
+            if ($row->name == 'assign') {
+                return userdate($row->duedate);
+            } else {
+                return 'N/A';
+            }
+        });
         
-        // // Date submitted.
-        // $columns[] = (new column(
-        //     'name',
-        //     new lang_string('name'),
-        //     $this->get_entity_name()
-        // ))
-        // ->add_join("
-        //             INNER JOIN {user_enrolments} {$userenrolmentsalias}
-        //             ON {$userenrolmentsalias}.userid = {$usertablealias}.id
-        //             INNER JOIN {enrol} {$enrolalias}
-        //             ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
-        //             INNER JOIN {course} {$coursealias}
-        //             ON e.courseid = {$coursealias}.id
-        //             INNER JOIN {course_modules} {$coursemodulesalias}
-        //             ON {$coursemodulesalias}.course = {$coursealias}.id
-        //             INNER JOIN {modules} {$modulesalias}
-        //             ON {$coursemodulesalias}.module = {$modulesalias}.id
-        //          ")
- 
-        //     ->set_is_sortable(true)
-        //     ->add_field("{$modulesalias}.name");
+        // Date submitted.
+        $columns[] = (new column(
+            'submitted',
+            new lang_string('submitted', 'local_ace'),
+            $this->get_entity_name()
+        ))
+        ->add_join($join)
+        ->set_is_sortable(true)
+        ->add_field("{$assignsubmissionalias}.status")
+        ->add_callback(static function ($value): string {
+            if ($value == 'submitted') {
+                return $value;
+            } else {
+                return 'Not Submitted';
+            }
+        });
 
         return $columns;
     }

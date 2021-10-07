@@ -33,8 +33,10 @@ $string['configallloglifetime'] = 'This specifies the length of time you want to
 $string['acetaskcleanup'] = 'ACE Log table cleanup';
 $string['privacy:metadata'] = 'The Analytics for course engagement plugin does not store any personal data.';
 $string['logo'] = 'Logo';
-$string['due'] = 'Due Date';
+$string['due'] = 'Due date';
 $string['nonapplicable'] = 'N/A';
+$string['submitted'] = 'Date submitted';
+
 
 
 
