@@ -173,19 +173,6 @@ class user extends base {
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
                 ";
 
-        // Logo column.
-        $columns[] = (new column(
-            'logo',
-            new lang_string('logo', 'local_ace'),
-            $this->get_entity_name()
-        ))
-            ->add_join($join)
-            ->set_is_sortable(true)
-            ->add_field("{$modulesalias}.name")
-            ->add_callback(static function ($value): string {
-                return html_writer::img('/mod/'.$value.'/pix/icon.png', new lang_string('logo', 'local_ace'));
-            });
-
         // Module name column.
         $columns[] = (new column(
             'name',
@@ -194,7 +181,10 @@ class user extends base {
         ))
             ->add_join($join)
             ->set_is_sortable(true)
-            ->add_field("{$modulesalias}.name");
+            ->add_field("{$modulesalias}.name")
+            ->add_callback(static function ($value): string {
+                return html_writer::img('/mod/'.$value.'/pix/icon.png', new lang_string('logo', 'local_ace')).' '.$value;
+            });
 
         // Last accessed.
         $columns[] = (new column(
