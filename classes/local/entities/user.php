@@ -70,6 +70,8 @@ class user extends base {
                 'modules' => 'm',
                 'assign' => 'a',
                 'assign_submission' => 'asub',
+                'logstore_standard_log' => 'ls',
+                'context' => 'ctx',
                ];
     }
 
@@ -142,6 +144,8 @@ class user extends base {
         $enrolalias = $this->get_table_alias('enrol');
         $assignalias = $this->get_table_alias('assign');
         $assignsubmissionalias = $this->get_table_alias('assign_submission');
+        $logstorealias = $this->get_table_alias('logstore_standard_log');
+        $contexttablealias = $this->get_table_alias('context');
 
         $fullnameselect = self::get_name_fields_select($usertablealias);
         $userpictureselect = fields::for_userpic()->get_sql($usertablealias, false, '', '', false)->selects;
@@ -156,6 +160,11 @@ class user extends base {
                     ON {$enrolalias}.courseid = {$coursealias}.id
                     INNER JOIN {course_modules} {$coursemodulesalias}
                     ON {$coursemodulesalias}.course = {$coursealias}.id
+                    LEFT JOIN {context} {$contexttablealias} 
+                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
+                    AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
+                    INNER JOIN {logstore_standard_log} {$logstorealias} 
+                    ON {$logstorealias}.contextid = {$contexttablealias}.id
                     LEFT JOIN {assign} {$assignalias}
                     ON {$coursemodulesalias}.instance = {$assignalias}.id
                     INNER JOIN {assign_submission} {$assignsubmissionalias}
@@ -187,26 +196,18 @@ class user extends base {
             ->set_is_sortable(true)
             ->add_field("{$modulesalias}.name");
 
-        // // Last accessed.
-        // $columns[] = (new column(
-        //     'name',
-        //     new lang_string('name'),
-        //     $this->get_entity_name()
-        // ))
-        //     ->add_join("
-        //                 INNER JOIN {user_enrolments} {$userenrolmentsalias}
-        //                 ON {$userenrolmentsalias}.userid = {$usertablealias}.id
-        //                 INNER JOIN {enrol} {$enrolalias}
-        //                 ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
-        //                 INNER JOIN {course} {$coursealias}
-        //                 ON {$enrolalias}.courseid = {$coursealias}.id
-        //                 INNER JOIN {course_modules} {$coursemodulesalias}
-        //                 ON {$coursemodulesalias}.course = {$coursealias}.id
-        //                 INNER JOIN {modules} {$modulesalias}
-        //                 ON {$coursemodulesalias}.module = {$modulesalias}.id
-        //             ")
-        //     ->set_is_sortable(true)
-        //     ->add_field("{$modulesalias}.name");
+        // Last accessed.
+        $columns[] = (new column(
+            'lastaccessed',
+            new lang_string('lastaccessed', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_join($join)
+            ->set_is_sortable(true)
+            ->add_field("{$logstorealias}.timecreated")
+            ->add_callback(static function ($value): string {
+                return userdate($value);
+            });
 
         // Date due.
         $columns[] = (new column(
@@ -237,7 +238,7 @@ class user extends base {
         ->add_field("{$assignsubmissionalias}.status")
         ->add_callback(static function ($value): string {
             if ($value == 'submitted') {
-                return $value;
+                return ucfirst($value);
             } else {
                 return 'Not Submitted';
             }
