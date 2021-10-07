@@ -19,7 +19,7 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use local_ace\local\entities\user;
+use local_ace\local\entities\activityentity;
 use local_ace\local\entities\course;
 use core_reportbuilder\local\helpers\database;
 
@@ -47,7 +47,7 @@ class activity extends datasource {
     protected function initialise(): void {
         global $CFG;
 
-        $userentity = new user();
+        $userentity = new activityentity();
         $usertablealias = $userentity->get_table_alias('user');
 
         $this->set_main_table('user', $usertablealias);
