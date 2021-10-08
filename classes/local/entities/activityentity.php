@@ -147,7 +147,7 @@ class activityentity extends base {
                     LEFT JOIN {context} {$contexttablealias} 
                     ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
                     AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
-                    INNER JOIN {logstore_standard_log} {$logstorealias} 
+                    LEFT JOIN {logstore_standard_log} {$logstorealias} 
                     ON {$logstorealias}.contextid = {$contexttablealias}.id
                     LEFT JOIN {assign} {$assignalias}
                     ON {$coursemodulesalias}.instance = {$assignalias}.id
