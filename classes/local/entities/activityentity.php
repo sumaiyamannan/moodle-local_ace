@@ -206,6 +206,8 @@ class activityentity extends base {
                 $duein = round($datediff / (60 * 60 * 24));
                 if ($duein <= 7) {
                     return html_writer::start_span('fa fa-calendar-o') . $duein . html_writer::end_span() . ' ' .userdate($row->duedate);
+                } elseif ($duein <= 0) {
+                    return html_writer::start_span('', array('style' => "color: red;")) . userdate($row->duedate) . html_writer::end_span();
                 }
                 return userdate($row->duedate);
             } else {
@@ -221,12 +223,19 @@ class activityentity extends base {
         ))
         ->add_join($join)
         ->set_is_sortable(true)
-        ->add_field("{$assignsubmissionalias}.status")
-        ->add_callback(static function ($value): string {
-            if ($value == 'submitted') {
+        ->add_fields("{$assignsubmissionalias}.status, {$assignalias}.duedate")
+        ->add_callback(static function ($value, $row): string {
+            if ($row->status == 'submitted') {
                 return ucfirst($value);
             } else {
-                return 'Not Submitted';
+                    $now = time();
+                    $your_date = $row->duedate;
+                    $datediff = $your_date - $now;
+                    $duein = round($datediff / (60 * 60 * 24));
+                if ($duein <= 0) {
+                    return html_writer::start_span('submitted', array('style' => "color: red;")) . 'Not Submitted' . html_writer::end_span();
+                }
+                return html_writer::start_span('submitted', array('style' => "color: red;")) . 'Not Submitted' . html_writer::end_span();
             }
         });
 
