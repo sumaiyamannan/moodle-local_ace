@@ -205,7 +205,7 @@ class activityentity extends base {
                 $datediff = $your_date - $now;
                 $duein = round($datediff / (60 * 60 * 24));
                 if ($duein <= 7) {
-                    return userdate($row->duedate) . ' ' . html_writer::start_span('fa fa-calendar-o') . $duein . html_writer::end_span();
+                    return html_writer::start_span('fa fa-calendar-o') . $duein . html_writer::end_span() . ' ' .userdate($row->duedate);
                 }
                 return userdate($row->duedate);
             } else {
