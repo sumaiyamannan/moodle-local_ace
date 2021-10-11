@@ -144,11 +144,6 @@ class activityentity extends base {
                     ON {$enrolalias}.courseid = {$coursealias}.id
                     INNER JOIN {course_modules} {$coursemodulesalias}
                     ON {$coursemodulesalias}.course = {$coursealias}.id
-                    LEFT JOIN {context} {$contexttablealias} 
-                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
-                    AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
-                    LEFT JOIN {logstore_standard_log} {$logstorealias} 
-                    ON {$logstorealias}.contextid = {$contexttablealias}.id
                     LEFT JOIN {assign} {$assignalias}
                     ON {$coursemodulesalias}.instance = {$assignalias}.id
                     INNER JOIN {assign_submission} {$assignsubmissionalias}
@@ -156,6 +151,16 @@ class activityentity extends base {
                     INNER JOIN {modules} {$modulesalias}
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
                 ";
+
+        $joinlog = "
+                    LEFT JOIN {context} {$contexttablealias} 
+                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
+                    AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
+                    LEFT JOIN {logstore_standard_log} {$logstorealias} 
+                    ON {$logstorealias}.contextid = {$contexttablealias}.id
+                ";
+
+        $join = $join . $joinlog;
 
         // Module name column.
         $columns[] = (new column(
@@ -178,8 +183,8 @@ class activityentity extends base {
         ))
             ->add_join($join)
             ->set_is_sortable(true)
-            ->add_field("{$logstorealias}.timecreated")
-            ->add_callback(static function ($value): string {
+            ->add_fields("{$logstorealias}.timecreated, {$coursemodulesalias}.id")
+            ->add_callback(static function ($value, $row): string {
                 return userdate($value);
             });
 
@@ -195,6 +200,13 @@ class activityentity extends base {
         ->add_fields("{$assignalias}.duedate")
         ->add_callback(static function ($value, $row): string {
             if ($row->name == 'assign') {
+                $now = time();
+                $your_date = $row->duedate;
+                $datediff = $your_date - $now;
+                $duein = round($datediff / (60 * 60 * 24));
+                if ($duein <= 7) {
+                    return userdate($row->duedate) . ' ' . html_writer::start_span('fa fa-calendar-o') . $duein . html_writer::end_span();
+                }
                 return userdate($row->duedate);
             } else {
                 return 'N/A';
