@@ -235,7 +235,7 @@ class activityentity extends base {
                 if ($duein <= 0) {
                     return html_writer::start_span('submitted', array('style' => "color: red;")) . 'Not Submitted' . html_writer::end_span();
                 }
-                return html_writer::start_span('submitted', array('style' => "color: red;")) . 'Not Submitted' . html_writer::end_span();
+                return html_writer::start_span('submitted') . 'Not Submitted' . html_writer::end_span();
             }
         });
 
