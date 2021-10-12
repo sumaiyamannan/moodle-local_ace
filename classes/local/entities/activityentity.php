@@ -51,7 +51,7 @@ require_once($CFG->dirroot . '/course/lib.php');
  * This entity defines all the course columns and filters to be used in any report.
  *
  * @package     local_ace
- * @copyright   2021 Ant
+ * @copyright   2021 University of Canterbury
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class activityentity extends base {

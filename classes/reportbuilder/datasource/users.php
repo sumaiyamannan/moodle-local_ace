@@ -19,8 +19,7 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use local_ace\local\entities\activityentity;
-use local_ace\local\entities\course;
+use local_ace\local\entities\userentity;
 use core_reportbuilder\local\helpers\database;
 
 /**
@@ -30,7 +29,7 @@ use core_reportbuilder\local\helpers\database;
  * @copyright 2021 University of Canterbury
  * @license   http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class activity extends datasource {
+class users extends datasource {
 
     /**
      * Return user friendly name of the datasource
@@ -38,7 +37,7 @@ class activity extends datasource {
      * @return string
      */
     public static function get_name(): string {
-        return get_string('activity');
+        return get_string('users');
     }
 
     /**
@@ -47,16 +46,17 @@ class activity extends datasource {
     protected function initialise(): void {
         global $CFG;
 
-        $userentity = new activityentity();
+        $userentity = new userentity();
         $usertablealias = $userentity->get_table_alias('user');
 
         $this->set_main_table('user', $usertablealias);
 
         $userparamguest = database::generate_param_name();
-        // $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0", [
-        //     $userparamguest => $CFG->siteguest,
-        // ]);
+        $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0", [
+            $userparamguest => $CFG->siteguest,
+        ]);
 
+        // Add all columns from entities to be available in custom reports.
         $this->add_entity($userentity);
 
         $userentityname = $userentity->get_entity_name();
@@ -71,7 +71,7 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_columns(): array {
-        return [];
+        return ['userentity:fullname', 'userentity:username', 'userentity:email'];
     }
 
     /**
@@ -80,7 +80,7 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_filters(): array {
-        return [];
+        return ['userentity:fullname', 'userentity:username', 'userentity:email'];
     }
 
     /**
@@ -89,6 +89,6 @@ class activity extends datasource {
      * @return string[]
      */
     public function get_default_conditions(): array {
-        return [];
+        return ['userentity:fullname', 'userentity:username', 'userentity:email'];
     }
 }
