@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Capabilities
  *
  * @package     local_ace
  * @copyright   2021 University of Canterbury
@@ -24,8 +24,18 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_ace';
-$plugin->release = '2021101300';
-$plugin->version = 2021101300;
-$plugin->requires = 2020061500;
-$plugin->maturity = MATURITY_STABLE;
+$capabilities = array(
+    'local/ace:view' => array(
+        'riskbitmask' => RISK_PERSONAL,
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_COURSE,
+        'archetypes' => array(
+            'manager' => CAP_ALLOW
+        )
+    ),
+    'local/ace:viewown' => array(
+        'captype' => 'read',
+        'contextlevel' => CONTEXT_USER,
+        'archetypes' => array(),
+    )
+);

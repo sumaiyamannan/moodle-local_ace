@@ -38,6 +38,41 @@ $string['nonapplicable'] = 'N/A';
 $string['submitted'] = 'Date submitted';
 $string['lastaccessed'] = 'Last accessed';
 $string['numofaccess'] = 'Number of accesses';
+$string['noanalytics'] = 'No analytics were found.';
+$string['noanalyticsfound'] = 'No analytics were found.';
+$string['ace:viewown'] = 'View own analytics';
+$string['ace:view'] = 'View analytics';
+$string['averagecourseengagement'] = 'Average course engagement';
+$string['yourengagement'] = 'Your engagement';
+$string['studentdetailheader'] =
+    'The university uses machine learning to determine how students are engaging in their courses, the following data is included when analysing student engagement.';
+$string['overallengagement'] = 'Overall';
+$string['userreport'] = 'Analytics for course engagement';
+$string['navigationlink'] = 'Engagement analytics';
+$string['userhistory'] = 'User history timeline';
+$string['userhistory_desc'] = 'How much of the users history should be displayed in the user report - defined in seconds';
+$string['displayperiod'] = 'Display period';
+$string['displayperiod_desc'] =
+    'Which analysis period to use when displaying anayltics (every 3 days, every week etc.) - defined in seconds.';
+$string['colourteachercoursehistory'] = 'Course report line';
+$string['colourteachercoursehistory_desc'] = 'The colour used in the line graph on the course report.';
+$string['colourteachercoursehigh'] = 'Course report high';
+$string['colourteachercoursehigh_desc'] = 'The colour used for the high level in the donut graph on the course report.';
+$string['colourteachercoursegood'] = 'Course report medium';
+$string['colourteachercoursegood_desc'] = 'The colour used for the medium level in the donut graph on the course report.';
+$string['colourteachercourselow'] = 'Course report low';
+$string['colourteachercourselow_desc'] = 'The colour used for the low level in the donut graph on the course report.';
+$string['colourteachercoursenone'] = 'Course report none';
+$string['colourteachercoursenone_desc'] = 'The colour used for the none level in the donut graph on the course report.';
+$string['colourusercoursehistory'] = 'User course average';
+$string['colourusercoursehistory_desc'] = 'The colour used for the average course engagment level';
+$string['colouruserhistory'] = 'User average';
+$string['colouruserhistory_desc'] = 'The colour used for the average user engagement level';
+$string['courseregex'] = 'Course shortname regex';
+$string['courseregex_desc'] =
+    'Regex to cover courses we want to be included in the analytics. The data entered here will be compared against the course shortname.';
+$string['userfooter'] =
+    'This graph shows you how you\'re engaging in your courses compared to your classmates. This is automatically calculated every three days by reviewing your use of Learn and Echo360 (if relevant to your courses). The more you engage with these resources, the higher your engagement will be.';
 
 
 
