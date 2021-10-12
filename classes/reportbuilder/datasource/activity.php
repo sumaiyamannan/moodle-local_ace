@@ -57,17 +57,7 @@ class activity extends datasource {
         //     $userparamguest => $CFG->siteguest,
         // ]);
 
-        // Join user entity for "User modified" column.
-
-        $this->add_entity($userentity
-                // ->add_join("
-                //             INNER JOIN {user_enrolments} ue ON ue.userid = u.id
-                //             INNER JOIN {enrol} e ON e.id = ue.enrolid
-                //             INNER JOIN {course} c ON e.courseid = c.id
-                //             INNER JOIN {course_modules} cm ON cm.course = c.id
-                //             INNER JOIN {modules} m ON cm.module = m.id
-                //         ")
-        );
+        $this->add_entity($userentity);
 
         $userentityname = $userentity->get_entity_name();
         $this->add_columns_from_entity($userentityname);

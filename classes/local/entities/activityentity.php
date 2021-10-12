@@ -156,8 +156,11 @@ class activityentity extends base {
                     LEFT JOIN {context} {$contexttablealias} 
                     ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
                     AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
-                    LEFT JOIN {logstore_standard_log} {$logstorealias} 
-                    ON {$logstorealias}.contextid = {$contexttablealias}.id
+                    LEFT JOIN (
+                        SELECT contextid, max(timecreated) as timecreated
+                        FROM {logstore_standard_log}
+                        GROUP BY contextid
+                    ) AS {$logstorealias} ON {$logstorealias}.contextid = {$contexttablealias}.id
                 ";
 
         $join = $join . $joinlog;
