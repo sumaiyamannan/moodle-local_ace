@@ -1,0 +1,175 @@
+#page-local-ace-user .useranalytics {
+    width: 100%;
+    position: relative;
+}
+
+#page-local-ace-user .useranalytics .usergraph .chart-table{
+    display: none;
+}
+
+.chart-table {
+    padding: 20px;
+}
+
+.chart-area .chart-table .chart-output-htmltable caption {
+    white-space: unset !important;
+}
+
+#page-local-ace-index .courseanalytics {
+    width: 100%;
+    position: relative;
+}
+
+#page-local-ace-index .courseanalytics .dougnut {
+    width: 100%;
+    float: left;
+}
+
+@media only screen and (min-width: 800px) {
+    #page-local-ace-index .courseanalytics .dougnut {
+        width: 50%;
+    }
+}
+
+#page-local-ace-index .courseanalytics .linegraph {
+    margin-left: 0;
+}
+
+@media only screen and (min-width: 800px) {
+    #page-local-ace-index .courseanalytics .linegraph {
+        margin-left: 50%;
+    }
+}
+
+#page-local-ace-index .predictions {
+    width: 100%;
+    position: relative;
+    zoom: 0.8;
+}
+
+#page-local-ace-index .predictions .coursedropout {
+    float: left;
+    padding-right: 20px;
+    flex-grow: 2;
+}
+
+#page-local-ace-index .predictions .generaltable {
+    width: 100%;
+}
+
+#page-local-ace-index .insight-container .mb-2 {
+    font-size: 1.5;
+}
+
+#page-local-ace-index .generaltable tbody .col-xs-8 {
+    padding: 0;
+}
+
+#page-local-ace-index .predictions .generaltable td {
+    vertical-align: middle !important;
+}
+
+#page-local-ace-index .generaltable .d-flex {
+    display: table-row !important;
+}
+#page-local-ace-index .coursedropout {
+    padding: 30px 20px;
+    margin: 10px;
+    border: 2px solid #5b9d39;
+}
+
+#page-local-ace-index .coursedropout .mb-2 {
+    color: #ffffff;
+    background-color: #5b9d39;
+    margin: -32px -20px;
+    padding: 30px 20px;
+    text-align: left;
+}
+
+#page-local-ace-index .noaccesssincestart .timecreated {
+    display: none;
+}
+
+#page-local-ace-index .norecentaccess,
+#page-local-ace-index .noaccesssincestart {
+    padding: 30px 20px;
+    margin: 10px;
+    border: 2px solid #e8e8e8;
+}
+
+#page-local-ace-index .norecentaccess .mb-2,
+#page-local-ace-index .noaccesssincestart .mb-2 {
+    background-color: #e8e8e8;
+    margin: -32px -20px;
+    padding: 30px 20px;
+    text-align: left;
+}
+
+#page-local-ace-user .footertext {
+    margin-left: 0;
+    margin-top: 40px;
+}
+
+#page-local-ace-index .headingdescription {
+    padding: 25px 0 40px;
+}
+
+#page-local-ace-index h2 {
+    text-align: center;
+}
+
+#page-local-ace-index .norecentaccess h2 {
+    text-align: left;
+}
+
+/* graph tabs */
+.useranalytics .nav-tabs {
+    margin-top: 2rem;
+    margin-bottom: 2rem !important;
+    border-bottom: 0;
+}
+
+.useranalytics .nav-tabs .nav-item {
+    margin-bottom: 0px;
+}
+
+.useranalytics .nav-tabs .nav-link.active,
+.useranalytics .nav-tabs .nav-item.show .nav-link {
+    color: #5cb85b;
+    background-color: #fff;
+    border-color: #5cb85b !important;
+    border-bottom: 3px solid #5cb85b;
+}
+
+.useranalytics .nav-tabs .nav-link:hover,
+.useranalytics .nav-tabs .nav-link:focus {
+    border-color: #373a3c;
+}
+
+.useranalytics .nav-tabs .nav-link {
+    border: 0;
+    border-bottom: 3px solid #e6e6e6;
+    text-transform: uppercase;
+    font-weight: 600;
+    letter-spacing: .6px;
+    color: #373a3c;
+    transition: .5s ease;
+    padding: .5rem 7rem .5rem .5rem;
+}
+
+.useranalytics .nav {
+    padding-left: 50px;
+}
+
+#page-local-ace-user .useranalytics .legend {
+    text-align: center;
+}
+
+#page-local-ace-user .useranalytics .legend .legendbox {
+    padding-left: 30px;
+}
+#page-local-ace-user .useranalytics .legend .legendtext {
+    padding-left: 10px;
+    padding-right: 20px;
+    font-size: 0.875em;
+}

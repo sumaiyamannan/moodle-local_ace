@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Web service definitions
  *
  * @package     local_ace
  * @copyright   2021 University of Canterbury
@@ -24,8 +24,24 @@
 
 defined('MOODLE_INTERNAL') || die();
 
-$plugin->component = 'local_ace';
-$plugin->release = '2021101300';
-$plugin->version = 2021101300;
-$plugin->requires = 2020061500;
-$plugin->maturity = MATURITY_STABLE;
+$functions = array(
+    'local_ace_get_user_analytics_graph' => array(
+        'classname' => 'user_analytics_graph',
+        'methodname' => 'get_user_analytics_graph',
+        'classpath' => 'local/ace/classes/external/user_analytics_graph.php',
+        'description' => 'Get the analytics graph for a specific user.',
+        'type' => 'read',
+        'capabilities' => '', // Capabilities depend on content user is fetching, checked in webservice method.
+        'ajax' => true,
+        'services' => array('local_ace_webservice'),
+    ),
+);
+
+$services = array(
+    'ACE Webservice' => array(
+        'functions' => array(),
+        'enabled' => 1,
+        'restrictedusers' => 0,
+        'shortname' => 'local_ace_webservice',
+    ),
+);
