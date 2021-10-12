@@ -150,20 +150,15 @@ class activityentity extends base {
                     ON {$assignalias}.id = {$assignsubmissionalias}.assignment 
                     INNER JOIN {modules} {$modulesalias}
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
-                ";
-
-        $joinlog = "
                     LEFT JOIN {context} {$contexttablealias} 
                     ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
                     AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
                     LEFT JOIN (
-                        SELECT contextid, max(timecreated) as timecreated
+                        SELECT contextid, max(timecreated) AS timecreated, COUNT(*) AS numberofaccess
                         FROM {logstore_standard_log}
                         GROUP BY contextid
                     ) AS {$logstorealias} ON {$logstorealias}.contextid = {$contexttablealias}.id
                 ";
-
-        $join = $join . $joinlog;
 
         // Module name column.
         $columns[] = (new column(
@@ -189,6 +184,22 @@ class activityentity extends base {
             ->add_fields("{$logstorealias}.timecreated, {$coursemodulesalias}.id")
             ->add_callback(static function ($value, $row): string {
                 return userdate($value);
+            });
+
+        // Last accessed.
+        $columns[] = (new column(
+            'numberofaccess',
+            new lang_string('numofaccess', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_join($join)
+            ->set_is_sortable(true)
+            ->add_fields("{$logstorealias}.numberofaccess")
+            ->add_callback(static function ($value): string {
+                if (!$value) {
+                    return '0';
+                }
+                return $value;
             });
 
         // Date due.
@@ -274,17 +285,20 @@ class activityentity extends base {
                     ON {$enrolalias}.courseid = {$coursealias}.id
                     INNER JOIN {course_modules} {$coursemodulesalias}
                     ON {$coursemodulesalias}.course = {$coursealias}.id
-                    LEFT JOIN {context} {$contexttablealias} 
-                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
-                    AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
-                    INNER JOIN {logstore_standard_log} {$logstorealias} 
-                    ON {$logstorealias}.contextid = {$contexttablealias}.id
                     LEFT JOIN {assign} {$assignalias}
                     ON {$coursemodulesalias}.instance = {$assignalias}.id
                     INNER JOIN {assign_submission} {$assignsubmissionalias}
                     ON {$assignalias}.id = {$assignsubmissionalias}.assignment 
                     INNER JOIN {modules} {$modulesalias}
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
+                    LEFT JOIN {context} {$contexttablealias} 
+                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
+                    AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
+                    LEFT JOIN (
+                        SELECT contextid, max(timecreated) AS timecreated, COUNT(*) AS numberofaccess
+                        FROM {logstore_standard_log}
+                        GROUP BY contextid
+                    ) AS {$logstorealias} ON {$logstorealias}.contextid = {$contexttablealias}.id
                 ";
 
         // Module name filter.

@@ -37,6 +37,8 @@ $string['due'] = 'Due date';
 $string['nonapplicable'] = 'N/A';
 $string['submitted'] = 'Date submitted';
 $string['lastaccessed'] = 'Last accessed';
+$string['numofaccess'] = 'Number of accesses';
+
 
 
 
