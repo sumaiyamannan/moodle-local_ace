@@ -218,8 +218,18 @@ class activityentity extends base {
                 $your_date = $row->duedate;
                 $datediff = $your_date - $now;
                 $duein = round($datediff / (60 * 60 * 24));
+
+
                 if ($duein <= 7) {
-                    return html_writer::start_span('fa fa-calendar-o') . $duein . html_writer::end_span() . ' ' .userdate($row->duedate);
+                    $html = html_writer::start_span('fa fa-calendar-o', array('style' => "font-size: 25px; position: absolute"));
+                    $html .= html_writer::start_span('duein', array('style' => "font-size: 14px; position: relative; left: -16px;"));
+                    $html .= $duein;
+                    $html .= html_writer::end_span();
+                    $html .= html_writer::end_span();
+                    $html .= html_writer::start_span('duedate', array('style' => "margin-left: 40px;"));
+                    $html .= ' ' . userdate($row->duedate);
+                    $html .= html_writer::end_span();
+                    return (string)$html;
                 } elseif ($duein <= 0) {
                     return html_writer::start_span('', array('style' => "color: red;")) . userdate($row->duedate) . html_writer::end_span();
                 }
