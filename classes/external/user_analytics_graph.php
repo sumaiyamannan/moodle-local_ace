@@ -35,7 +35,7 @@ class user_analytics_graph extends external_api {
                 'userid' => new external_value(PARAM_INT, 'ID of user'),
                 'courseid' => new external_value(PARAM_INT, 'Course id', false),
                 'start' => new external_value(PARAM_INT, 'User history timeline', false),
-            ),
+            )
         );
     }
 
