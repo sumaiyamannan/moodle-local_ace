@@ -44,7 +44,7 @@ use core_reportbuilder\local\entities\base;
  * @copyright  2021 University of Canterbury
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class userentity extends base {
+class userentity extends user {
 
     /**
      * Database tables that this entity uses and their default aliases
@@ -52,7 +52,18 @@ class userentity extends base {
      * @return array
      */
     protected function get_default_table_aliases(): array {
-        return ['user' => 'u'];
+        return [
+                'user' => 'u',
+                'enrol' => 'e',
+                'user_enrolments' => 'ue',
+                'course' => 'c',
+                'course_modules' => 'cm',
+                'modules' => 'm',
+                'assign' => 'a',
+                'assign_submission' => 'asub',
+                'logstore_standard_log' => 'ls',
+                'context' => 'ctx',
+               ];
     }
 
     /**
@@ -112,10 +123,36 @@ class userentity extends base {
     protected function get_all_columns(): array {
 
         $usertablealias = $this->get_table_alias('user');
+        $userenrolmentsalias = $this->get_table_alias('user_enrolments');
+        $coursealias = $this->get_table_alias('course');
+        $coursemodulesalias = $this->get_table_alias('course_modules');
+        $modulesalias = $this->get_table_alias('modules');
+        $enrolalias = $this->get_table_alias('enrol');
+        $assignalias = $this->get_table_alias('assign');
+        $assignsubmissionalias = $this->get_table_alias('assign_submission');
+        $logstorealias = $this->get_table_alias('logstore_standard_log');
+        $contexttablealias = $this->get_table_alias('context');
 
         $fullnameselect = self::get_name_fields_select($usertablealias);
         $userpictureselect = fields::for_userpic()->get_sql($usertablealias, false, '', '', false)->selects;
         $viewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
+
+        $join = "
+                INNER JOIN {user_enrolments} {$userenrolmentsalias}
+                ON {$userenrolmentsalias}.userid = {$usertablealias}.id
+                INNER JOIN {enrol} {$enrolalias}
+                ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
+                INNER JOIN {course} {$coursealias}
+                ON {$enrolalias}.courseid = {$coursealias}.id
+                LEFT JOIN {context} {$contexttablealias}
+                ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
+                AND {$contexttablealias}.instanceid = {$coursealias}.id
+                LEFT JOIN (
+                    SELECT contextid, max(timecreated) AS timecreated, COUNT(*) AS numberofaccess
+                    FROM {logstore_standard_log}
+                    GROUP BY contextid
+                ) AS {$logstorealias} ON {$logstorealias}.contextid = {$contexttablealias}.id
+        ";
 
         // Fullname column.
         $columns[] = (new column(
@@ -133,6 +170,48 @@ class userentity extends base {
                 }
 
                 return fullname($row, $viewfullnames);
+            });
+
+        // Last accessed to course column.
+        $columns[] = (new column(
+            'lastaccessed',
+            new lang_string('numofaccess', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_join($join)
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true)
+            ->add_field("{$logstorealias}.timecreated")
+            ->add_callback(static function ($value): string {
+                return userdate($value);
+            });
+
+        // Last access column.
+        $columns[] = (new column(
+            'log7',
+            new lang_string('last7', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_join($join)
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true)
+            ->add_field("{$logstorealias}.timecreated")
+            ->add_callback(static function ($value): string {
+                return userdate($value);
+            });
+
+        // Fullname column.
+        $columns[] = (new column(
+            'log30',
+            new lang_string('last30', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_join($join)
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true)
+            ->add_fields("{$logstorealias}.timecreated")
+            ->add_callback(static function ($value): string {
+                return userdate($value);
             });
 
         // Formatted fullname columns (with link, picture or both).
