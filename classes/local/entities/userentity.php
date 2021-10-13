@@ -148,11 +148,25 @@ class userentity extends user {
                 ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
                 AND {$contexttablealias}.instanceid = {$coursealias}.id
                 LEFT JOIN (
-                    SELECT contextid, max(timecreated) AS timecreated, COUNT(*) AS numberofaccess
+                    SELECT contextid, max(timecreated) AS maxtimecreated, COUNT(*) AS numberofaccess
                     FROM {logstore_standard_log}
                     GROUP BY contextid
                 ) AS {$logstorealias} ON {$logstorealias}.contextid = {$contexttablealias}.id
         ";
+
+        // Alternative query for last accessed
+        // $join = "
+        //     INNER JOIN {user_enrolments} {$userenrolmentsalias}
+        //     ON {$userenrolmentsalias}.userid = {$usertablealias}.id
+        //     INNER JOIN {enrol} {$enrolalias}
+        //     ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
+        //     INNER JOIN {course} {$coursealias}
+        //     ON {$enrolalias}.courseid = {$coursealias}.id
+        //     LEFT JOIN {context} {$contexttablealias}
+        //     ON {$contexttablealias}.instanceid = {$coursealias}.id
+        //     JOIN {user_lastaccess} AS ul on ul.courseid = {$usertablealias}.id 
+        //     AND {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
+        // ";
 
         // Fullname column.
         $columns[] = (new column(
@@ -181,37 +195,41 @@ class userentity extends user {
             ->add_join($join)
             ->set_type(column::TYPE_TEXT)
             ->set_is_sortable(true)
-            ->add_field("{$logstorealias}.timecreated")
+            ->add_field("{$logstorealias}.maxtimecreated")
             ->add_callback(static function ($value): string {
                 return userdate($value);
             });
 
-        // Last access column.
+        // Last access in 7 days column.
         $columns[] = (new column(
             'log7',
             new lang_string('last7', 'local_ace'),
             $this->get_entity_name()
         ))
             ->add_join($join)
-            ->set_type(column::TYPE_TEXT)
             ->set_is_sortable(true)
-            ->add_field("{$logstorealias}.timecreated")
+            ->add_field("{$logstorealias}.numberofaccess")
             ->add_callback(static function ($value): string {
-                return userdate($value);
+                if (!$value) {
+                    return '0';
+                }
+                return $value;
             });
 
-        // Fullname column.
+        // Last access in 30 days column.
         $columns[] = (new column(
             'log30',
             new lang_string('last30', 'local_ace'),
             $this->get_entity_name()
         ))
             ->add_join($join)
-            ->set_type(column::TYPE_TEXT)
             ->set_is_sortable(true)
-            ->add_fields("{$logstorealias}.timecreated")
+            ->add_fields("{$logstorealias}.numberofaccess")
             ->add_callback(static function ($value): string {
-                return userdate($value);
+                if (!$value) {
+                    return '0';
+                }
+                return $value;
             });
 
         // Formatted fullname columns (with link, picture or both).
