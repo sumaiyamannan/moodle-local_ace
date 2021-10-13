@@ -25,11 +25,89 @@
 defined('MOODLE_INTERNAL') || die;
 
 /**
- * Show graph for specific user
+ * Renders the chart based on given parameters.
  *
- * @return array
+ * @param int $userid
+ * @param int|array $courses
+ * @param bool $showxtitles
+ * @return bool|string
+ * @throws coding_exception
+ * @throws dml_exception
  */
-function local_ace_student_graph($userid, $course, $startfrom, $showxtitles = true) {
+function local_ace_student_graph($userid, $courses, $showxtitles = true) {
+    global $OUTPUT;
+
+    $config = get_config('local_ace');
+
+    $graphdata = local_ace_student_graph_data($userid, $courses, null, $showxtitles);
+    $series = $graphdata['series'];
+    $labels = $graphdata['labels'];
+    $average1 = $graphdata['average1'];
+    $average2 = $graphdata['average2'];
+
+    if ($graphdata['error'] != null) {
+        return '';
+    }
+
+    // Get max value to use as upper level of graph.
+    $max = max(max($series), max($average1), max($average2));
+
+    // Charts.js doesn't cope when the stepsize is under 1.
+    // Some of the courses have very little engagement so we occasionally end up with very low values.
+    // This results in the Y axis having "high/high/high" instead of low/medium/high.
+    // UC do not want to show "real" values on the student graph, so the y-axis just autoscales to the max and low values.
+    if ($max < 2) {
+        $max = 2;
+    }
+    $stepsize = $max / 2;
+
+    $chart = new \core\chart_line();
+    $chart->set_legend_options(['display' => false]);
+    $chart->set_smooth(true);
+
+    $chart->set_labels($labels);
+
+    $chartseries = new \core\chart_series(get_string('yourengagement', 'report_ucanalytics'), $series);
+    $chartseries->set_color($config->colouruserhistory);
+    $chart->add_series($chartseries);
+
+    if (empty($course)) {
+        $averagelabel = get_string('averageengagement', 'report_ucanalytics');
+    } else {
+        $averagelabel = get_string('averagecourseengagement', 'report_ucanalytics');
+    }
+    $averageseries = new \core\chart_series($averagelabel, $average1);
+    $averageseries->set_color($config->colourusercoursehistory);
+    $chart->add_series($averageseries);
+
+    $averageseries2 = new \core\chart_series($averagelabel, $average2);
+    $averageseries2->set_color($config->colourusercoursehistory);
+    $averageseries2->set_fill(1);
+    $chart->add_series($averageseries2);
+
+    $yaxis0 = $chart->get_yaxis(0, true);
+    $yaxis0->set_min(0);
+    $yaxis0->set_max($max);
+    $yaxis0->set_stepsize($stepsize);
+    $yaxis0->set_labels(array(0 => get_string('low', 'report_ucanalytics'),
+        $stepsize => get_string('medium', 'report_ucanalytics'),
+        $max => get_string('high', 'report_ucanalytics')));
+
+    return $OUTPUT->render($chart);
+}
+
+/**
+ * Fetch graph data for specific user
+ *
+ * @param int $userid
+ * @param int|array $course
+ * @param int|null $startfrom Display period start, defaults to 'displayperiod' setting.
+ * @param bool $showxtitles
+ * @return array
+ * @throws coding_exception
+ * @throws dml_exception
+ */
+function local_ace_student_graph_data($userid, $course, $startfrom = null, $showxtitles = true) {
     global $DB;
 
     $config = get_config('local_ace');
