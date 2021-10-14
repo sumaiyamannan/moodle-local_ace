@@ -27,8 +27,20 @@ defined('MOODLE_INTERNAL') || die();
 require_once($CFG->libdir . '/externallib.php');
 require_once($CFG->dirroot . '/local/ace/locallib.php');
 
+/**
+ * Class user_analytics_graph
+ *
+ * @package     local_ace
+ * @copyright   2021 University of Canterbury
+ * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
+ */
 class user_analytics_graph extends external_api {
 
+    /**
+     * Returns parameter types for get_user_analytics_graph function.
+     *
+     * @return external_function_parameters
+     */
     public static function get_user_analytics_graph_parameters() {
         return new external_function_parameters(
             array(
@@ -39,6 +51,17 @@ class user_analytics_graph extends external_api {
         );
     }
 
+    /**
+     * Get data required to create a chart for user engagement/analytics.
+     *
+     * @param int $userid
+     * @param int|null $courseid
+     * @param int|null $startfrom Unix timestamp of start date to look for data from
+     * @return array|string
+     * @throws coding_exception
+     * @throws dml_exception
+     * @throws invalid_parameter_exception
+     */
     public static function get_user_analytics_graph($userid, $courseid, $startfrom) {
         global $USER, $DB;
 
@@ -110,6 +133,11 @@ class user_analytics_graph extends external_api {
         return $data;
     }
 
+    /**
+     * Returns description of get_user_analytics_graph() result values
+     *
+     * @return external_single_structure
+     */
     public static function get_user_analytics_graph_returns() {
         return new external_single_structure([
             'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working'),

@@ -24,6 +24,18 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+/**
+ * Returns a list of courses and a course id that meet the following conditions:
+ * - Contain analytics data
+ * - The user is enrolled in
+ * - Not excluded
+ *
+ * @param $userid
+ * @param $courseid
+ * @return array array[0] = int[] (courseid) and array[1] = array (courses)
+ * @throws coding_exception
+ * @throws dml_exception
+ */
 function local_ace_get_student_courses($userid, $courseid) {
     global $DB;
 
@@ -84,7 +96,8 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
 
     $config = get_config('local_ace');
 
-    list($series, $labels, $average1, $average2, $max, $stepsize) = local_ace_student_graph_data($userid, $courses, null, $showxtitles);
+    list($series, $labels, $average1, $average2, $max, $stepsize) = local_ace_student_graph_data($userid, $courses,
+        null, $showxtitles);
     if (empty($series)) {
         return '';
     }
@@ -185,7 +198,6 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
               WHERE s.userid = :userid
               GROUP BY s.starttime, s.endtime, avg, stddev
               ORDER BY s.starttime DESC";
-
 
     $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $startfrom);
     if ($startfrom == null) {
