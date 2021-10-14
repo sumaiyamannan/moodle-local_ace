@@ -132,6 +132,8 @@ class userentity extends user {
         $assignsubmissionalias = $this->get_table_alias('assign_submission');
         $logstorealias = $this->get_table_alias('logstore_standard_log');
         $contexttablealias = $this->get_table_alias('context');
+        $logstorealiassub1 = 'logs_sub_select_1';
+        $logstorealiassub2 = 'logs_sub_select_2';
 
         $fullnameselect = self::get_name_fields_select($usertablealias);
         $userpictureselect = fields::for_userpic()->get_sql($usertablealias, false, '', '', false)->selects;
@@ -148,10 +150,17 @@ class userentity extends user {
                 ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
                 AND {$contexttablealias}.instanceid = {$coursealias}.id
                 LEFT JOIN (
-                    SELECT contextid, max(timecreated) AS maxtimecreated, COUNT(*) AS numberofaccess
+                    SELECT contextid, max(timecreated) AS maxtimecreated, COUNT(*) AS last7
                     FROM {logstore_standard_log}
+                    WHERE timecreated > extract(epoch from (now() - interval '7 days'))
                     GROUP BY contextid
-                ) AS {$logstorealias} ON {$logstorealias}.contextid = {$contexttablealias}.id
+                    ) AS {$logstorealiassub1} ON {$logstorealiassub1}.contextid = {$contexttablealias}.id
+                    LEFT JOIN (
+                    SELECT contextid, COUNT(*) AS last30
+                    FROM {logstore_standard_log}
+                    WHERE timecreated > extract(epoch from (now() - interval '30 days'))
+                    GROUP BY contextid
+                ) AS {$logstorealiassub2} ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
         ";
 
         // Alternative query for last accessed
@@ -188,14 +197,14 @@ class userentity extends user {
 
         // Last accessed to course column.
         $columns[] = (new column(
-            'lastaccessed',
-            new lang_string('numofaccess', 'local_ace'),
+            'lastaccessedtocourse',
+            new lang_string('lastaccessedtocourse', 'local_ace'),
             $this->get_entity_name()
         ))
             ->add_join($join)
             ->set_type(column::TYPE_TEXT)
             ->set_is_sortable(true)
-            ->add_field("{$logstorealias}.maxtimecreated")
+            ->add_field("$logstorealiassub1.maxtimecreated")
             ->add_callback(static function ($value): string {
                 return userdate($value);
             });
@@ -208,7 +217,7 @@ class userentity extends user {
         ))
             ->add_join($join)
             ->set_is_sortable(true)
-            ->add_field("{$logstorealias}.numberofaccess")
+            ->add_field("$logstorealiassub1.last7")
             ->add_callback(static function ($value): string {
                 if (!$value) {
                     return '0';
@@ -224,7 +233,7 @@ class userentity extends user {
         ))
             ->add_join($join)
             ->set_is_sortable(true)
-            ->add_fields("{$logstorealias}.numberofaccess")
+            ->add_fields("$logstorealiassub2.last30")
             ->add_callback(static function ($value): string {
                 if (!$value) {
                     return '0';
