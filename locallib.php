@@ -24,6 +24,51 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+function local_ace_get_student_courses($userid, $courseid) {
+    global $DB;
+
+    $shortnameregs = get_config('local_ace', 'courseregex');
+    $shortnamesql = '';
+    if (!empty($shortnameregs)) {
+        $shortnamesql = " AND co.shortname ~ '$shortnameregs' ";
+    }
+    $startfrom = time() - get_config('local_ace', 'userhistory');
+    $period = get_config('local_ace', 'displayperiod');
+
+    $sql = "SELECT DISTINCT co.id, co.shortname, co.enddate, co.fullname
+              FROM {report_ucanalytics_samples} s
+              JOIN {report_ucanalytics_contexts} c ON c.contextid = s.contextid
+                   AND s.starttime = c.starttime AND s.endtime = c.endtime
+              JOIN {context} cx ON c.contextid = cx.id AND cx.contextlevel = " . CONTEXT_COURSE . "
+              JOIN {course} co ON cx.instanceid = co.id
+              WHERE s.userid = :userid AND (s.endtime - s.starttime = :per) $shortnamesql
+              AND s.endtime > :start ORDER BY co.shortname";
+
+    $courses = $DB->get_records_sql($sql, array('userid' => $userid, 'per' => $period, 'start' => $startfrom));
+
+    // TODO: Rename field to acecourseexclude, or define via setting.
+    $excludefield = \core_customfield\field::get_record(array('shortname' => 'ucanalyticscourseexclude'));
+    foreach ($courses as $course) {
+        // Check enrollment.
+        if (!is_enrolled(context_course::instance($course->id), $userid) ||
+            empty($course->enddate) || $course->enddate < time()) {
+            unset($courses[$course->id]);
+        } else if (!empty($excludefield)) { // Check if this is an excluded course using the custom course field.
+            $data = \core_customfield\data::get_record(array('instanceid' => $course->id, 'fieldid' => $excludefield->get('id')));
+            if (!empty($data) && !empty($data->get("intvalue"))) {
+                unset($courses[$course->id]);
+            }
+        }
+    }
+
+    if (count($courses) == 1 || ($courseid === null && !empty($courses))) {
+        // Set courseid to the first course this user is enrolled in to make graph clear.
+        $courseid = reset($courses)->id;
+    }
+
+    return array($courseid, $courses);
+}
+
 /**
  * Renders the chart based on given parameters.
  *
@@ -39,27 +84,10 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
 
     $config = get_config('local_ace');
 
-    $graphdata = local_ace_student_graph_data($userid, $courses, null, $showxtitles);
-    $series = $graphdata['series'];
-    $labels = $graphdata['labels'];
-    $average1 = $graphdata['average1'];
-    $average2 = $graphdata['average2'];
-
-    if ($graphdata['error'] != null) {
+    list($series, $labels, $average1, $average2, $max, $stepsize) = local_ace_student_graph_data($userid, $courses, null, $showxtitles);
+    if (empty($series)) {
         return '';
     }
-
-    // Get max value to use as upper level of graph.
-    $max = max(max($series), max($average1), max($average2));
-
-    // Charts.js doesn't cope when the stepsize is under 1.
-    // Some of the courses have very little engagement so we occasionally end up with very low values.
-    // This results in the Y axis having "high/high/high" instead of low/medium/high.
-    // UC do not want to show "real" values on the student graph, so the y-axis just autoscales to the max and low values.
-    if ($max < 2) {
-        $max = 2;
-    }
-    $stepsize = $max / 2;
 
     $chart = new \core\chart_line();
     $chart->set_legend_options(['display' => false]);
@@ -67,14 +95,14 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
 
     $chart->set_labels($labels);
 
-    $chartseries = new \core\chart_series(get_string('yourengagement', 'report_ucanalytics'), $series);
+    $chartseries = new \core\chart_series(get_string('yourengagement', 'local_ace'), $series);
     $chartseries->set_color($config->colouruserhistory);
     $chart->add_series($chartseries);
 
     if (empty($course)) {
-        $averagelabel = get_string('averageengagement', 'report_ucanalytics');
+        $averagelabel = get_string('averageengagement', 'local_ace');
     } else {
-        $averagelabel = get_string('averagecourseengagement', 'report_ucanalytics');
+        $averagelabel = get_string('averagecourseengagement', 'local_ace');
     }
     $averageseries = new \core\chart_series($averagelabel, $average1);
     $averageseries->set_color($config->colourusercoursehistory);
@@ -89,21 +117,21 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
     $yaxis0->set_min(0);
     $yaxis0->set_max($max);
     $yaxis0->set_stepsize($stepsize);
-    $yaxis0->set_labels(array(0 => get_string('low', 'report_ucanalytics'),
-        $stepsize => get_string('medium', 'report_ucanalytics'),
-        $max => get_string('high', 'report_ucanalytics')));
+    $yaxis0->set_labels(array(0 => get_string('low', 'local_ace'),
+        $stepsize => get_string('medium', 'local_ace'),
+        $max => get_string('high', 'local_ace')));
 
     return $OUTPUT->render($chart);
 }
 
 /**
- * Fetch graph data for specific user
+ * Fetch graph data for specific user.
  *
  * @param int $userid
  * @param int|array $course
- * @param int|null $startfrom Display period start, defaults to 'displayperiod' setting.
+ * @param int|null $startfrom Display period start, defaults to displaying all course history to date.
  * @param bool $showxtitles
- * @return array
+ * @return array|string
  * @throws coding_exception
  * @throws dml_exception
  */
@@ -113,9 +141,6 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
     $config = get_config('local_ace');
 
     $period = (int) $config->displayperiod;
-    if ($startfrom == null) {
-        $startfrom = time() - (int) $config->userhistory;
-    }
 
     $courseids = array();
     if (empty($course)) {
@@ -131,7 +156,7 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
         $courseids = array($course);
     }
     if (empty($courseids)) {
-        return array('error' => null, 'series' => [], 'labels' => [], 'average1' => [], 'average2' => []);
+        return get_string('noanalyticsfound', 'local_ace');
     }
 
     // Restrict to course passed, or enrolled users courses.
@@ -148,7 +173,7 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
                 FROM {report_ucanalytics_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
                 JOIN {course} co ON cx.instanceid = co.id
-                WHERE (endtime - starttime = :per) AND endtime > :start $coursefilter
+                WHERE (endtime - starttime = :per) " . ($startfrom != null ? "AND endtime > :start" : "") . " $coursefilter
             )
             SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev
               FROM samples s
@@ -157,11 +182,15 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
                         FROM samples s
                         GROUP BY starttime, endtime
                     ) a ON a.starttime = s.starttime AND a.endtime = a.endtime
-              WHERE s.userid = :userid AND s.starttime > :startt
+              WHERE s.userid = :userid
               GROUP BY s.starttime, s.endtime, avg, stddev
               ORDER BY s.starttime DESC";
 
-    $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $startfrom, 'startt' => $startfrom);
+
+    $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $startfrom);
+    if ($startfrom == null) {
+        $params['start'] = time() - (int) $config->userhistory;
+    }
 
     $values = $DB->get_records_sql($sql, $params);
 
@@ -200,9 +229,20 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
     }
 
     if (empty($series)) {
-        return array('error' => get_string('noanalyticsfound', 'local_ace'), 'series' => [], 'labels' => [],
-            'average1' => [], 'average2' => []);
+        return get_string('noanalyticsfound', 'local_ace');
     }
+
+    // Get max value to use as upper level of graph.
+    $max = ceil(max(max($series), max($average1), max($average2)));
+
+    // Charts.js doesn't cope when the stepsize is under 1.
+    // Some of the courses have very little engagement so we occasionally end up with very low values.
+    // This results in the Y axis having "high/high/high" instead of low/medium/high.
+    // We do not want to show "real" values on the student graph, so the y-axis just autoscales to the max and low values.
+    if ($max < 2) {
+        $max = 2;
+    }
+    $stepsize = ceil($max / 2);
 
     // Reverse Series/labels to order by date correctly.
     return array(
@@ -211,5 +251,7 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
         'labels' => array_reverse($labels),
         'average1' => array_reverse($average1),
         'average2' => array_reverse($average2),
+        'max' => $max,
+        'stepsize' => $stepsize,
     );
 }

@@ -51,6 +51,11 @@ export const init = () => {
     updateGraph();
 };
 
+/**
+ * Update the graph display based on values fetched from a webservice.
+ *
+ * @param {Number|null} startDatetime
+ */
 const updateGraph = (startDatetime) => {
     startDatetime = isNaN(startDatetime) ? null : startDatetime;
     let url = new URL(window.location.href);
@@ -80,8 +85,15 @@ const updateGraph = (startDatetime) => {
         graphData.series[1].values = response.average1;
         graphData.series[2].values = response.average2;
         graphData.labels = response.labels;
+        graphData.axes.y[0].max = response.max;
+        graphData.axes.y[0].stepSize = response.stepsize;
+        let yLabels = {};
+        response.ylabels.forEach((element) => {
+            yLabels[element.value] = element.label;
+        });
+        graphData.axes.y[0].labels = yLabels;
 
-        ChartBuilder.make(graphData).then(function(chart) {
+        ChartBuilder.make(graphData).then((chart) => {
             new ChartJSOutput(chartImage, chart);
         });
     }).catch(function() {
@@ -223,7 +235,6 @@ const getUserEngagementData = (courseid, userid, start) => {
 /**
  * Get a graph.js data object filled out with the values we need for a student engagement graph.
  * TODO: Pull graph colours from plugin settings.
- * TODO: Pull high/medium/low strings from plugin.
  *
  * @returns {Object}
  */
@@ -281,15 +292,11 @@ const getGraphDataPlaceholder = () => {
             "y": [
                 {
                     "label": null,
-                    "labels": {
-                        "0": "Low",
-                        "50": "Medium",
-                        "100": "High"
-                    },
-                    "max": 100,
+                    "labels": {},
+                    "max": null,
                     "min": 0,
                     "position": null,
-                    "stepSize": 50
+                    "stepSize": null
                 }
             ]
         },

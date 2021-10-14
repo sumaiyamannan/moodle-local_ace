@@ -42,17 +42,6 @@ class user_analytics_graph extends external_api {
     public static function get_user_analytics_graph($userid, $courseid, $startfrom) {
         global $USER, $DB;
 
-        $supplieduser = $DB->get_record('user', array('id' => $userid, 'deleted' => 0), '*', MUST_EXIST);
-
-        $personalcontext = context_user::instance($supplieduser->id);
-        if ($userid == $USER->id && !has_capability('local/ace:viewown', $personalcontext)) {
-            return array('error' => get_string('nopermissions', 'error', get_capability_string('local/ace:viewown')),
-                'series' => [], 'labels' => [], 'average1' => [], 'average2' => []);
-        } else if (!has_capability('local/ace:view', $personalcontext)) {
-            return array('error' => get_string('nopermissions', 'error', get_capability_string('local/ace:viewown')),
-                'series' => [], 'labels' => [], 'average1' => [], 'average2' => []);
-        }
-
         self::validate_parameters(
             self::get_user_analytics_graph_parameters(),
             array(
@@ -62,14 +51,70 @@ class user_analytics_graph extends external_api {
             )
         );
 
-        return local_ace_student_graph_data($userid, $courseid, $startfrom);
+        $supplieduser = $DB->get_record('user', array('id' => $userid, 'deleted' => 0), '*', MUST_EXIST);
+        $personalcontext = context_user::instance($supplieduser->id);
+        if ($userid == $USER->id && !has_capability('local/ace:viewown', $personalcontext)) {
+            return array(
+                'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:viewown')),
+                'series' => [],
+                'labels' => [],
+                'average1' => [],
+                'average2' => [],
+                'max' => null,
+                'stepsize' => null,
+                'ylabels' => []
+            );
+        } else if (!has_capability('local/ace:view', $personalcontext)) {
+            return array(
+                'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:viewown')),
+                'series' => [],
+                'labels' => [],
+                'average1' => [],
+                'average2' => [],
+                'max' => null,
+                'stepsize' => null,
+                'ylabels' => []
+            );
+        }
+
+        list($courseid, $courses) = local_ace_get_student_courses($userid, $courseid);
+        $data = local_ace_student_graph_data($userid, $courseid, $startfrom);
+        if (!is_array($data)) {
+            return array(
+                'error' => $data,
+                'series' => [],
+                'labels' => [],
+                'average1' => [],
+                'average2' => [],
+                'max' => null,
+                'stepsize' => null,
+                'ylabels' => []
+            );
+        }
+
+        $data['ylabels'] = array(
+            [
+                'value' => 0,
+                'label' => get_string('low', 'local_ace')
+            ],
+            [
+                'value' => $data['stepsize'],
+                'label' => get_string('medium', 'local_ace')
+            ],
+            [
+                'value' => $data['max'],
+                'label' => get_string('high', 'local_ace')
+            ]
+        );
+
+        return $data;
     }
 
     public static function get_user_analytics_graph_returns() {
         return new external_single_structure([
             'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working'),
             'series' => new external_multiple_structure(
-                new external_value(PARAM_INT, 'Series value')
+                new external_value(PARAM_FLOAT, 'Series value')
             ),
             'labels' => new external_multiple_structure(
                 new external_value(PARAM_TEXT, 'Formatted date string label')
@@ -79,6 +124,14 @@ class user_analytics_graph extends external_api {
             ),
             'average2' => new external_multiple_structure(
                 new external_value(PARAM_FLOAT, 'Upper average value')
+            ),
+            'max' => new external_value(PARAM_FLOAT, 'Maximum engagement value'),
+            'stepsize' => new external_value(PARAM_FLOAT, 'Engagement stepsize between Y labels'),
+            'ylabels' => new external_multiple_structure(
+                new external_single_structure([
+                    'value' => new external_value(PARAM_FLOAT, 'Engagement Value'),
+                    'label' => new external_value(PARAM_TEXT, 'Engagement Label')
+                ])
             )
         ]);
     }
