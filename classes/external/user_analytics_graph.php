@@ -89,7 +89,7 @@ class user_analytics_graph extends external_api {
             );
         } else if (!has_capability('local/ace:view', $personalcontext)) {
             return array(
-                'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:viewown')),
+                'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:view')),
                 'series' => [],
                 'labels' => [],
                 'average1' => [],
@@ -140,7 +140,7 @@ class user_analytics_graph extends external_api {
      */
     public static function get_user_analytics_graph_returns() {
         return new external_single_structure([
-            'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working'),
+            'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working', false),
             'series' => new external_multiple_structure(
                 new external_value(PARAM_FLOAT, 'Series value')
             ),

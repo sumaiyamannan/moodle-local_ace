@@ -96,9 +96,8 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
 
     $config = get_config('local_ace');
 
-    list($series, $labels, $average1, $average2, $max, $stepsize) = local_ace_student_graph_data($userid, $courses,
-        null, $showxtitles);
-    if (empty($series)) {
+    $data = local_ace_student_graph_data($userid, $courses, null, $showxtitles);
+    if (empty($data['series'])) {
         return '';
     }
 
@@ -106,9 +105,9 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
     $chart->set_legend_options(['display' => false]);
     $chart->set_smooth(true);
 
-    $chart->set_labels($labels);
+    $chart->set_labels($data['labels']);
 
-    $chartseries = new \core\chart_series(get_string('yourengagement', 'local_ace'), $series);
+    $chartseries = new \core\chart_series(get_string('yourengagement', 'local_ace'), $data['series']);
     $chartseries->set_color($config->colouruserhistory);
     $chart->add_series($chartseries);
 
@@ -117,19 +116,19 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
     } else {
         $averagelabel = get_string('averagecourseengagement', 'local_ace');
     }
-    $averageseries = new \core\chart_series($averagelabel, $average1);
+    $averageseries = new \core\chart_series($averagelabel, $data['average1']);
     $averageseries->set_color($config->colourusercoursehistory);
     $chart->add_series($averageseries);
 
-    $averageseries2 = new \core\chart_series($averagelabel, $average2);
+    $averageseries2 = new \core\chart_series($averagelabel, $data['average2']);
     $averageseries2->set_color($config->colourusercoursehistory);
     $averageseries2->set_fill(1);
     $chart->add_series($averageseries2);
 
     $yaxis0 = $chart->get_yaxis(0, true);
     $yaxis0->set_min(0);
-    $yaxis0->set_max($max);
-    $yaxis0->set_stepsize($stepsize);
+    $yaxis0->set_max($data['max']);
+    $yaxis0->set_stepsize($data['stepsize']);
     $yaxis0->set_labels(array(0 => get_string('low', 'local_ace'),
         $stepsize => get_string('medium', 'local_ace'),
         $max => get_string('high', 'local_ace')));
@@ -258,7 +257,6 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
 
     // Reverse Series/labels to order by date correctly.
     return array(
-        'error' => null,
         'series' => array_reverse($series),
         'labels' => array_reverse($labels),
         'average1' => array_reverse($average1),
