@@ -163,20 +163,6 @@ class userentity extends user {
                 ) AS {$logstorealiassub2} ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
         ";
 
-        // Alternative query for last accessed
-        // $join = "
-        //     INNER JOIN {user_enrolments} {$userenrolmentsalias}
-        //     ON {$userenrolmentsalias}.userid = {$usertablealias}.id
-        //     INNER JOIN {enrol} {$enrolalias}
-        //     ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
-        //     INNER JOIN {course} {$coursealias}
-        //     ON {$enrolalias}.courseid = {$coursealias}.id
-        //     LEFT JOIN {context} {$contexttablealias}
-        //     ON {$contexttablealias}.instanceid = {$coursealias}.id
-        //     JOIN {user_lastaccess} AS ul on ul.courseid = {$usertablealias}.id 
-        //     AND {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
-        // ";
-
         // Fullname column.
         $columns[] = (new column(
             'fullname',

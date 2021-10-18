@@ -147,11 +147,11 @@ class activityentity extends base {
                     LEFT JOIN {assign} {$assignalias}
                     ON {$coursemodulesalias}.instance = {$assignalias}.id
                     INNER JOIN {assign_submission} {$assignsubmissionalias}
-                    ON {$assignalias}.id = {$assignsubmissionalias}.assignment 
+                    ON {$assignalias}.id = {$assignsubmissionalias}.assignment
                     INNER JOIN {modules} {$modulesalias}
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
-                    LEFT JOIN {context} {$contexttablealias} 
-                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
+                    LEFT JOIN {context} {$contexttablealias}
+                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . "
                     AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
                     LEFT JOIN (
                         SELECT contextid, max(timecreated) AS timecreated, COUNT(*) AS numberofaccess
@@ -215,14 +215,18 @@ class activityentity extends base {
         ->add_callback(static function ($value, $row): string {
             if ($row->name == 'assign') {
                 $now = time();
-                $your_date = $row->duedate;
-                $datediff = $your_date - $now;
+                $date = $row->duedate;
+                $datediff = $date - $now;
                 $duein = round($datediff / (60 * 60 * 24));
 
-
                 if ($duein <= 7) {
-                    $html = html_writer::start_span('fa fa-calendar-o', array('style' => "font-size: 25px; position: absolute"));
-                    $html .= html_writer::start_span('duein', array('style' => "font-size: 14px; position: relative; left: -16px;"));
+                    $html = html_writer::start_span('fa fa-calendar-o', array('style' =>
+                                                                              "font-size: 25px;
+                                                                               position: absolute"));
+                    $html .= html_writer::start_span('duein', array('style' =>
+                                                                    "font-size: 14px;
+                                                                     position: relative;
+                                                                     left: -16px;"));
                     $html .= $duein;
                     $html .= html_writer::end_span();
                     $html .= html_writer::end_span();
@@ -230,15 +234,16 @@ class activityentity extends base {
                     $html .= ' ' . userdate($row->duedate);
                     $html .= html_writer::end_span();
                     return (string)$html;
-                } elseif ($duein <= 0) {
-                    return html_writer::start_span('', array('style' => "color: red;")) . userdate($row->duedate) . html_writer::end_span();
+                } else if ($duein <= 0) {
+                    return html_writer::start_span('', array('style' => "color: red;")) .
+                                        userdate($row->duedate) . html_writer::end_span();
                 }
                 return userdate($row->duedate);
             } else {
                 return 'N/A';
             }
         });
-        
+
         // Date submitted.
         $columns[] = (new column(
             'submitted',
@@ -253,11 +258,12 @@ class activityentity extends base {
                 return ucfirst($value);
             } else {
                     $now = time();
-                    $your_date = $row->duedate;
-                    $datediff = $your_date - $now;
+                    $date = $row->duedate;
+                    $datediff = $date - $now;
                     $duein = round($datediff / (60 * 60 * 24));
                 if ($duein <= 0) {
-                    return html_writer::start_span('submitted', array('style' => "color: red;")) . 'Not Submitted' . html_writer::end_span();
+                    return html_writer::start_span('submitted', array('style' => "color: red;")) .
+                                                   'Not Submitted' . html_writer::end_span();
                 }
                 return html_writer::start_span('submitted') . 'Not Submitted' . html_writer::end_span();
             }
@@ -298,11 +304,11 @@ class activityentity extends base {
                     LEFT JOIN {assign} {$assignalias}
                     ON {$coursemodulesalias}.instance = {$assignalias}.id
                     INNER JOIN {assign_submission} {$assignsubmissionalias}
-                    ON {$assignalias}.id = {$assignsubmissionalias}.assignment 
+                    ON {$assignalias}.id = {$assignsubmissionalias}.assignment
                     INNER JOIN {modules} {$modulesalias}
                     ON {$coursemodulesalias}.module = {$modulesalias}.id
-                    LEFT JOIN {context} {$contexttablealias} 
-                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . " 
+                    LEFT JOIN {context} {$contexttablealias}
+                    ON {$contexttablealias}.contextlevel = " . CONTEXT_MODULE . "
                     AND {$contexttablealias}.instanceid = {$coursemodulesalias}.instance
                     LEFT JOIN (
                         SELECT contextid, max(timecreated) AS timecreated, COUNT(*) AS numberofaccess
@@ -340,7 +346,6 @@ class activityentity extends base {
             "{$assignalias}.duedate"
         ))
             ->add_join($join);
-
 
         // Date submitted filter.
         $filters[] = (new filter(

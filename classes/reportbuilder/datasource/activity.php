@@ -53,9 +53,6 @@ class activity extends datasource {
         $this->set_main_table('user', $usertablealias);
 
         $userparamguest = database::generate_param_name();
-        // $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0", [
-        //     $userparamguest => $CFG->siteguest,
-        // ]);
 
         $this->add_entity($userentity);
 
