@@ -1,0 +1,9 @@
+<?xml version="1.0"?>
+<libraries>
+    <library>
+        <location>amd/src/litepicker.js</location>
+        <name>Litepicker</name>
+        <version>2.0.11</version>
+        <license>MIT</license>
+    </library>
+</libraries>
