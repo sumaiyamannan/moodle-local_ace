@@ -25,6 +25,9 @@
 namespace local_ace\privacy;
 defined('MOODLE_INTERNAL') || die();
 
+/**
+ * Privacy provider for local_ace implementing null provider
+ */
 class provider implements \core_privacy\local\metadata\null_provider {
     /**
      * Get the language string identifier with the component's language
@@ -36,3 +39,4 @@ class provider implements \core_privacy\local\metadata\null_provider {
         return 'privacy:metadata';
     }
 }
+

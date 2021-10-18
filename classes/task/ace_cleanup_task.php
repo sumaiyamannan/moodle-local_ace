@@ -15,8 +15,7 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * Analytics for course engagement irrelevant logs cleanup 
- *
+ * Task for logs cleanup. Supports cli and restore type.
  * @package     local_ace
  * @category    admin
  * @copyright   2021 University of Canterbury
@@ -32,12 +31,10 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Scheduled task to delete logs with origin cli and restore.
  */
-
 class ace_cleanup_task extends \core\task\scheduled_task {
 
     /**
-     * Get a descriptive name for this task (shown to admins).
-     *
+     * Get a descriptive name for this task (shown to admins).     *
      * @return string
      */
     public function get_name() {
@@ -61,13 +58,12 @@ class ace_cleanup_task extends \core\task\scheduled_task {
         $lifetimep = array($loglifetime);
         $start = time();
 
-        while ($min = $DB->get_field_select("logstore_standard_log", "MIN(timecreated)", "timecreated < ? AND (origin='cli' or origin='restore')", $lifetimep)) {
-      
-
+        while ($min = $DB->get_field_select("logstore_standard_log", "MIN(timecreated)",
+        "timecreated < ? AND (origin='cli' or origin='restore')", $lifetimep)) {
             $params = array(min($min + 3600 * 24, $loglifetime));
-            //delete cli and restore logs 
+            // Delete cli and restore logs.
             $DB->delete_records_select("logstore_standard_log", "timecreated < ? AND (origin='cli' or origin='restore') ", $params);
-            if (time() > $start + 300) {
+            if (time() > $start + 1200) {
                 // Do not churn on log deletion for too long each run.
                 break;
             }
@@ -76,3 +72,4 @@ class ace_cleanup_task extends \core\task\scheduled_task {
         mtrace(" Deleted old log records with origin restore and cli from standard store.");
     }
 }
+

@@ -124,3 +124,4 @@ if ($hassiteconfig) {
         $ADMIN->add('localplugins', $settings);
     }
 }
+

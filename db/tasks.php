@@ -13,18 +13,14 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
-
 /**
- * Analytics for course engagement irrelevant logs cleanup 
- *
+ * Task for logs cleanup. Supports cli and restore type.
  * @package     local_ace
  * @category    admin
  * @copyright   2021 University of Canterbury
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-
 defined('MOODLE_INTERNAL') || die();
-
 $tasks = array(
     array(
         'classname' => 'local_ace\task\ace_cleanup_task',
@@ -36,3 +32,4 @@ $tasks = array(
         'month' => '*'
     ),
 );
+
