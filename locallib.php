@@ -96,7 +96,7 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
 
     $config = get_config('local_ace');
 
-    $data = local_ace_student_graph_data($userid, $courses, null, $showxtitles);
+    $data = local_ace_student_graph_data($userid, $courses, null, null, $showxtitles);
     if (empty($data['series'])) {
         return '';
     }
@@ -141,13 +141,14 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
  *
  * @param int $userid
  * @param int|array $course
- * @param int|null $startfrom Display period start, defaults to displaying all course history to date.
+ * @param int|null $start Display period start, defaults to displaying all course history to date.
+ * @param int|null $end Display period end
  * @param bool $showxtitles
  * @return array|string
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph_data($userid, $course, $startfrom = null, $showxtitles = true) {
+function local_ace_student_graph_data($userid, $course, $start = null, $end = null, $showxtitles = true) {
     global $DB;
 
     $config = get_config('local_ace');
@@ -185,7 +186,10 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
                 FROM {report_ucanalytics_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
                 JOIN {course} co ON cx.instanceid = co.id
-                WHERE (endtime - starttime = :per) " . ($startfrom != null ? "AND endtime > :start" : "") . " $coursefilter
+                WHERE (endtime - starttime = :per) "
+        . ($start != null ? "AND endtime > :start" : "")
+        . ($end != null ? "AND endtime < :end" : "")
+        . " $coursefilter
             )
             SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev
               FROM samples s
@@ -198,9 +202,12 @@ function local_ace_student_graph_data($userid, $course, $startfrom = null, $show
               GROUP BY s.starttime, s.endtime, avg, stddev
               ORDER BY s.starttime DESC";
 
-    $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $startfrom);
-    if ($startfrom == null) {
+    $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $start);
+    if ($start == null) {
         $params['start'] = time() - (int) $config->userhistory;
+    }
+    if ($end != null) {
+        $params['end'] = $end;
     }
 
     $values = $DB->get_records_sql($sql, $params);

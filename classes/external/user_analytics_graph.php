@@ -46,7 +46,8 @@ class user_analytics_graph extends external_api {
             array(
                 'userid' => new external_value(PARAM_INT, 'ID of user'),
                 'courseid' => new external_value(PARAM_INT, 'Course id', false),
-                'start' => new external_value(PARAM_INT, 'User history timeline', false),
+                'start' => new external_value(PARAM_INT, 'History start', false),
+                'end' => new external_value(PARAM_INT, 'History end', false)
             )
         );
     }
@@ -56,13 +57,14 @@ class user_analytics_graph extends external_api {
      *
      * @param int $userid
      * @param int|null $courseid
-     * @param int|null $startfrom Unix timestamp of start date to look for data from
+     * @param int|null $start Unix timestamp of start date
+     * @param int|null $end Unix timestamp of end date
      * @return array|string
      * @throws coding_exception
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function get_user_analytics_graph($userid, $courseid, $startfrom) {
+    public static function get_user_analytics_graph($userid, $courseid, $start, $end) {
         global $USER, $DB;
 
         self::validate_parameters(
@@ -70,7 +72,8 @@ class user_analytics_graph extends external_api {
             array(
                 'userid' => $userid,
                 'courseid' => $courseid,
-                'start' => $startfrom,
+                'start' => $start,
+                'end' => $end
             )
         );
 
@@ -101,7 +104,7 @@ class user_analytics_graph extends external_api {
         }
 
         list($courseid, $courses) = local_ace_get_student_courses($userid, $courseid);
-        $data = local_ace_student_graph_data($userid, $courseid, $startfrom);
+        $data = local_ace_student_graph_data($userid, $courseid, $start, $end);
         if (!is_array($data)) {
             return array(
                 'error' => $data,

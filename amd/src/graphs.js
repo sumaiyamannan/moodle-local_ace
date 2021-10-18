@@ -25,6 +25,7 @@ import Ajax from 'core/ajax';
 import {get_string as getString} from 'core/str';
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
+import Litepicker from 'local_ace/litepicker';
 
 const FILTER_ACTIVE = "active";
 
@@ -32,7 +33,7 @@ const Selectors = {
     chartFilterOptions: "#chart-filter-options",
     courseToDate: "#course-to-date",
     last12Days: "#last-12-days",
-    startDate: "#start-date",
+    dateRange: "#date-range",
 };
 
 /**
@@ -48,16 +49,16 @@ export const init = () => {
     }
 
     setupFilters();
-    updateGraph();
+    updateGraph(null, null);
 };
 
 /**
  * Update the graph display based on values fetched from a webservice.
  *
  * @param {Number|null} startDatetime
+ * @param {Number|null} endDateTime
  */
-const updateGraph = (startDatetime) => {
-    startDatetime = isNaN(startDatetime) ? null : startDatetime;
+const updateGraph = (startDatetime, endDateTime) => {
     let url = new URL(window.location.href);
     let params = new URLSearchParams(url.search);
     let userid = parseInt(params.get('id'));
@@ -65,7 +66,7 @@ const updateGraph = (startDatetime) => {
     if (params.has('course')) {
         courseid = parseInt(params.get('course'));
     }
-    getUserEngagementData(courseid, userid, startDatetime).then(function(response) {
+    getUserEngagementData(courseid, userid, startDatetime, endDateTime).then(function(response) {
         let chartArea = document.querySelector('#chart-area-engagement');
         let chartImage = chartArea.querySelector('.chart-image');
         chartImage.innerHTML = "";
@@ -123,33 +124,39 @@ const setActiveFilter = (suppliedFilter) => {
  * When detected set the active filter and pass the new date through to the graph.
  */
 const setupFilters = () => {
-    getFilterNodes().forEach((filter) => {
-        if (filter.type === "date") {
-            filter.addEventListener("change", () => {
-                setActiveFilter(filter);
-                let val = new Date(filter.value).getTime() / 1000;
-                val = val.toFixed(0);
-                if (isNaN(val)) {
-                    val = null;
-                }
-                updateGraph(val);
-            });
-        } else {
-            filter.addEventListener("click", () => {
-                setActiveFilter(filter);
+    let filtersNode = document.querySelector(Selectors.chartFilterOptions);
 
-                let daysSelector = Selectors.last12Days.substr(1, Selectors.last12Days.length);
-                if (filter.id === daysSelector) {
-                    var date = new Date();
-                    date.setDate(date.getDate() - 12);
-                    let val = date.getTime() / 1000;
-                    updateGraph(val.toFixed(0));
-                } else {
-                    updateGraph(null);
+    let courseToDateFilter = filtersNode.querySelector(Selectors.courseToDate);
+    courseToDateFilter.addEventListener("click", () => {
+        setActiveFilter(courseToDateFilter);
+        updateGraph(null, null);
+    });
+
+    let last12DaysFilter = filtersNode.querySelector(Selectors.last12Days);
+    last12DaysFilter.addEventListener("click", () => {
+        setActiveFilter(last12DaysFilter);
+        var date = new Date();
+        date.setDate(date.getDate() - 12);
+        let val = date.getTime() / 1000;
+        updateGraph(val.toFixed(0), null);
+    });
+
+    let dateRangeFilter = filtersNode.querySelector(Selectors.dateRange);
+    let picker = new Litepicker({
+        element: dateRangeFilter,
+        singleMode: false,
+        splitView: false,
+        setup: (picker) => {
+            picker.on('selected', (date1, date2) => {
+                if (date1 === undefined || date2 === undefined) {
+                    return;
                 }
+                setActiveFilter(dateRangeFilter);
+                updateGraph(date1.timestamp() / 1000, date2.timestamp() / 1000);
             });
         }
     });
+    picker.clearSelection();
 };
 
 /**
@@ -159,15 +166,10 @@ const updateFilterDisplay = () => {
     let filters = getFilterNodes();
     filters.forEach((filter) => {
         if (filter.dataset.filter === FILTER_ACTIVE) {
-            if (filter.type === "date") {
-                filter.classList.add("border-primary");
-            } else {
-                filter.classList.add("btn-primary");
-                filter.classList.remove("btn-secondary");
-            }
+            filter.classList.add("btn-primary");
+            filter.classList.remove("btn-secondary");
         } else {
             filter.classList.add("btn-secondary");
-            filter.classList.remove("border-primary");
             filter.classList.remove("btn-primary");
         }
     });
@@ -197,7 +199,7 @@ const getFilterNodes = () => {
     return [
         filtersNode.querySelector(Selectors.courseToDate),
         filtersNode.querySelector(Selectors.last12Days),
-        filtersNode.querySelector(Selectors.startDate)
+        filtersNode.querySelector(Selectors.dateRange)
     ];
 };
 
@@ -217,17 +219,18 @@ const displayError = (langString) => {
  *
  * @param {number|null} courseid Course ID
  * @param {number} userid User ID
- * @param {number} period User history period
- * @param {number} start Start time of analytics in seconds
+ * @param {number} start Start time of analytics period in seconds
+ * @param {end} end End of analytics period in seconds
  * @returns {Promise}
  */
-const getUserEngagementData = (courseid, userid, start) => {
+const getUserEngagementData = (courseid, userid, start, end) => {
     return Ajax.call([{
         methodname: 'local_ace_get_user_analytics_graph',
         args: {
             'courseid': courseid,
             'userid': userid,
-            'start': start
+            'start': start,
+            'end': end
         },
     }])[0];
 };
