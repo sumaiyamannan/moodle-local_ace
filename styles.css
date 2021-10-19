@@ -12,7 +12,7 @@
 }
 
 .chart-area .chart-table .chart-output-htmltable caption {
-    white-space: unset !important;
+    white-space: unset;
 }
 
 #page-local-ace-index .courseanalytics {
@@ -62,11 +62,11 @@
 }
 
 #page-local-ace-index .predictions .generaltable td {
-    vertical-align: middle !important;
+    vertical-align: middle;
 }
 
 #page-local-ace-index .generaltable .d-flex {
-    display: table-row !important;
+    display: table-row;
 }
 
 #page-local-ace-index .coursedropout {
@@ -122,7 +122,7 @@
 /* graph tabs */
 .useranalytics .nav-tabs {
     margin-top: 2rem;
-    margin-bottom: 2rem !important;
+    margin-bottom: 2rem;
     border-bottom: 0;
 }
 
@@ -134,7 +134,7 @@
 .useranalytics .nav-tabs .nav-item.show .nav-link {
     color: #5cb85b;
     background-color: #fff;
-    border-color: #5cb85b !important;
+    border-color: #5cb85b;
     border-bottom: 3px solid #5cb85b;
 }
 
