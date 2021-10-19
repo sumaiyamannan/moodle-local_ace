@@ -66,21 +66,19 @@ const updateGraph = (startDatetime, endDateTime) => {
     if (params.has('course')) {
         courseid = parseInt(params.get('course'));
     }
-    getUserEngagementData(courseid, userid, startDatetime, endDateTime).then(function(response) {
-        let chartArea = document.querySelector('#chart-area-engagement');
-        let chartImage = chartArea.querySelector('.chart-image');
-        chartImage.innerHTML = "";
-
+    let engagementDataPromise = getUserEngagementData(courseid, userid, startDatetime, endDateTime).then(function(response) {
         if (response.error !== null) {
             displayError(response.error);
-            return;
+            return null;
         } else if (response.series.length === 0) {
             getString('noanalytics', 'local_ace').then((langString) => {
                 displayError(langString);
-            });
-            return;
+                return;
+            }).catch();
+            return null;
         }
 
+        // Populate empty fields.
         let graphData = getGraphDataPlaceholder();
         graphData.series[0].values = response.series;
         graphData.series[1].values = response.average1;
@@ -94,12 +92,21 @@ const updateGraph = (startDatetime, endDateTime) => {
         });
         graphData.axes.y[0].labels = yLabels;
 
-        ChartBuilder.make(graphData).then((chart) => {
-            new ChartJSOutput(chartImage, chart);
-        });
+        return graphData;
     }).catch(function() {
         displayError("API returned an error");
     });
+
+    engagementDataPromise.then((data) => {
+        let chartArea = document.querySelector('#chart-area-engagement');
+        let chartImage = chartArea.querySelector('.chart-image');
+        chartImage.innerHTML = "";
+        ChartBuilder.make(data).then((chart) => {
+            new ChartJSOutput(chartImage, chart);
+            return;
+        }).catch();
+        return;
+    }).catch();
 };
 
 /**
