@@ -90,7 +90,7 @@ class user_analytics_graph extends external_api {
                 'stepsize' => null,
                 'ylabels' => []
             );
-        } else if (!has_capability('local/ace:view', $personalcontext)) {
+        } else if ($userid != $USER->id && !has_capability('local/ace:view', $personalcontext)) {
             return array(
                 'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:view')),
                 'series' => [],

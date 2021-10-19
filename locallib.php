@@ -148,7 +148,7 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph_data($userid, $course, $start = null, $end = null, $showxtitles = true): array {
+function local_ace_student_graph_data($userid, $course, $start = null, $end = null, $showxtitles = true) {
     global $DB;
 
     $config = get_config('local_ace');
