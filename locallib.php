@@ -30,13 +30,13 @@ defined('MOODLE_INTERNAL') || die;
  * - The user is enrolled in
  * - Not excluded
  *
- * @param $userid
- * @param $courseid
- * @return array array[0] = int[] (courseid) and array[1] = array (courses)
+ * @param int $userid
+ * @param int $courseid
+ * @return array array[0] = int (courseid) and array[1] = array (courses)
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_get_student_courses($userid, $courseid) {
+function local_ace_get_student_courses($userid, $courseid): array {
     global $DB;
 
     $shortnameregs = get_config('local_ace', 'courseregex');
@@ -148,7 +148,7 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph_data($userid, $course, $start = null, $end = null, $showxtitles = true) {
+function local_ace_student_graph_data($userid, $course, $start = null, $end = null, $showxtitles = true): array {
     global $DB;
 
     $config = get_config('local_ace');
