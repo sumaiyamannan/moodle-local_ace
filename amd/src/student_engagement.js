@@ -25,30 +25,13 @@ import Ajax from 'core/ajax';
 import {get_string as getString} from 'core/str';
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
-import Litepicker from 'local_ace/litepicker';
-
-const FILTER_ACTIVE = "active";
-
-const Selectors = {
-    chartFilterOptions: "#chart-filter-options",
-    courseToDate: "#course-to-date",
-    last12Days: "#last-12-days",
-    dateRange: "#date-range",
-};
+import {init as filtersInit} from 'local_ace/chart_filters';
 
 /**
  * Retrieves data from the local_ace webservice to populate an engagement graph
  */
 export const init = () => {
-    // Set default filter, update display, set handlers
-    let filter = getActiveFilter();
-    if (filter === null) {
-        // Course to date is our default filter
-        filter = document.querySelector(Selectors.courseToDate);
-        setActiveFilter(filter);
-    }
-
-    setupFilters();
+    filtersInit(updateGraph);
     updateGraph(null, null);
 };
 
@@ -98,6 +81,9 @@ const updateGraph = (startDatetime, endDateTime) => {
     });
 
     engagementDataPromise.then((data) => {
+        if (data === null) {
+            return;
+        }
         let chartArea = document.querySelector('#chart-area-engagement');
         let chartImage = chartArea.querySelector('.chart-image');
         chartImage.innerHTML = "";
@@ -107,107 +93,6 @@ const updateGraph = (startDatetime, endDateTime) => {
         }).catch();
         return;
     }).catch();
-};
-
-/**
- * Set the active filter.
- *
- * @param {Element} suppliedFilter
- */
-const setActiveFilter = (suppliedFilter) => {
-    getFilterNodes().forEach((filter) => {
-        if (filter === suppliedFilter) {
-            filter.dataset.filter = FILTER_ACTIVE;
-        } else {
-            filter.dataset.filter = null;
-        }
-
-        updateFilterDisplay();
-    });
-};
-
-/**
- * Set up the click/change listeners on the filter buttons.
- * When detected set the active filter and pass the new date through to the graph.
- */
-const setupFilters = () => {
-    let filtersNode = document.querySelector(Selectors.chartFilterOptions);
-
-    let courseToDateFilter = filtersNode.querySelector(Selectors.courseToDate);
-    courseToDateFilter.addEventListener("click", () => {
-        setActiveFilter(courseToDateFilter);
-        updateGraph(null, null);
-    });
-
-    let last12DaysFilter = filtersNode.querySelector(Selectors.last12Days);
-    last12DaysFilter.addEventListener("click", () => {
-        setActiveFilter(last12DaysFilter);
-        var date = new Date();
-        date.setDate(date.getDate() - 12);
-        let val = date.getTime() / 1000;
-        updateGraph(val.toFixed(0), null);
-    });
-
-    let dateRangeFilter = filtersNode.querySelector(Selectors.dateRange);
-    let picker = new Litepicker({
-        element: dateRangeFilter,
-        singleMode: false,
-        splitView: false,
-        setup: (picker) => {
-            picker.on('selected', (date1, date2) => {
-                if (date1 === undefined || date2 === undefined) {
-                    return;
-                }
-                setActiveFilter(dateRangeFilter);
-                updateGraph(date1.timestamp() / 1000, date2.timestamp() / 1000);
-            });
-        }
-    });
-    picker.clearSelection();
-};
-
-/**
- * Update the filter colours to display which is active.
- */
-const updateFilterDisplay = () => {
-    let filters = getFilterNodes();
-    filters.forEach((filter) => {
-        if (filter.dataset.filter === FILTER_ACTIVE) {
-            filter.classList.add("btn-primary");
-            filter.classList.remove("btn-secondary");
-        } else {
-            filter.classList.add("btn-secondary");
-            filter.classList.remove("btn-primary");
-        }
-    });
-};
-
-/**
- * Get the active filter DOM element.
- *
- * @returns {null|Element}
- */
-const getActiveFilter = () => {
-    let filters = getFilterNodes();
-    let filter = filters.find(filter => filter.dataset.filter === FILTER_ACTIVE);
-    if (filter !== undefined) {
-        return filter;
-    }
-    return null;
-};
-
-/**
- * Get the DOM element of chart filters on the page.
- *
- * @returns {[Element]}
- */
-const getFilterNodes = () => {
-    let filtersNode = document.querySelector(Selectors.chartFilterOptions);
-    return [
-        filtersNode.querySelector(Selectors.courseToDate),
-        filtersNode.querySelector(Selectors.last12Days),
-        filtersNode.querySelector(Selectors.dateRange)
-    ];
 };
 
 /**
