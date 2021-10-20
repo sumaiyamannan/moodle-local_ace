@@ -130,8 +130,8 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
     $yaxis0->set_max($data['max']);
     $yaxis0->set_stepsize($data['stepsize']);
     $yaxis0->set_labels(array(0 => get_string('low', 'local_ace'),
-        $stepsize => get_string('medium', 'local_ace'),
-        $max => get_string('high', 'local_ace')));
+        $data['stepsize'] => get_string('medium', 'local_ace'),
+        $data['max'] => get_string('high', 'local_ace')));
 
     return $OUTPUT->render($chart);
 }

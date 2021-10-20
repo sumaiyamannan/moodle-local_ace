@@ -99,7 +99,7 @@ if (!empty($courses)) { // If user is not enrolled in any relevant coureses, don
 
     $renderer = $PAGE->get_renderer('core');
     echo $renderer->render_from_template('local_ace/chart_page', $context);
-    $PAGE->requires->js_call_amd('local_ace/graphs', 'init');
+    $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init');
 } else {
     echo $OUTPUT->box(get_string('noanalytics', 'local_ace'));
 }
