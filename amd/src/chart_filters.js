@@ -50,7 +50,6 @@ export const init = (providedFunc) => {
 
     setupFilters();
     updateFunc = providedFunc;
-    updateFunc(null, null);
 };
 
 /**

@@ -75,6 +75,8 @@ $string['userfooter'] =
 $string['high'] = 'High';
 $string['medium'] = 'Medium';
 $string['low'] = 'Low';
+$string['none'] = 'None';
 $string['averageengagement'] = 'Average engagement';
 $string['getstats'] = 'Generate indicator stats';
-
+$string['courseengagement'] = 'Course engagement';
+$string['noanalyticsfoundcourse'] = 'No analytics were found for this course';

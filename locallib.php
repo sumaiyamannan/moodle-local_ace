@@ -25,6 +25,132 @@
 defined('MOODLE_INTERNAL') || die;
 
 /**
+ * Returns the course summary graph
+ *
+ * @param int $courseid
+ * @return string
+ * @throws dml_exception
+ * @throws moodle_exception
+ */
+function local_ace_course_graph(int $courseid): string {
+    global $PAGE;
+
+    $config = get_config('local_ace');
+
+    $context = array(
+        'colourteachercoursehistory' => $config->colourteachercoursehistory,
+        'courseid' => $courseid
+    );
+
+    $renderer = $PAGE->get_renderer('core');
+    $output = $renderer->render_from_template('local_ace/course_engagement_chart', $context);
+    $PAGE->requires->js_call_amd('local_ace/course_engagement', 'init', [$context]);
+    $PAGE->requires->css('/local/ace/styles.css');
+    return $output;
+}
+
+/**
+ * Get course summary graph data.
+ *
+ * @param int $courseid
+ * @param int|null $period
+ * @param int|null $start
+ * @param int|null $end
+ * @throws coding_exception
+ * @throws dml_exception
+ */
+function local_ace_course_data(int $courseid, int $period = null, int $start = null, int $end = null) {
+    global $DB;
+
+    $config = get_config('local_ace');
+
+    if ($period === null) {
+        $period = (int) get_config('local_ace', 'displayperiod');
+    }
+
+    if ($start === null) {
+        $start = time() - $config->userhistory;
+    }
+
+    $context = context_course::instance($courseid);
+
+    $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
+              FROM {report_ucanalytics_contexts}
+              WHERE contextid = :context AND (endtime - starttime = :period)
+              " . ($start != null ? "AND endtime > :start" : "") . "
+              " . ($end != null ? "AND endtime < :end " : "") . "
+              GROUP BY starttime, endtime
+              ORDER BY starttime DESC";
+
+    $parameters = array(
+        'context' => $context->id,
+        'period' => $period
+    );
+    if ($start != null) {
+        $parameters['start'] = $start;
+    }
+    if ($end != null) {
+        $parameters['end'] = $end;
+    }
+    $values = $DB->get_records_sql($sql, $parameters);
+
+    $labels = array();
+    $series = array();
+    $laststart = null;
+    foreach ($values as $value) {
+        if (!empty($laststart) && $value->endtime > $laststart) {
+            // If this period overlaps with the last week, skip it in the display.
+            continue;
+        }
+        $labels[] = userdate($value->endtime, get_string('strftimedate'));
+        if (empty($value->value)) {
+            $series[] = 0;
+        } else {
+            $series[] = round(($value->value / $value->count) * 100); // Convert to average percentage.
+        }
+        // Make sure we don't show overlapping periods.
+        $laststart = $value->starttime;
+    }
+
+    if (empty($series)) {
+        return get_string('noanalyticsfoundcourse', 'local_ace');
+    }
+
+    $ylabels = [
+        [
+            'value' => 0,
+            'label' => get_string('none', 'local_ace')
+        ],
+        [
+            'value' => 20,
+            'label' => ''
+        ],
+        [
+            'value' => 40,
+            'label' => get_string('medium', 'local_ace')
+        ],
+        [
+            'value' => 60,
+            'label' => ''
+        ],
+        [
+            'value' => 80,
+            'label' => ''
+        ],
+        [
+            'value' => 100,
+            'label' => get_string('high', 'local_ace')
+        ]
+    ];
+
+    return array(
+        'series' => array_reverse($series),
+        'xlabels' => array_reverse($labels),
+        'ylabels' => $ylabels,
+    );
+}
+
+/**
  * Returns a list of courses and a course id that meet the following conditions:
  * - Contain analytics data
  * - The user is enrolled in
