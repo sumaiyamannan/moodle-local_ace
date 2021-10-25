@@ -16,7 +16,7 @@
 /**
  * Shows the course engagement graph
  *
- * @package     local_ace
+ * @module      local_ace/course_engagement
  * @copyright   2021 University of Canterbury
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
