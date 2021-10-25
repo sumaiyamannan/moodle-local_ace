@@ -76,3 +76,5 @@ $string['high'] = 'High';
 $string['medium'] = 'Medium';
 $string['low'] = 'Low';
 $string['averageengagement'] = 'Average engagement';
+$string['getstats'] = 'Generate indicator stats';
+

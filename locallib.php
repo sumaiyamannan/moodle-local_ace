@@ -48,8 +48,8 @@ function local_ace_get_student_courses($userid, $courseid): array {
     $period = get_config('local_ace', 'displayperiod');
 
     $sql = "SELECT DISTINCT co.id, co.shortname, co.enddate, co.fullname
-              FROM {report_ucanalytics_samples} s
-              JOIN {report_ucanalytics_contexts} c ON c.contextid = s.contextid
+              FROM {local_ace_samples} s
+              JOIN {local_ace_contexts} c ON c.contextid = s.contextid
                    AND s.starttime = c.starttime AND s.endtime = c.endtime
               JOIN {context} cx ON c.contextid = cx.id AND cx.contextlevel = " . CONTEXT_COURSE . "
               JOIN {course} co ON cx.instanceid = co.id
@@ -183,7 +183,7 @@ function local_ace_student_graph_data($userid, $course, $start = null, $end = nu
                        EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
                        value,
                        userid
-                FROM {report_ucanalytics_samples} s
+                FROM {local_ace_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
                 JOIN {course} co ON cx.instanceid = co.id
                 WHERE (endtime - starttime = :per) "
@@ -272,3 +272,4 @@ function local_ace_student_graph_data($userid, $course, $start = null, $end = nu
         'stepsize' => $stepsize,
     );
 }
+
