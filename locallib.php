@@ -75,7 +75,7 @@ function local_ace_course_data(int $courseid, int $period = null, int $start = n
     $context = context_course::instance($courseid);
 
     $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
-              FROM {report_ucanalytics_contexts}
+              FROM {local_ace_contexts}
               WHERE contextid = :context AND (endtime - starttime = :period)
               " . ($start != null ? "AND endtime > :start" : "") . "
               " . ($end != null ? "AND endtime < :end " : "") . "
