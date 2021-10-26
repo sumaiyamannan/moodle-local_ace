@@ -16,7 +16,7 @@
 /**
  * Provides the chart filters for engagement graphs
  *
- * @package     local_ace
+ * @module      local_ace/chart_filters
  * @copyright   2021 University of Canterbury
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
@@ -50,7 +50,6 @@ export const init = (providedFunc) => {
 
     setupFilters();
     updateFunc = providedFunc;
-    updateFunc(null, null);
 };
 
 /**

@@ -64,7 +64,7 @@ class user_analytics_graph extends external_api {
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function get_user_analytics_graph($userid, $courseid, $start, $end) {
+    public static function get_user_analytics_graph(int $userid, int $courseid, int $start, int $end) {
         global $USER, $DB;
 
         self::validate_parameters(

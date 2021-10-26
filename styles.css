@@ -158,6 +158,20 @@
     padding-left: 50px;
 }
 
+.courseanalytics .legend {
+    text-align: center;
+}
+
+.courseanalytics .legend .legendbox {
+    padding-left: 30px;
+}
+
+.courseanalytics .legend .legendtext {
+    padding-left: 10px;
+    padding-right: 20px;
+    font-size: 0.875em;
+}
+
 #page-local-ace-user .useranalytics .legend {
     text-align: center;
 }

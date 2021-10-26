@@ -35,6 +35,16 @@ $functions = array(
         'ajax' => true,
         'services' => array('local_ace_webservice'),
     ),
+    'local_ace_get_course_analytics_graph' => array(
+        'classname' => 'course_analytics_graph',
+        'methodname' => 'get_course_analytics_graph',
+        'classpath' => 'local/ace/classes/external/course_analytics_graph.php',
+        'description' => 'Get historic course analytics',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => true,
+        'services' => array('local_ace_webservice')
+    )
 );
 
 $services = array(

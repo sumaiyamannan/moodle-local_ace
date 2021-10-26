@@ -16,7 +16,7 @@
 /**
  * Uses the local_ace webservices to create engagement charts
  *
- * @package     local_ace
+ * @module      local_ace/student_engagement
  * @copyright   2021 University of Canterbury
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
