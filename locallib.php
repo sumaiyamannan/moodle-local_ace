@@ -59,7 +59,7 @@ function local_ace_course_graph(int $courseid): string {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_course_data(int $courseid, int $period = null, int $start = null, int $end = null) {
+function local_ace_course_data(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null) {
     global $DB;
 
     $config = get_config('local_ace');
@@ -274,7 +274,7 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph_data(int $userid, $course, int $start = null, int $end = null, bool $showxtitles = true) {
+function local_ace_student_graph_data(int $userid, $course, ?int $start = null, ?int $end = null, ?bool $showxtitles = true) {
     global $DB;
 
     $config = get_config('local_ace');
