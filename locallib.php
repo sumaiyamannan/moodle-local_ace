@@ -162,7 +162,7 @@ function local_ace_course_data(int $courseid, int $period = null, int $start = n
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_get_student_courses($userid, $courseid): array {
+function local_ace_get_student_courses(int $userid, int $courseid): array {
     global $DB;
 
     $shortnameregs = get_config('local_ace', 'courseregex');
@@ -217,7 +217,7 @@ function local_ace_get_student_courses($userid, $courseid): array {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph($userid, $courses, $showxtitles = true) {
+function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true) {
     global $OUTPUT;
 
     $config = get_config('local_ace');
@@ -274,7 +274,7 @@ function local_ace_student_graph($userid, $courses, $showxtitles = true) {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph_data($userid, $course, $start = null, $end = null, $showxtitles = true) {
+function local_ace_student_graph_data(int $userid, $course, int $start = null, int $end = null, bool $showxtitles = true) {
     global $DB;
 
     $config = get_config('local_ace');

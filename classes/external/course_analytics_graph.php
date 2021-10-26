@@ -64,7 +64,7 @@ class course_analytics_graph extends external_api {
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function get_course_analytics_graph($courseid, $period, $start, $end) {
+    public static function get_course_analytics_graph(int $courseid, int $period, int $start, int $end) {
         self::validate_parameters(
             self::get_course_analytics_graph_parameters(),
             array(
