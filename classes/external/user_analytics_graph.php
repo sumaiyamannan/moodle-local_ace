@@ -44,7 +44,7 @@ class user_analytics_graph extends external_api {
     public static function get_user_analytics_graph_parameters() {
         return new external_function_parameters(
             array(
-                'userid' => new external_value(PARAM_INT, 'ID of user'),
+                'userid' => new external_value(PARAM_INT, 'ID of user', false),
                 'courseid' => new external_value(PARAM_INT, 'Course id', false),
                 'start' => new external_value(PARAM_INT, 'History start', false),
                 'end' => new external_value(PARAM_INT, 'History end', false)
@@ -55,7 +55,7 @@ class user_analytics_graph extends external_api {
     /**
      * Get data required to create a chart for user engagement/analytics.
      *
-     * @param int $userid
+     * @param int|null $userid
      * @param int|null $courseid
      * @param int|null $start Unix timestamp of start date
      * @param int|null $end Unix timestamp of end date
@@ -64,7 +64,7 @@ class user_analytics_graph extends external_api {
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function get_user_analytics_graph(int $userid, ?int $courseid, ?int $start, ?int $end) {
+    public static function get_user_analytics_graph(?int $userid, ?int $courseid, ?int $start, ?int $end) {
         global $USER, $DB;
 
         self::validate_parameters(
@@ -76,6 +76,10 @@ class user_analytics_graph extends external_api {
                 'end' => $end
             )
         );
+
+        if ($userid == null) {
+            $userid = $USER->id;
+        }
 
         $supplieduser = $DB->get_record('user', array('id' => $userid, 'deleted' => 0), '*', MUST_EXIST);
         $personalcontext = context_user::instance($supplieduser->id);

@@ -172,15 +172,15 @@
     font-size: 0.875em;
 }
 
-#page-local-ace-user .useranalytics .legend {
+.useranalytics .legend {
     text-align: center;
 }
 
-#page-local-ace-user .useranalytics .legend .legendbox {
+.useranalytics .legend .legendbox {
     padding-left: 30px;
 }
 
-#page-local-ace-user .useranalytics .legend .legendtext {
+.useranalytics .legend .legendtext {
     padding-left: 10px;
     padding-right: 20px;
     font-size: 0.875em;

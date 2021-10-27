@@ -151,18 +151,81 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
 }
 
 /**
+ * Returns the HTML output for the student engagement graph that includes a tab selector for courses.
+ *
+ * @param int $userid
+ * @param int|null $courseid
+ * @return string
+ * @throws coding_exception
+ * @throws dml_exception
+ * @throws moodle_exception
+ */
+function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
+    global $PAGE, $OUTPUT;
+
+    list($courseid, $courses) = local_ace_get_student_courses($userid, $courseid);
+
+    $config = get_config('local_ace');
+
+    $tabs = array();
+
+    foreach ($courses as $course) {
+        $newurl = clone $PAGE->url;
+        $newurl->param('course', $course->id);
+        $tabs[] = new tabobject($course->id,
+            $newurl,
+            $course->shortname);
+    }
+
+    // Add overall tab last.
+    if (count($courses) > 1) {
+        $url = new moodle_url($PAGE->url);
+        $url->param('course', 0);
+        $tabs[] = new tabobject(0,
+            $url,
+            get_string('overallengagement', 'local_ace'));
+    }
+
+    $output = html_writer::start_div('useranalytics');
+
+    $output .= print_tabs(array($tabs), $courseid, null, null, true);
+
+    if (!empty($courses)) { // If user is not enrolled in any relevant coureses, don't show the graph.
+        if (!empty($courseid)) {
+            $output .= $OUTPUT->heading(format_string($courses[$courseid]->fullname), 3, 'coursename');
+        }
+
+        $context = array(
+            'colourusercoursehistory' => $config->colourusercoursehistory,
+            'colouruserhistory' => $config->colouruserhistory,
+        );
+
+        $renderer = $PAGE->get_renderer('core');
+        $output .= $renderer->render_from_template('local_ace/student_engagement_chart', $context);
+        $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init');
+        $PAGE->requires->css('/local/ace/styles.css');
+    } else {
+        $output .= $OUTPUT->box(get_string('noanalytics', 'local_ace'));
+    }
+
+    $output .= html_writer::end_div();
+
+    return $output;
+}
+
+/**
  * Returns a list of courses and a course id that meet the following conditions:
  * - Contain analytics data
  * - The user is enrolled in
  * - Not excluded
  *
  * @param int $userid
- * @param int $courseid
+ * @param int|null $courseid
  * @return array array[0] = int (courseid) and array[1] = array (courses)
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_get_student_courses(int $userid, int $courseid): array {
+function local_ace_get_student_courses(int $userid, ?int $courseid = 0): array {
     global $DB;
 
     $shortnameregs = get_config('local_ace', 'courseregex');

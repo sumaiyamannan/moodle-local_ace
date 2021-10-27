@@ -62,48 +62,8 @@ $event = \report_ucanalytics\event\userreport_viewed::create(array('context' => 
 
 echo $OUTPUT->header();
 echo $OUTPUT->heading(get_string('studentdetailheader', 'local_ace'), 4);
-echo html_writer::start_div('useranalytics');
 
-list($courseid, $courses) = local_ace_get_student_courses($user->id, $courseid);
+echo local_ace_student_full_graph($userid, $courseid);
 
-$tabs = array();
-
-foreach ($courses as $course) {
-    $newurl = clone $PAGE->url;
-    $newurl->param('course', $course->id);
-    $tabs[] = new tabobject($course->id,
-        $newurl,
-        $course->shortname);
-}
-
-// Add overall tab last.
-if (count($courses) > 1) {
-    $url = new moodle_url($PAGE->url);
-    $url->param('course', 0);
-    $tabs[] = new tabobject(0,
-        $url,
-        get_string('overallengagement', 'local_ace'));
-}
-
-print_tabs(array($tabs), $courseid);
-
-if (!empty($courses)) { // If user is not enrolled in any relevant coureses, don't show the graph.
-    if (!empty($courseid)) {
-        echo $OUTPUT->heading(format_string($courses[$courseid]->fullname), 3, 'coursename');
-    }
-
-    $context = array(
-        'colourusercoursehistory' => $config->colourusercoursehistory,
-        'colouruserhistory' => $config->colouruserhistory,
-    );
-
-    $renderer = $PAGE->get_renderer('core');
-    echo $renderer->render_from_template('local_ace/student_engagement_chart', $context);
-    $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init');
-} else {
-    echo $OUTPUT->box(get_string('noanalytics', 'local_ace'));
-}
-
-echo html_writer::end_div();
 echo html_writer::div(get_string('userfooter', 'local_ace'), 'footertext');
 echo $OUTPUT->footer();
