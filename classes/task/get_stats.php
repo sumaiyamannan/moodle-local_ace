@@ -44,8 +44,8 @@ class get_stats extends \core\task\scheduled_task {
         global $DB;
         $runlast = get_config('local_ace', 'statsrunlast');
         if (empty($runlast)) {
-            // Only do last 3 months of data for first run.
-            $runlast = time() - (DAYSECS * 30 * 3);
+            // Only do last 6 months of data for first run.
+            $runlast = time() - (DAYSECS * 30 * 6);
         }
         $now = time();
         // Get user stats for each context (course) for indicators that we care about.
