@@ -44,17 +44,19 @@ class users extends datasource {
      * Initialise report
      */
     protected function initialise(): void {
-        global $CFG;
+        global $CFG, $COURSE;
 
         $userentity = new userentity();
         $usertablealias = $userentity->get_table_alias('user');
+        $usercoursealias = $userentity->get_table_alias('course');
 
         $this->set_main_table('user', $usertablealias);
 
         $userparamguest = database::generate_param_name();
-        $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0", [
-            $userparamguest => $CFG->siteguest,
-        ]);
+        $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0
+        AND {$usercoursealias}.id = $COURSE->id"
+            , [$userparamguest => $CFG->siteguest,
+            ]);
 
         // Add all columns from entities to be available in custom reports.
         $this->add_entity($userentity);
@@ -71,7 +73,7 @@ class users extends datasource {
      * @return string[]
      */
     public function get_default_columns(): array {
-        return ['userentity:fullname', 'userentity:username', 'userentity:email'];
+        return ['userentity:fullname', 'userentity:username', 'userentity:email', 'userentity:lastaccessedtocourse'];
     }
 
     /**
