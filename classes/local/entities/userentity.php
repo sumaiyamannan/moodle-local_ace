@@ -53,17 +53,18 @@ class userentity extends user {
      */
     protected function get_default_table_aliases(): array {
         return [
-                'user' => 'u',
-                'enrol' => 'e',
-                'user_enrolments' => 'ue',
-                'course' => 'c',
-                'course_modules' => 'cm',
-                'modules' => 'm',
-                'assign' => 'a',
-                'assign_submission' => 'asub',
-                'logstore_standard_log' => 'ls',
-                'context' => 'ctx',
-               ];
+            'user' => 'u',
+            'enrol' => 'e',
+            'user_enrolments' => 'ue',
+            'user_lastaccess' => 'ula',
+            'course' => 'c',
+            'course_modules' => 'cm',
+            'modules' => 'm',
+            'assign' => 'a',
+            'assign_submission' => 'asub',
+            'logstore_standard_log' => 'ls',
+            'context' => 'ctx',
+        ];
     }
 
     /**
@@ -131,6 +132,7 @@ class userentity extends user {
         $assignalias = $this->get_table_alias('assign');
         $assignsubmissionalias = $this->get_table_alias('assign_submission');
         $logstorealias = $this->get_table_alias('logstore_standard_log');
+        $userlastaccessalias = $this->get_table_alias('user_lastaccess');
         $contexttablealias = $this->get_table_alias('context');
         $logstorealiassub1 = 'logs_sub_select_1';
         $logstorealiassub2 = 'logs_sub_select_2';
@@ -138,6 +140,14 @@ class userentity extends user {
         $fullnameselect = self::get_name_fields_select($usertablealias);
         $userpictureselect = fields::for_userpic()->get_sql($usertablealias, false, '', '', false)->selects;
         $viewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
+
+        $lastaccessjoin = "JOIN {user_enrolments} {$userenrolmentsalias}
+                               ON {$userenrolmentsalias}.userid = {$usertablealias}.id
+                          JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
+                          JOIN {course} {$coursealias} ON {$enrolalias}.courseid = {$coursealias}.id
+                          LEFT JOIN {user_lastaccess} {$userlastaccessalias}
+                           ON {$userlastaccessalias}.userid = {$usertablealias}.id
+                           AND {$userlastaccessalias}.courseid = {$coursealias}.id";
 
         $join = "
                 INNER JOIN {user_enrolments} {$userenrolmentsalias}
@@ -187,12 +197,12 @@ class userentity extends user {
             new lang_string('lastaccessedtocourse', 'local_ace'),
             $this->get_entity_name()
         ))
-            ->add_join($join)
+            ->add_join($lastaccessjoin)
             ->set_type(column::TYPE_TEXT)
             ->set_is_sortable(true)
-            ->add_field("$logstorealiassub1.maxtimecreated")
+            ->add_field("$userlastaccessalias.timeaccess")
             ->add_callback(static function ($value): string {
-                return userdate($value);
+                return !empty($value) ? userdate($value) : get_string('never');
             });
 
         // Last access in 7 days column.
