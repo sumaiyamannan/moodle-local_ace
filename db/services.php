@@ -44,7 +44,17 @@ $functions = array(
         'capabilities' => '',
         'ajax' => true,
         'services' => array('local_ace_webservice')
-    )
+    ),
+    'local_ace_get_teacher_course_analytics_graph' => array(
+        'classname' => 'teacher_course_analytics_graph',
+        'methodname' => 'get_teacher_course_analytics_graph',
+        'classpath' => 'local/ace/classes/external/teacher_course_analytics_graph.php',
+        'description' => 'Get teacher course analytics',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => true,
+        'services' => array('local_ace_webservice')
+    ),
 );
 
 $services = array(

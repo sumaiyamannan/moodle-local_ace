@@ -25,6 +25,108 @@
 defined('MOODLE_INTERNAL') || die;
 
 /**
+ * Returns the HTML output for the teacher course engagement graph
+ *
+ * @param int $userid
+ * @return string
+ * @throws coding_exception
+ * @throws dml_exception
+ * @throws moodle_exception
+ */
+function local_ace_teacher_course_graph(int $userid): string {
+    global $PAGE;
+
+    $renderer = $PAGE->get_renderer('core');
+    $output = $renderer->render_from_template('local_ace/teacher_course_engagement_chart', null);
+    $PAGE->requires->js_call_amd('local_ace/teacher_course_engagement', 'init');
+    $PAGE->requires->css('/local/ace/styles.css');
+    return $output;
+}
+
+/**
+ * Returns data required for teacher course data, from the users enrolled courses.
+ *
+ * @param int $userid
+ * @param int|null $period
+ * @param int|null $start
+ * @param int|null $end
+ * @return array|array[]
+ * @throws coding_exception
+ * @throws dml_exception
+ */
+function local_ace_teacher_course_data(int $userid, ?int $period = null, ?int $start = null, ?int $end = null): array {
+    $data = array('series' => [], 'xlabels' => []);
+
+    if ($period === null) {
+        $period = (int) get_config('local_ace', 'displayperiod');
+    }
+
+    list($defaultcourseid, $courses) = local_ace_get_user_courses($userid);
+
+    foreach ($courses as $course) {
+        $values = local_ace_course_data_values($course->id, $period, $start, $end);
+        $series = array();
+        $laststart = null;
+        $labels = empty($data['xlabels']);
+
+        foreach ($values as $value) {
+            if (!empty($laststart) && $value->endtime > $laststart) {
+                // If this period overlaps with the last week, skip it in the display.
+                continue;
+            }
+
+            if ($labels) {
+                $data['xlabels'][] = userdate($value->endtime, get_string('strftimedate'));
+            }
+            if (empty($value->value)) {
+                $series[] = 0;
+            } else {
+                $series[] = round(($value->value / $value->count) * 100); // Convert to average percentage.
+            }
+            // Make sure we don't show overlapping periods.
+            $laststart = $value->starttime;
+        }
+        if (!empty($series)) {
+            $data['series'][] = [
+                'title' => $course->shortname,
+                'values' => array_reverse($series)
+            ];
+        }
+    }
+
+    $data['xlabels'] = array_reverse($data['xlabels']);
+
+    $data['ylabels'] = [
+        [
+            'value' => 0,
+            'label' => get_string('none', 'local_ace')
+        ],
+        [
+            'value' => 20,
+            'label' => ''
+        ],
+        [
+            'value' => 40,
+            'label' => get_string('medium', 'local_ace')
+        ],
+        [
+            'value' => 60,
+            'label' => ''
+        ],
+        [
+            'value' => 80,
+            'label' => ''
+        ],
+        [
+            'value' => 100,
+            'label' => get_string('high', 'local_ace')
+        ]
+    ];
+
+    return $data;
+}
+
+/**
  * Returns the course summary graph
  *
  * @param int $courseid
@@ -50,22 +152,22 @@ function local_ace_course_graph(int $courseid): string {
 }
 
 /**
- * Get course summary graph data.
+ * Returns series data for course engagement data.
  *
  * @param int $courseid
  * @param int|null $period
  * @param int|null $start
  * @param int|null $end
- * @throws coding_exception
+ * @return array
  * @throws dml_exception
  */
-function local_ace_course_data(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null) {
+function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null): array {
     global $DB;
 
     $config = get_config('local_ace');
 
     if ($period === null) {
-        $period = (int) get_config('local_ace', 'displayperiod');
+        $period = (int) $config->displayperiod;
     }
 
     if ($start === null) {
@@ -76,23 +178,34 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
 
     $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
               FROM {local_ace_contexts}
-              WHERE contextid = :context AND (endtime - starttime = :period)
-              " . ($start != null ? "AND endtime > :start" : "") . "
+              WHERE contextid = :context AND (endtime - starttime = :period) AND endtime > :start
               " . ($end != null ? "AND endtime < :end " : "") . "
               GROUP BY starttime, endtime
               ORDER BY starttime DESC";
 
     $parameters = array(
         'context' => $context->id,
-        'period' => $period
+        'period' => $period,
+        'start' => $start
     );
-    if ($start != null) {
-        $parameters['start'] = $start;
-    }
     if ($end != null) {
         $parameters['end'] = $end;
     }
-    $values = $DB->get_records_sql($sql, $parameters);
+    return $DB->get_records_sql($sql, $parameters);
+}
+
+/**
+ * Get course summary graph data.
+ *
+ * @param int $courseid
+ * @param int|null $period
+ * @param int|null $start
+ * @param int|null $end
+ * @throws coding_exception
+ * @throws dml_exception
+ */
+function local_ace_course_data(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null) {
+    $values = local_ace_course_data_values($courseid, $period, $start, $end);
 
     $labels = array();
     $series = array();
@@ -163,7 +276,7 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
 function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
     global $PAGE, $OUTPUT;
 
-    list($courseid, $courses) = local_ace_get_student_courses($userid, $courseid);
+    list($courseid, $courses) = local_ace_get_user_courses($userid, $courseid);
 
     $config = get_config('local_ace');
 
@@ -216,7 +329,7 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
 /**
  * Returns a list of courses and a course id that meet the following conditions:
  * - Contain analytics data
- * - The user is enrolled in
+ * - The user is enrolled
  * - Not excluded
  *
  * @param int $userid
@@ -225,7 +338,7 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_get_student_courses(int $userid, ?int $courseid = 0): array {
+function local_ace_get_user_courses(int $userid, ?int $courseid = 0): array {
     global $DB;
 
     $shortnameregs = get_config('local_ace', 'courseregex');

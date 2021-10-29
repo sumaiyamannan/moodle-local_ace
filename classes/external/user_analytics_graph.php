@@ -107,7 +107,7 @@ class user_analytics_graph extends external_api {
             );
         }
 
-        list($courseid, $courses) = local_ace_get_student_courses($userid, $courseid);
+        list($courseid, $courses) = local_ace_get_user_courses($userid, $courseid);
         $data = local_ace_student_graph_data($userid, $courseid, $start, $end);
         if (!is_array($data)) {
             return array(
