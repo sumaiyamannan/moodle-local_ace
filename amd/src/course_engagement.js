@@ -27,12 +27,19 @@ import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
 let COURSE_ID = 0;
+let COURSE_REPORT_LINE_COLOUR;
 
+/**
+ * Initialise the course engagement graph
+ *
+ * @param {Object} parameters Data passed from the server.
+ */
 export const init = (parameters) => {
     if (COURSE_ID !== 0) {
         return;
     }
     COURSE_ID = parameters.courseid;
+    COURSE_REPORT_LINE_COLOUR = parameters.colourteachercoursehistory;
     filtersInit(updateGraph);
     updateGraph(null, null);
 };
@@ -100,7 +107,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": ["#613d7c"],
+                "colors": [COURSE_REPORT_LINE_COLOUR],
                 "fill": null,
                 "axes": {
                     "x": null,
