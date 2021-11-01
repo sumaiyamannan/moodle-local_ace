@@ -15,18 +15,24 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * Plugin version and other meta-data are defined here.
+ * Library functions for local_ace.
  *
  * @package     local_ace
  * @copyright   2021 University of Canterbury
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-defined('MOODLE_INTERNAL') || die();
-
-$plugin->component = 'local_ace';
-$plugin->release = '1.1';
-$plugin->version = 2021110100;
-$plugin->requires = 2020061500;
-$plugin->maturity = MATURITY_STABLE;
-
+/**
+ * Get the current user preferences that are available
+ *
+ * @return Array preferences configuration
+ */
+function local_ace_user_preferences() {
+    return [
+        'local_ace_teacher_hidden_courses' => [
+            'type' => PARAM_TEXT,
+            'null' => NULL_ALLOWED,
+            'default' => 'none'
+        ],
+    ];
+}

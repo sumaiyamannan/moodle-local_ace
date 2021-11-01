@@ -25,8 +25,11 @@ import Ajax from 'core/ajax';
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
+import Notification from 'core/notification';
+import ChartJS from 'core/chartjs-lazy';
 
 let COURSE_COLOUR_MATCH = [];
+let HIDDEN_COURSES = [];
 
 export const init = () => {
     filtersInit(updateGraph);
@@ -73,6 +76,29 @@ const updateGraph = (startDate, endDate) => {
         chartImage.innerHTML = "";
         ChartBuilder.make(data).then((chart) => {
             new ChartJSOutput(chartImage, chart);
+
+            // Hides courses based on user preferences.
+            getHiddenCourses().then(response => {
+                if (response.error) {
+                    return;
+                }
+                let courseList = response.preferences[0].value;
+                if (courseList === null) {
+                    return;
+                }
+                HIDDEN_COURSES = courseList.split(",");
+                ChartJS.helpers.each(ChartJS.instances, function(instance) {
+                    let chart = instance.chart;
+                    for (let dataset in chart.data.datasets) {
+                        let datasetObject = chart.data.datasets[dataset];
+                        if (HIDDEN_COURSES.includes(datasetObject.label)) {
+                            datasetObject.hidden = true;
+                        }
+                    }
+                    chart.update();
+                });
+                return;
+            }).fail(Notification.exception);
             return;
         }).catch();
         return;
@@ -116,11 +142,74 @@ const getGraphDataPlaceholder = () => {
             ]
         },
         "legend_options": {
-            "display": true
+            "display": true,
+            "position": 'right',
+            "onClick": legendClickHandler
         },
         "config_colorset": null,
         "smooth": true
     };
+};
+
+/**
+ * Handles clicks on dataset legends.
+ *
+ * @param {Object} e Event
+ * @param {Object} legendItem Chart.JS Legend item
+ */
+const legendClickHandler = function(e, legendItem) {
+    let index = legendItem.datasetIndex;
+    let ci = this.chart;
+    let meta = ci.getDatasetMeta(index);
+
+    if (meta.hidden === null) {
+        if (ci.data.datasets[index].hidden) {
+            HIDDEN_COURSES = HIDDEN_COURSES.filter(course => course !== ci.data.datasets[index].label);
+            updateHiddenCourses();
+            ci.data.datasets[index].hidden = false;
+        } else {
+            HIDDEN_COURSES.push(ci.data.datasets[index].label);
+            updateHiddenCourses();
+            ci.data.datasets[index].hidden = true;
+        }
+    }
+
+    ci.update();
+};
+
+/**
+ * Updates the hidden courses user preference, based on the HIDDEN_COURSES array.
+ */
+const updateHiddenCourses = function() {
+    let request = {
+        methodname: 'core_user_update_user_preferences',
+        args: {
+            preferences: [
+                {
+                    type: 'local_ace_teacher_hidden_courses',
+                    value: HIDDEN_COURSES.join(",")
+                }
+            ]
+        }
+    };
+
+    Ajax.call([request])[0]
+        .fail(Notification.exception);
+};
+
+/**
+ * Gets the hidden courses from the user preferences.
+ *
+ * @returns {Promise}
+ */
+const getHiddenCourses = function() {
+    let request = {
+        methodname: 'core_user_get_user_preferences',
+        args: {
+            name: 'local_ace_teacher_hidden_courses'
+        }
+    };
+    return Ajax.call([request])[0];
 };
 
 /**
