@@ -315,7 +315,7 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
 
         $renderer = $PAGE->get_renderer('core');
         $output .= $renderer->render_from_template('local_ace/student_engagement_chart', $context);
-        $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init');
+        $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init', [$context]);
         $PAGE->requires->css('/local/ace/styles.css');
     } else {
         $output .= $OUTPUT->box(get_string('noanalytics', 'local_ace'));

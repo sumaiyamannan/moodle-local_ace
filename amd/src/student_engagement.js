@@ -27,10 +27,13 @@ import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
+let COLOURS = {};
+
 /**
  * Retrieves data from the local_ace webservice to populate an engagement graph
  */
-export const init = () => {
+export const init = (parameters) => {
+    COLOURS = parameters;
     filtersInit(updateGraph);
     updateGraph(null, null);
 };
@@ -142,7 +145,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": ["#5cb85c"],
+                "colors": [COLOURS.colouruserhistory],
                 "fill": null,
                 "axes": {
                     "x": null,
@@ -156,7 +159,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": ["#CEE9CE"],
+                "colors": [COLOURS.colourusercoursehistory],
                 "fill": null,
                 "axes": {
                     "x": null,
@@ -170,7 +173,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": ["#CEE9CE"],
+                "colors": [COLOURS.colourusercoursehistory],
                 "fill": 1,
                 "axes": {
                     "x": null,
