@@ -15,7 +15,7 @@
 // along with Moodle.  If not, see <https://www.gnu.org/licenses/>.
 
 /**
- * External functions for the user analytics grpah
+ * External functions for the user analytics graph
  *
  * @package     local_ace
  * @copyright   2021 University of Canterbury
