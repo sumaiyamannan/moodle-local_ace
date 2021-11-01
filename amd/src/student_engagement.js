@@ -31,6 +31,8 @@ let COLOURS = {};
 
 /**
  * Retrieves data from the local_ace webservice to populate an engagement graph
+ *
+ * @param {Object} parameters Data passed from the server.
  */
 export const init = (parameters) => {
     COLOURS = parameters;

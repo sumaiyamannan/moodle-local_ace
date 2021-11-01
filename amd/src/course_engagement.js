@@ -29,6 +29,11 @@ import {init as filtersInit} from 'local_ace/chart_filters';
 let COURSE_ID = 0;
 let COURSE_REPORT_LINE_COLOUR;
 
+/**
+ * Initialise the course engagement graph
+ *
+ * @param {Object} parameters Data passed from the server.
+ */
 export const init = (parameters) => {
     if (COURSE_ID !== 0) {
         return;
