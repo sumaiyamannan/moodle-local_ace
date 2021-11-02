@@ -44,17 +44,15 @@ class users extends datasource {
      * Initialise report
      */
     protected function initialise(): void {
-        global $CFG, $COURSE;
+        global $CFG;
 
         $userentity = new userentity();
         $usertablealias = $userentity->get_table_alias('user');
-        $usercoursealias = $userentity->get_table_alias('course');
 
         $this->set_main_table('user', $usertablealias);
 
         $userparamguest = database::generate_param_name();
-        $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0
-        AND {$usercoursealias}.id = $COURSE->id"
+        $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0"
             , [$userparamguest => $CFG->siteguest,
             ]);
 
