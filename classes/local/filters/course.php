@@ -117,7 +117,6 @@ class course extends \core_reportbuilder\local\filters\base {
      * Validate filter form values
      *
      * @param int|null $operator
-     * @param mixed|null $value
      * @return bool
      */
     private function validate_filter_values(?int $operator): bool {
