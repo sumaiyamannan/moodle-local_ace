@@ -28,6 +28,7 @@ use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
+use local_ace\local\filters\course;
 use core_reportbuilder\local\helpers\user_profile_fields;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
@@ -446,6 +447,7 @@ class userentity extends user {
     protected function get_all_filters(): array {
         $filters = [];
         $tablealias = $this->get_table_alias('user');
+        $coursetablealias = $this->get_table_alias('course');
 
         // Fullname filter.
         $canviewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
@@ -457,6 +459,15 @@ class userentity extends user {
             $this->get_entity_name(),
             $fullnamesql,
             $fullnameparams
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            course::class,
+            'course',
+            new lang_string('course'),
+            $this->get_entity_name(),
+            "{$coursetablealias}.id"
         ))
             ->add_joins($this->get_joins());
 
