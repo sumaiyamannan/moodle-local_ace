@@ -27,7 +27,9 @@ import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
-let COLOURS = {};
+let COLOUR_USER_HISTORY;
+let COLOUR_USER_COURSE_HISTORY;
+let USER_ID = {};
 
 /**
  * Retrieves data from the local_ace webservice to populate an engagement graph
@@ -35,7 +37,9 @@ let COLOURS = {};
  * @param {Object} parameters Data passed from the server.
  */
 export const init = (parameters) => {
-    COLOURS = parameters;
+    COLOUR_USER_HISTORY = parameters.colouruserhistory;
+    COLOUR_USER_COURSE_HISTORY = parameters.colourusercoursehistory;
+    USER_ID = parameters.userid;
     filtersInit(updateGraph);
     updateGraph(null, null);
 };
@@ -49,12 +53,11 @@ export const init = (parameters) => {
 const updateGraph = (startDatetime, endDateTime) => {
     let url = new URL(window.location.href);
     let params = new URLSearchParams(url.search);
-    let userid = parseInt(params.get('id'));
     let courseid = null;
     if (params.has('course')) {
         courseid = parseInt(params.get('course'));
     }
-    let engagementDataPromise = getUserEngagementData(courseid, userid, startDatetime, endDateTime).then(function(response) {
+    let engagementDataPromise = getUserEngagementData(courseid, USER_ID, startDatetime, endDateTime).then(function(response) {
         if (response.error !== null) {
             displayError(response.error);
             return null;
@@ -147,7 +150,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": [COLOURS.colouruserhistory],
+                "colors": [COLOUR_USER_HISTORY],
                 "fill": null,
                 "axes": {
                     "x": null,
@@ -161,7 +164,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": [COLOURS.colourusercoursehistory],
+                "colors": [COLOUR_USER_COURSE_HISTORY],
                 "fill": null,
                 "axes": {
                     "x": null,
@@ -175,7 +178,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": [COLOURS.colourusercoursehistory],
+                "colors": [COLOUR_USER_COURSE_HISTORY],
                 "fill": 1,
                 "axes": {
                     "x": null,

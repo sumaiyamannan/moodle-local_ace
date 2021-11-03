@@ -201,6 +201,7 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
  * @param int|null $period
  * @param int|null $start
  * @param int|null $end
+ * @return array|string
  * @throws coding_exception
  * @throws dml_exception
  */
@@ -303,23 +304,20 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
 
     $output .= print_tabs(array($tabs), $courseid, null, null, true);
 
-    if (!empty($courses)) { // If user is not enrolled in any relevant coureses, don't show the graph.
-        if (!empty($courseid)) {
-            $output .= $OUTPUT->heading(format_string($courses[$courseid]->fullname), 3, 'coursename');
-        }
-
-        $context = array(
-            'colourusercoursehistory' => $config->colourusercoursehistory,
-            'colouruserhistory' => $config->colouruserhistory,
-        );
-
-        $renderer = $PAGE->get_renderer('core');
-        $output .= $renderer->render_from_template('local_ace/student_engagement_chart', $context);
-        $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init', [$context]);
-        $PAGE->requires->css('/local/ace/styles.css');
-    } else {
-        $output .= $OUTPUT->box(get_string('noanalytics', 'local_ace'));
+    if (!empty($courseid)) {
+        $output .= $OUTPUT->heading(format_string($courses[$courseid]->fullname), 3, 'coursename');
     }
+
+    $context = array(
+        'colourusercoursehistory' => $config->colourusercoursehistory,
+        'colouruserhistory' => $config->colouruserhistory,
+        'userid' => $userid,
+    );
+
+    $renderer = $PAGE->get_renderer('core');
+    $output .= $renderer->render_from_template('local_ace/student_engagement_chart', $context);
+    $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init', [$context]);
+    $PAGE->requires->css('/local/ace/styles.css');
 
     $output .= html_writer::end_div();
 
