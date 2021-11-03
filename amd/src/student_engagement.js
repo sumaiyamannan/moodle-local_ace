@@ -28,7 +28,6 @@ import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
 let COLOUR_USER_HISTORY;
-let COLOUR_USER_COURSE_HISTORY;
 let USER_ID = {};
 
 /**
@@ -38,7 +37,6 @@ let USER_ID = {};
  */
 export const init = (parameters) => {
     COLOUR_USER_HISTORY = parameters.colouruserhistory;
-    COLOUR_USER_COURSE_HISTORY = parameters.colourusercoursehistory;
     USER_ID = parameters.userid;
     filtersInit(updateGraph);
     updateGraph(null, null);
@@ -72,8 +70,15 @@ const updateGraph = (startDatetime, endDateTime) => {
         // Populate empty fields.
         let graphData = getGraphDataPlaceholder();
         graphData.series[0].values = response.series;
-        graphData.series[1].values = response.average1;
-        graphData.series[2].values = response.average2;
+        // Create series for comparison data.
+        response.comparison.forEach((comparison) => {
+            let series = getSeriesPlaceholder();
+            series.label = comparison.label;
+            series.colors = [comparison.colour];
+            series.values = comparison.values;
+            series.fill = comparison.fill ? 1 : null;
+            graphData.series.push(series);
+        });
         graphData.labels = response.labels;
         graphData.axes.y[0].max = response.max;
         graphData.axes.y[0].stepSize = response.stepsize;
@@ -146,40 +151,12 @@ const getGraphDataPlaceholder = () => {
         "type": "line",
         "series": [
             {
-                "label": " Your engagement",
+                "label": "Your engagement",
                 "labels": null,
                 "type": null,
                 "values": null,
                 "colors": [COLOUR_USER_HISTORY],
                 "fill": null,
-                "axes": {
-                    "x": null,
-                    "y": null
-                },
-                "urls": [],
-                "smooth": null
-            },
-            {
-                "label": "Average course engagement",
-                "labels": null,
-                "type": null,
-                "values": null,
-                "colors": [COLOUR_USER_COURSE_HISTORY],
-                "fill": null,
-                "axes": {
-                    "x": null,
-                    "y": null
-                },
-                "urls": [],
-                "smooth": null
-            },
-            {
-                "label": "Average course engagement",
-                "labels": null,
-                "type": null,
-                "values": null,
-                "colors": [COLOUR_USER_COURSE_HISTORY],
-                "fill": 1,
                 "axes": {
                     "x": null,
                     "y": null
@@ -208,5 +185,22 @@ const getGraphDataPlaceholder = () => {
         },
         "config_colorset": null,
         "smooth": true
+    };
+};
+
+const getSeriesPlaceholder = () => {
+    return {
+        "label": "",
+        "labels": null,
+        "type": null,
+        "values": [],
+        "colors": [],
+        "fill": null,
+        "axes": {
+            "x": null,
+            "y": null
+        },
+        "urls": [],
+        "smooth": null
     };
 };
