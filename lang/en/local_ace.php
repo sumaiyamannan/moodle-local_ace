@@ -80,6 +80,11 @@ $string['averageengagement'] = 'Average engagement';
 $string['getstats'] = 'Generate indicator stats';
 $string['courseengagement'] = 'Course engagement';
 $string['noanalyticsfoundcourse'] = 'No analytics were found for this course';
+$string['showaveragecourseengagement'] = 'Show average course engagement (+/- 15%)';
+$string['showoptimumcourseengagementline'] = 'Show optimum course engagement line';
+$string['showtop10engagementline'] = 'Show top 10% engagement line';
+$string['shownone'] = 'Show none';
+$string['changegraph'] = 'Change Graph';
 
 $string['privacy:metadata:local_ace'] = 'Summary of user analytics data';
 $string['privacy:metadata:local_ace:userid'] = 'The Moodle userid';

@@ -1,0 +1,44 @@
+{{!
+    This file is part of Moodle - http://moodle.org/
+
+    Moodle is free software: you can redistribute it and/or modify
+    it under the terms of the GNU General Public License as published by
+    the Free Software Foundation, either version 3 of the License, or
+    (at your option) any later version.
+
+    Moodle is distributed in the hope that it will be useful,
+    but WITHOUT ANY WARRANTY; without even the implied warranty of
+    MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+    GNU General Public License for more details.
+
+    You should have received a copy of the GNU General Public License
+    along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+}}
+{{!
+    @template local_ace/chart_comparison_body
+
+    Chart comparison options
+
+    Example context (json):
+    {}
+}}
+<div id="chart-filter-options">
+    <div class="form-group">
+        <input type="radio" id="comparison-average-course-engagement" name="comparison-options" value="average-course-engagement"
+               required>
+        <label for="comparison-average-course-engagement">{{#str}}showaveragecourseengagement, local_ace{{/str}}</label>
+    </div>
+    <div class="form-group" style="display: none;">
+        <input type="radio" id="comparison-optimum-course-engagement" name="comparison-options" value="optimum-course-engagement"
+               required>
+        <label for="comparison-optimum-course-engagement">{{#str}}showoptimumcourseengagementline, local_ace{{/str}}</label>
+    </div>
+    <div class="form-group" style="display: none;">
+        <input type="radio" id="comparison-top-10-engagement" name="comparison-options" value="top-10-engagement" required>
+        <label for="comparison-top-10-engagement">{{#str}}showtop10engagementline, local_ace{{/str}}</label>
+    </div>
+    <div class="form-group">
+        <input type="radio" id="comparison-none" name="comparison-options" value="none" required>
+        <label for="comparison-none">{{#str}}shownone, local_ace{{/str}}</label>
+    </div>
+</div>

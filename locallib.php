@@ -317,7 +317,6 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
     $renderer = $PAGE->get_renderer('core');
     $output .= $renderer->render_from_template('local_ace/student_engagement_chart', $context);
     $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init', [$context]);
-    $PAGE->requires->css('/local/ace/styles.css');
 
     $output .= html_writer::end_div();
 
@@ -411,19 +410,22 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
     $chartseries->set_color($config->colouruserhistory);
     $chart->add_series($chartseries);
 
-    if (empty($course)) {
-        $averagelabel = get_string('averageengagement', 'local_ace');
-    } else {
-        $averagelabel = get_string('averagecourseengagement', 'local_ace');
-    }
-    $averageseries = new \core\chart_series($averagelabel, $data['average1']);
-    $averageseries->set_color($config->colourusercoursehistory);
-    $chart->add_series($averageseries);
+    // Check average course comparison data was included.
+    if (count($data['comparison']) == 2) {
+        if (empty($course)) {
+            $averagelabel = get_string('averageengagement', 'local_ace');
+        } else {
+            $averagelabel = get_string('averagecourseengagement', 'local_ace');
+        }
+        $averageseries = new \core\chart_series($averagelabel, $data['comparison'][0]['values']);
+        $averageseries->set_color($config->colourusercoursehistory);
+        $chart->add_series($averageseries);
 
-    $averageseries2 = new \core\chart_series($averagelabel, $data['average2']);
-    $averageseries2->set_color($config->colourusercoursehistory);
-    $averageseries2->set_fill(1);
-    $chart->add_series($averageseries2);
+        $averageseries2 = new \core\chart_series($averagelabel, $data['comparison'][1]['values']);
+        $averageseries2->set_color($config->colourusercoursehistory);
+        $averageseries2->set_fill(1);
+        $chart->add_series($averageseries2);
+    }
 
     $yaxis0 = $chart->get_yaxis(0, true);
     $yaxis0->set_min(0);
@@ -444,11 +446,13 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
  * @param int|null $start Display period start, defaults to displaying all course history to date.
  * @param int|null $end Display period end
  * @param bool $showxtitles
+ * @param string $comparison Comparison data source, defaults to average course engagement
  * @return array|string
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_student_graph_data(int $userid, $course, ?int $start = null, ?int $end = null, ?bool $showxtitles = true) {
+function local_ace_student_graph_data(int $userid, $course, ?int $start = null, ?int $end = null, ?bool $showxtitles = true,
+    string $comparison = 'average-course-engagement') {
     global $DB;
 
     $config = get_config('local_ace');
@@ -562,14 +566,32 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     }
     $stepsize = ceil($max / 2);
 
+    switch ($comparison) {
+        case 'average-course-engagement':
+            $comparison = [
+                [
+                    'label' => get_string('averagecourseengagement', 'local_ace'),
+                    'values' => array_reverse($average1),
+                    'colour' => $config->colourusercoursehistory,
+                ],
+                [
+                    'label' => get_string('averagecourseengagement', 'local_ace'),
+                    'values' => array_reverse($average2),
+                    'colour' => $config->colourusercoursehistory,
+                    'fill' => true,
+                ]
+            ];
+            break;
+        default:
+            $comparison = [];
+    }
+
     // Reverse Series/labels to order by date correctly.
     return array(
         'series' => array_reverse($series),
         'labels' => array_reverse($labels),
-        'average1' => array_reverse($average1),
-        'average2' => array_reverse($average2),
+        'comparison' => $comparison,
         'max' => $max,
         'stepsize' => $stepsize,
     );
 }
-

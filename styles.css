@@ -185,3 +185,9 @@
     padding-right: 20px;
     font-size: 0.875em;
 }
+
+.chart-comparison-modal .modal-dialog {
+    max-width: 500px;
+    margin-left: auto;
+    margin-right: auto;
+}

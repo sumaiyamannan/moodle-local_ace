@@ -47,7 +47,8 @@ class user_analytics_graph extends external_api {
                 'userid' => new external_value(PARAM_INT, 'ID of user', false),
                 'courseid' => new external_value(PARAM_INT, 'Course id', false),
                 'start' => new external_value(PARAM_INT, 'History start', false),
-                'end' => new external_value(PARAM_INT, 'History end', false)
+                'end' => new external_value(PARAM_INT, 'History end', false),
+                'comparison' => new external_value(PARAM_TEXT, 'Course comparison data', false, 'average-course-engagement'),
             )
         );
     }
@@ -59,63 +60,51 @@ class user_analytics_graph extends external_api {
      * @param int|null $courseid
      * @param int|null $start Unix timestamp of start date
      * @param int|null $end Unix timestamp of end date
+     * @param string|null $comparison Course comparison data
      * @return array|string
      * @throws coding_exception
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function get_user_analytics_graph(?int $userid, ?int $courseid, ?int $start, ?int $end) {
+    public static function get_user_analytics_graph(?int $userid, ?int $courseid, ?int $start, ?int $end, ?string $comparison) {
         global $USER, $DB;
 
-        self::validate_parameters(
+        $params = self::validate_parameters(
             self::get_user_analytics_graph_parameters(),
             array(
                 'userid' => $userid,
                 'courseid' => $courseid,
                 'start' => $start,
-                'end' => $end
+                'end' => $end,
+                'comparison' => $comparison,
             )
         );
 
-        if ($userid == null) {
-            $userid = $USER->id;
+        if ($params['userid'] == null) {
+            $params['userid'] = $USER->id;
         }
 
-        $supplieduser = $DB->get_record('user', array('id' => $userid, 'deleted' => 0), '*', MUST_EXIST);
+        $supplieduser = $DB->get_record('user', array('id' => $params['userid'], 'deleted' => 0), '*', MUST_EXIST);
         $personalcontext = context_user::instance($supplieduser->id);
-        if ($userid == $USER->id && !has_capability('local/ace:viewown', $personalcontext)) {
+        if ($params['userid'] == $USER->id && !has_capability('local/ace:viewown', $personalcontext)) {
             return array(
                 'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:viewown')),
-                'series' => [],
-                'labels' => [],
-                'average1' => [],
-                'average2' => [],
-                'max' => null,
-                'stepsize' => null,
-                'ylabels' => []
             );
-        } else if ($userid != $USER->id && !has_capability('local/ace:view', $personalcontext)) {
+        } else if ($params['userid'] != $USER->id && !has_capability('local/ace:view', $personalcontext)) {
             return array(
                 'error' => get_string('nopermissions', 'error', get_capability_string('local/ace:view')),
-                'series' => [],
-                'labels' => [],
-                'average1' => [],
-                'average2' => [],
-                'max' => null,
-                'stepsize' => null,
-                'ylabels' => []
             );
         }
 
-        list($courseid, $courses) = local_ace_get_user_courses($userid, $courseid);
-        $data = local_ace_student_graph_data($userid, $courseid, $start, $end);
+        list($courseid, $courses) = local_ace_get_user_courses($params['userid'], $params['courseid']);
+        $data = local_ace_student_graph_data($params['userid'], $courseid, $params['start'], $params['end'], true,
+            $params['comparison']);
         if (!is_array($data)) {
             return array(
                 'error' => $data,
                 'series' => [],
                 'labels' => [],
-                'average1' => [],
-                'average2' => [],
+                'comparison' => [],
                 'max' => null,
                 'stepsize' => null,
                 'ylabels' => []
@@ -154,11 +143,13 @@ class user_analytics_graph extends external_api {
             'labels' => new external_multiple_structure(
                 new external_value(PARAM_TEXT, 'Formatted date string label')
             ),
-            'average1' => new external_multiple_structure(
-                new external_value(PARAM_FLOAT, 'Lower average value')
-            ),
-            'average2' => new external_multiple_structure(
-                new external_value(PARAM_FLOAT, 'Upper average value')
+            'comparison' => new external_multiple_structure(
+                new external_single_structure([
+                    'values' => new external_multiple_structure(new external_value(PARAM_FLOAT, 'Series value')),
+                    'label' => new external_value(PARAM_TEXT, 'Series label'),
+                    'colour' => new external_value(PARAM_TEXT, 'Hex colour of series'),
+                    'fill' => new external_value(PARAM_BOOL, 'Fill between series', false, false)
+                ])
             ),
             'max' => new external_value(PARAM_FLOAT, 'Maximum engagement value'),
             'stepsize' => new external_value(PARAM_FLOAT, 'Engagement stepsize between Y labels'),
