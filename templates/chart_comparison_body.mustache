@@ -24,19 +24,21 @@
 }}
 <div id="chart-filter-options">
     <div class="form-group">
-        <input type="radio" id="comparison-average-course-engagement" name="comparison-options" value="average-course-engagement" required>
-        <label for="comparison-average-course-engagement">Show average course engagement (+/- 15%)</label>
+        <input type="radio" id="comparison-average-course-engagement" name="comparison-options" value="average-course-engagement"
+               required>
+        <label for="comparison-average-course-engagement">{{#str}}showaveragecourseengagement, local_ace{{/str}}</label>
     </div>
     <div class="form-group">
-        <input type="radio" id="comparison-optimum-course-engagement" name="comparison-options" value="optimum-course-engagement" required>
-        <label for="comparison-optimum-course-engagement">Show optimum course engagement line</label>
+        <input type="radio" id="comparison-optimum-course-engagement" name="comparison-options" value="optimum-course-engagement"
+               required>
+        <label for="comparison-optimum-course-engagement">{{#str}}showoptimumcourseengagementline, local_ace{{/str}}</label>
     </div>
     <div class="form-group">
         <input type="radio" id="comparison-top-10-engagement" name="comparison-options" value="top-10-engagement" required>
-        <label for="comparison-top-10-engagement">Show top 10% engagement line</label>
+        <label for="comparison-top-10-engagement">{{#str}}showtop10engagementline, local_ace{{/str}}</label>
     </div>
     <div class="form-group">
         <input type="radio" id="comparison-none" name="comparison-options" value="none" required>
-        <label for="comparison-none">Show none</label>
+        <label for="comparison-none">{{#str}}shownone, local_ace{{/str}}</label>
     </div>
 </div>

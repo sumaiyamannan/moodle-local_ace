@@ -570,12 +570,12 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         case 'average-course-engagement':
             $comparison = [
                 [
-                    'label' => 'Average course engagement',
+                    'label' => get_string('averagecourseengagement', 'local_ace'),
                     'values' => array_reverse($average1),
                     'colour' => $config->colourusercoursehistory,
                 ],
                 [
-                    'label' => 'Average course engagement',
+                    'label' => get_string('averagecourseengagement', 'local_ace'),
                     'values' => array_reverse($average2),
                     'colour' => $config->colourusercoursehistory,
                     'fill' => true,
