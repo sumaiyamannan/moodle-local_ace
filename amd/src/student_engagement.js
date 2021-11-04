@@ -51,42 +51,47 @@ export const init = (parameters) => {
 
     // Setup chart comparison control.
     let chartComparisonButton = document.querySelector("#chart-comparison");
-    chartComparisonButton.addEventListener("click", () => {
-        var modalPromise = ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL});
+    chartComparisonButton.addEventListener("click", createChartComparisonModal);
+};
 
-        modalPromise.then(function(modal) {
-            modal.getRoot()[0].classList.add('chart-comparison-modal');
-            modal.setTitle("Change course comparison data");
-            let templatePromise = Templates.render('local_ace/chart_comparison_body', {});
-            modal.setBody(templatePromise);
-            modal.setSaveButtonText("Filter");
+/**
+ * Creates the chart comparison modal.
+ */
+const createChartComparisonModal = function() {
+    var modalPromise = ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL});
 
-            // Check the comparison option on load.
-            modal.getRoot().on(ModalEvents.bodyRendered, function() {
-                document.querySelector('#comparison-' + COMPARISON_OPTION).checked = true;
-            });
+    modalPromise.then(function(modal) {
+        modal.getRoot()[0].classList.add('chart-comparison-modal');
+        modal.setTitle("Change course comparison data");
+        let templatePromise = Templates.render('local_ace/chart_comparison_body', {});
+        modal.setBody(templatePromise);
+        modal.setSaveButtonText("Filter");
 
-            // Update COMPARISON_OPTION when the modal is saved.
-            modal.getRoot().on(ModalEvents.save, function() {
-                let checkedElement = document.querySelector('input[name="comparison-options"]:checked');
-                if (checkedElement !== null) {
-                    COMPARISON_OPTION = checkedElement.value;
-                } else {
-                    COMPARISON_OPTION = 'none';
-                }
-                updateGraph();
-            });
+        // Check the comparison option on load.
+        modal.getRoot().on(ModalEvents.bodyRendered, function() {
+            document.querySelector('#comparison-' + COMPARISON_OPTION).checked = true;
+        });
 
-            modal.getRoot().on(ModalEvents.hidden, () => {
-                // Destroy when hidden, removes modal HTML from document.
-                modal.destroy();
-            });
+        // Update COMPARISON_OPTION when the modal is saved.
+        modal.getRoot().on(ModalEvents.save, function() {
+            let checkedElement = document.querySelector('input[name="comparison-options"]:checked');
+            if (checkedElement !== null) {
+                COMPARISON_OPTION = checkedElement.value;
+            } else {
+                COMPARISON_OPTION = 'none';
+            }
+            updateGraph();
+        });
 
-            modal.show();
+        modal.getRoot().on(ModalEvents.hidden, () => {
+            // Destroy when hidden, removes modal HTML from document.
+            modal.destroy();
+        });
 
-            return modal;
-        }).fail(Notification.exception);
-    });
+        modal.show();
+
+        return modal;
+    }).fail(Notification.exception);
 };
 
 /**
