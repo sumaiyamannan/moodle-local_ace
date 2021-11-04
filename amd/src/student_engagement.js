@@ -23,12 +23,20 @@
 
 import Ajax from 'core/ajax';
 import {get_string as getString} from 'core/str';
+import ModalFactory from 'core/modal_factory';
+import Templates from 'core/templates';
+import ModalEvents from "core/modal_events";
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
 let COLOUR_USER_HISTORY;
 let USER_ID = {};
+// Stores the chosen comparison method.
+let COMPARISON_OPTION = 'average-course-engagement';
+// Stores the current time method, allowing us to update the graph without supplying values.
+let START_TIME = null;
+let END_TIME = null;
 
 /**
  * Retrieves data from the local_ace webservice to populate an engagement graph
@@ -39,7 +47,46 @@ export const init = (parameters) => {
     COLOUR_USER_HISTORY = parameters.colouruserhistory;
     USER_ID = parameters.userid;
     filtersInit(updateGraph);
-    updateGraph(null, null);
+    updateGraph();
+
+    // Setup chart comparison control.
+    let chartComparisonButton = document.querySelector("#chart-comparison");
+    chartComparisonButton.addEventListener("click", () => {
+        var modalPromise = ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL});
+
+        modalPromise.then(function(modal) {
+            modal.getRoot()[0].classList.add('chart-comparison-modal');
+            modal.setTitle("Change course comparison data");
+            let templatePromise = Templates.render('local_ace/chart_comparison_body', {});
+            modal.setBody(templatePromise);
+            modal.setSaveButtonText("Filter");
+
+            // Check the comparison option on load.
+            modal.getRoot().on(ModalEvents.bodyRendered, function() {
+                document.querySelector('#comparison-' + COMPARISON_OPTION).checked = true;
+            });
+
+            // Update COMPARISON_OPTION when the modal is saved.
+            modal.getRoot().on(ModalEvents.save, function() {
+                let checkedElement = document.querySelector('input[name="comparison-options"]:checked');
+                if (checkedElement !== null) {
+                    COMPARISON_OPTION = checkedElement.value;
+                } else {
+                    COMPARISON_OPTION = 'none';
+                }
+                updateGraph();
+            });
+
+            modal.getRoot().on(ModalEvents.hidden, () => {
+                // Destroy when hidden, removes modal HTML from document.
+                modal.destroy();
+            });
+
+            modal.show();
+
+            return modal;
+        }).fail(Notification.exception);
+    });
 };
 
 /**
@@ -48,50 +95,58 @@ export const init = (parameters) => {
  * @param {Number|null} startDatetime
  * @param {Number|null} endDateTime
  */
-const updateGraph = (startDatetime, endDateTime) => {
+const updateGraph = (startDatetime = START_TIME, endDateTime = END_TIME) => {
+    if (START_TIME !== startDatetime) {
+        START_TIME = startDatetime;
+    }
+    if (END_TIME !== endDateTime) {
+        END_TIME = endDateTime;
+    }
+
     let url = new URL(window.location.href);
     let params = new URLSearchParams(url.search);
     let courseid = null;
     if (params.has('course')) {
         courseid = parseInt(params.get('course'));
     }
-    let engagementDataPromise = getUserEngagementData(courseid, USER_ID, startDatetime, endDateTime).then(function(response) {
-        if (response.error !== null) {
-            displayError(response.error);
-            return null;
-        } else if (response.series.length === 0) {
-            getString('noanalytics', 'local_ace').then((langString) => {
-                displayError(langString);
-                return;
-            }).catch();
-            return null;
-        }
+    let engagementDataPromise = getUserEngagementData(courseid, USER_ID, START_TIME, END_TIME)
+        .then(function(response) {
+            if (response.error !== null) {
+                displayError(response.error);
+                return null;
+            } else if (response.series.length === 0) {
+                getString('noanalytics', 'local_ace').then((langString) => {
+                    displayError(langString);
+                    return;
+                }).catch();
+                return null;
+            }
 
-        // Populate empty fields.
-        let graphData = getGraphDataPlaceholder();
-        graphData.series[0].values = response.series;
-        // Create series for comparison data.
-        response.comparison.forEach((comparison) => {
-            let series = getSeriesPlaceholder();
-            series.label = comparison.label;
-            series.colors = [comparison.colour];
-            series.values = comparison.values;
-            series.fill = comparison.fill ? 1 : null;
-            graphData.series.push(series);
-        });
-        graphData.labels = response.labels;
-        graphData.axes.y[0].max = response.max;
-        graphData.axes.y[0].stepSize = response.stepsize;
-        let yLabels = {};
-        response.ylabels.forEach((element) => {
-            yLabels[element.value] = element.label;
-        });
-        graphData.axes.y[0].labels = yLabels;
+            // Populate empty fields.
+            let graphData = getGraphDataPlaceholder();
+            graphData.series[0].values = response.series;
+            // Create series for comparison data.
+            response.comparison.forEach((comparison) => {
+                let series = getSeriesPlaceholder();
+                series.label = comparison.label;
+                series.colors = [comparison.colour];
+                series.values = comparison.values;
+                series.fill = comparison.fill ? 1 : null;
+                graphData.series.push(series);
+            });
+            graphData.labels = response.labels;
+            graphData.axes.y[0].max = response.max;
+            graphData.axes.y[0].stepSize = response.stepsize;
+            let yLabels = {};
+            response.ylabels.forEach((element) => {
+                yLabels[element.value] = element.label;
+            });
+            graphData.axes.y[0].labels = yLabels;
 
-        return graphData;
-    }).catch(function() {
-        displayError("API returned an error");
-    });
+            return graphData;
+        }).catch(function() {
+            displayError("API returned an error");
+        });
 
     engagementDataPromise.then((data) => {
         if (data === null) {
@@ -111,7 +166,7 @@ const updateGraph = (startDatetime, endDateTime) => {
 /**
  * Display an error on the page, which replaces the engagement graphs on the page.
  *
- * @param {string} langString Text displayed on the page
+ * @param {String} langString Text displayed on the page
  */
 const displayError = (langString) => {
     let chartArea = document.querySelector('#chart-area-engagement');
@@ -122,27 +177,28 @@ const displayError = (langString) => {
 /**
  * Get analytics data for specific user and course, within a certain period and after a starting time.
  *
- * @param {number|null} courseid Course ID
- * @param {number} userid User ID
- * @param {number} start Start time of analytics period in seconds
- * @param {end} end End of analytics period in seconds
+ * @param {Number|null} courseid Course ID
+ * @param {Number} userid User ID
+ * @param {Number} start Start time of analytics period in seconds
+ * @param {Number} end End of analytics period in seconds
+ * @param {String} comparison Comparison method
  * @returns {Promise}
  */
-const getUserEngagementData = (courseid, userid, start, end) => {
+const getUserEngagementData = (courseid, userid, start, end, comparison = COMPARISON_OPTION) => {
     return Ajax.call([{
         methodname: 'local_ace_get_user_analytics_graph',
         args: {
             'courseid': courseid,
             'userid': userid,
             'start': start,
-            'end': end
+            'end': end,
+            'comparison': comparison
         },
     }])[0];
 };
 
 /**
  * Get a graph.js data object filled out with the values we need for a student engagement graph.
- * TODO: Pull graph colours from plugin settings.
  *
  * @returns {Object}
  */

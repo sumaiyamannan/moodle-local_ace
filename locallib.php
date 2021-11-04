@@ -566,20 +566,24 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     }
     $stepsize = ceil($max / 2);
 
-    if ($comparison === 'average-course-engagement') {
-        $comparison = [
-            [
-                'label' => 'Average course engagement',
-                'values' => array_reverse($average1),
-                'colour' => $config->colourusercoursehistory,
-            ],
-            [
-                'label' => 'Average course engagement',
-                'values' => array_reverse($average2),
-                'colour' => $config->colourusercoursehistory,
-                'fill' => true,
-            ]
-        ];
+    switch ($comparison) {
+        case 'average-course-engagement':
+            $comparison = [
+                [
+                    'label' => 'Average course engagement',
+                    'values' => array_reverse($average1),
+                    'colour' => $config->colourusercoursehistory,
+                ],
+                [
+                    'label' => 'Average course engagement',
+                    'values' => array_reverse($average2),
+                    'colour' => $config->colourusercoursehistory,
+                    'fill' => true,
+                ]
+            ];
+            break;
+        default:
+            $comparison = [];
     }
 
     // Reverse Series/labels to order by date correctly.
