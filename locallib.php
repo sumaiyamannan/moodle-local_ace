@@ -119,10 +119,10 @@ function local_ace_all_enrolled_courses_data(int $userid, ?int $period = null, ?
  */
 function local_ace_get_matching_values_to_labels(array $coursevalues): array {
     $tempvalues = [];
-    $largestcourse = null;
     $ongoinglargestcount = 0;
     $labels = [];
-    // GO through every course and arrange the values by date. Find the course with the most values and use its labels.
+    // Go through every course and arrange the values by date. Find the course with the most values and use its labels.
+    // Doing this means that we end up with the most data possible to display.
     foreach ($coursevalues as $shortname => $values) {
         $series = [];
         $laststart = null;
@@ -147,22 +147,16 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
         $tempvalues[$shortname] = array_reverse($series);
         $count = count($tempvalues[$shortname]);
         if ($count > $ongoinglargestcount) {
-            $largestcourse = $shortname;
             $ongoinglargestcount = $count;
             $labels = $templabels;
         }
-    }
-
-    // No point doing this if we don't have any courses.
-    if ($largestcourse == null) {
-        return [];
     }
 
     $labels = array_reverse($labels);
 
     $finalvalues = [];
     $max = 2;
-    // Loop the labels, check that for each course a corresponding value exists, if one doesn't set it to 0.
+    // Loop the labels, check that for each course a corresponding value against the label exists, if one doesn't set it to 0.
     foreach ($labels as $label) {
         foreach ($tempvalues as $shortname => $valueset) {
             if (isset($valueset[$label])) {
@@ -176,6 +170,7 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
         }
     }
 
+    // We need to return the values ready for displaying in chart.js.
     $preparedvalues = [];
     foreach ($finalvalues as $shortname => $values) {
         $preparedvalues[] = [
