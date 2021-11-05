@@ -30,13 +30,16 @@ import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
-let COLOUR_USER_HISTORY;
 let USER_ID = {};
 // Stores the chosen comparison method.
 let COMPARISON_OPTION = 'average-course-engagement';
 // Stores the current time method, allowing us to update the graph without supplying values.
 let START_TIME = null;
 let END_TIME = null;
+// Toggles the retrieval of a single course vs all courses enrolled in.
+let SHOW_ALL_COURSES = false;
+// Stores randomised colours against course shortnames.
+let COURSE_COLOUR_MATCH = [];
 
 /**
  * Retrieves data from the local_ace webservice to populate an engagement graph
@@ -44,7 +47,6 @@ let END_TIME = null;
  * @param {Object} parameters Data passed from the server.
  */
 export const init = (parameters) => {
-    COLOUR_USER_HISTORY = parameters.colouruserhistory;
     USER_ID = parameters.userid;
     filtersInit(updateGraph);
     updateGraph();
@@ -52,6 +54,23 @@ export const init = (parameters) => {
     // Setup chart comparison control.
     let chartComparisonButton = document.querySelector("#chart-comparison");
     chartComparisonButton.addEventListener("click", createChartComparisonModal);
+
+    document.querySelector("#show-all-courses").addEventListener("click", showAllCourses);
+    document.querySelector("#show-your-course").addEventListener("click", showYourCourse);
+};
+
+const showAllCourses = function() {
+    document.querySelector("#show-all-courses").style.display = 'none';
+    document.querySelector("#show-your-course").style.display = 'inline-block';
+    SHOW_ALL_COURSES = true;
+    updateGraph();
+};
+
+const showYourCourse = function() {
+    document.querySelector("#show-your-course").style.display = 'none';
+    document.querySelector("#show-all-courses").style.display = 'inline-block';
+    SHOW_ALL_COURSES = false;
+    updateGraph();
 };
 
 /**
@@ -70,6 +89,13 @@ const createChartComparisonModal = function() {
         // Check the comparison option on load.
         modal.getRoot().on(ModalEvents.bodyRendered, function() {
             document.querySelector('#comparison-' + COMPARISON_OPTION).checked = true;
+            // If all courses are shown then we cannot show comparisons.
+            if (SHOW_ALL_COURSES) {
+                let elements = document.querySelectorAll('input[name="comparison-options"]');
+                elements.forEach((ele) => {
+                    ele.disabled = true;
+                });
+            }
         });
 
         // Update COMPARISON_OPTION when the modal is saved.
@@ -119,7 +145,7 @@ const updateGraph = (startDatetime = START_TIME, endDateTime = END_TIME) => {
             if (response.error !== null) {
                 displayError(response.error);
                 return null;
-            } else if (response.series.length === 0) {
+            } else if (response.data.length === 0) {
                 getString('noanalytics', 'local_ace').then((langString) => {
                     displayError(langString);
                     return;
@@ -129,17 +155,24 @@ const updateGraph = (startDatetime = START_TIME, endDateTime = END_TIME) => {
 
             // Populate empty fields.
             let graphData = getGraphDataPlaceholder();
-            graphData.series[0].values = response.series;
-            // Create series for comparison data.
-            response.comparison.forEach((comparison) => {
+            graphData.legend_options.display = SHOW_ALL_COURSES;
+            // Create individual series data.
+            response.data.forEach((data) => {
                 let series = getSeriesPlaceholder();
-                series.label = comparison.label;
-                series.colors = [comparison.colour];
-                series.values = comparison.values;
-                series.fill = comparison.fill ? 1 : null;
+                series.label = data.label;
+                series.values = data.values;
+                if (SHOW_ALL_COURSES || data.colour === undefined) {
+                    if (!COURSE_COLOUR_MATCH[series.label]) {
+                        COURSE_COLOUR_MATCH[series.label] = parseInt(Math.random() * 0xffffff).toString(16);
+                    }
+                    series.colors = ['#' + COURSE_COLOUR_MATCH[series.label]];
+                } else {
+                    series.colors = [data.colour];
+                }
+                series.fill = data.fill ? 1 : null;
                 graphData.series.push(series);
             });
-            graphData.labels = response.labels;
+            graphData.labels = response.xlabels;
             graphData.axes.y[0].max = response.max;
             graphData.axes.y[0].stepSize = response.stepsize;
             let yLabels = {};
@@ -197,7 +230,8 @@ const getUserEngagementData = (courseid, userid, start, end, comparison = COMPAR
             'userid': userid,
             'start': start,
             'end': end,
-            'comparison': comparison
+            'comparison': comparison,
+            'showallcourses': SHOW_ALL_COURSES,
         },
     }])[0];
 };
@@ -210,22 +244,7 @@ const getUserEngagementData = (courseid, userid, start, end, comparison = COMPAR
 const getGraphDataPlaceholder = () => {
     return {
         "type": "line",
-        "series": [
-            {
-                "label": "Your engagement",
-                "labels": null,
-                "type": null,
-                "values": null,
-                "colors": [COLOUR_USER_HISTORY],
-                "fill": null,
-                "axes": {
-                    "x": null,
-                    "y": null
-                },
-                "urls": [],
-                "smooth": null
-            }
-        ],
+        "series": [],
         "labels": null,
         "title": null,
         "axes": {

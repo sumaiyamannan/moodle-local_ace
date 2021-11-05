@@ -85,6 +85,9 @@ $string['showoptimumcourseengagementline'] = 'Show optimum course engagement lin
 $string['showtop10engagementline'] = 'Show top 10% engagement line';
 $string['shownone'] = 'Show none';
 $string['changegraph'] = 'Change Graph';
+$string['showallcourses'] = 'Show all courses';
+$string['showyourcourse'] = 'Show your course';
+$string['yourengagement'] = 'Your engagement';
 
 $string['privacy:metadata:local_ace'] = 'Summary of user analytics data';
 $string['privacy:metadata:local_ace:userid'] = 'The Moodle userid';

@@ -28,7 +28,9 @@ import {init as filtersInit} from 'local_ace/chart_filters';
 import Notification from 'core/notification';
 import ChartJS from 'core/chartjs-lazy';
 
+// Stores randomised colours against course shortnames.
 let COURSE_COLOUR_MATCH = [];
+// List of course shortnames hidden on the graph.
 let HIDDEN_COURSES = [];
 
 export const init = () => {
@@ -45,13 +47,13 @@ const updateGraph = (startDate, endDate) => {
         let data = getGraphDataPlaceholder();
         response.series.forEach((series) => {
             // Store colours against courses so when switching history they stay the same colour.
-            if (!COURSE_COLOUR_MATCH[series.title]) {
-                COURSE_COLOUR_MATCH[series.title] = parseInt(Math.random() * 0xffffff).toString(16);
+            if (!COURSE_COLOUR_MATCH[series.label]) {
+                COURSE_COLOUR_MATCH[series.label] = parseInt(Math.random() * 0xffffff).toString(16);
             }
             let seriesData = getSeriesPlaceholder();
-            seriesData.label = series.title;
+            seriesData.label = series.label;
             seriesData.values = series.values;
-            seriesData.colors = ['#' + COURSE_COLOUR_MATCH[series.title]];
+            seriesData.colors = ['#' + COURSE_COLOUR_MATCH[series.label]];
             data.series.push(seriesData);
         });
         data.labels = response.xlabels;

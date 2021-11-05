@@ -49,6 +49,7 @@ class user_analytics_graph extends external_api {
                 'start' => new external_value(PARAM_INT, 'History start', false),
                 'end' => new external_value(PARAM_INT, 'History end', false),
                 'comparison' => new external_value(PARAM_TEXT, 'Course comparison data', false, 'average-course-engagement'),
+                'showallcourses' => new external_value(PARAM_BOOL, 'Retrieve all enrolled courses', false, false),
             )
         );
     }
@@ -61,12 +62,14 @@ class user_analytics_graph extends external_api {
      * @param int|null $start Unix timestamp of start date
      * @param int|null $end Unix timestamp of end date
      * @param string|null $comparison Course comparison data
+     * @param bool $showallcourses Changes the results to return data for all enrolled in courses.
      * @return array|string
      * @throws coding_exception
      * @throws dml_exception
      * @throws invalid_parameter_exception
      */
-    public static function get_user_analytics_graph(?int $userid, ?int $courseid, ?int $start, ?int $end, ?string $comparison) {
+    public static function get_user_analytics_graph(?int $userid, ?int $courseid, ?int $start, ?int $end, ?string $comparison,
+        bool $showallcourses = false) {
         global $USER, $DB;
 
         $params = self::validate_parameters(
@@ -77,6 +80,7 @@ class user_analytics_graph extends external_api {
                 'start' => $start,
                 'end' => $end,
                 'comparison' => $comparison,
+                'showallcourses' => $showallcourses
             )
         );
 
@@ -97,17 +101,23 @@ class user_analytics_graph extends external_api {
         }
 
         list($courseid, $courses) = local_ace_get_user_courses($params['userid'], $params['courseid']);
-        $data = local_ace_student_graph_data($params['userid'], $courseid, $params['start'], $params['end'], true,
-            $params['comparison']);
+        // Get data for all courses user is enrolled in.
+        if ($showallcourses) {
+            $data = local_ace_all_enrolled_courses_data($params['userid'], null, $params['start'], $params['end']);
+            if (empty($data['series'])) {
+                return array(
+                    'error' => get_string('noanalytics', 'local_ace')
+                );
+            }
+            $data['data'] = $data['series'];
+            unset($data['series']);
+        } else {
+            $data = local_ace_student_graph_data($params['userid'], $courseid, $params['start'], $params['end'], true,
+                $params['comparison']);
+        }
         if (!is_array($data)) {
             return array(
                 'error' => $data,
-                'series' => [],
-                'labels' => [],
-                'comparison' => [],
-                'max' => null,
-                'stepsize' => null,
-                'ylabels' => []
             );
         }
 
@@ -137,27 +147,27 @@ class user_analytics_graph extends external_api {
     public static function get_user_analytics_graph_returns() {
         return new external_single_structure([
             'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working', false),
-            'series' => new external_multiple_structure(
-                new external_value(PARAM_FLOAT, 'Series value')
-            ),
-            'labels' => new external_multiple_structure(
-                new external_value(PARAM_TEXT, 'Formatted date string label')
-            ),
-            'comparison' => new external_multiple_structure(
+            'data' => new external_multiple_structure(
                 new external_single_structure([
                     'values' => new external_multiple_structure(new external_value(PARAM_FLOAT, 'Series value')),
                     'label' => new external_value(PARAM_TEXT, 'Series label'),
-                    'colour' => new external_value(PARAM_TEXT, 'Hex colour of series'),
+                    'colour' => new external_value(PARAM_TEXT, 'Hex cour of series', false),
                     'fill' => new external_value(PARAM_BOOL, 'Fill between series', false, false)
-                ])
+                ]),
+                'Series data', false
             ),
-            'max' => new external_value(PARAM_FLOAT, 'Maximum engagement value'),
-            'stepsize' => new external_value(PARAM_FLOAT, 'Engagement stepsize between Y labels'),
+            'xlabels' => new external_multiple_structure(
+                new external_value(PARAM_TEXT, 'Formatted date string label'), 'X axis labels', false
+            ),
+            'max' => new external_value(PARAM_FLOAT, 'Maximum engagement value', false),
+            'stepsize' => new external_value(PARAM_FLOAT, 'Engagement stepsize between Y labels', false),
             'ylabels' => new external_multiple_structure(
                 new external_single_structure([
                     'value' => new external_value(PARAM_FLOAT, 'Engagement Value'),
                     'label' => new external_value(PARAM_TEXT, 'Engagement Label')
-                ])
+                ]),
+                'Y axis labels',
+                false
             )
         ]);
     }
