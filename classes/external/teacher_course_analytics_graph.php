@@ -71,13 +71,10 @@ class teacher_course_analytics_graph extends external_api {
             )
         );
 
-        $data = local_ace_teacher_course_data($USER->id, null, $start, $end);
-        if (!is_array($data)) {
+        $data = local_ace_all_enrolled_courses_data($USER->id, null, $start, $end);
+        if (empty($data['series'])) {
             return array(
-                'error' => $data,
-                'series' => [],
-                'xlabels' => [],
-                'ylabels' => []
+                'error' => get_string('noanalytics', 'local_ace')
             );
         }
 
@@ -95,17 +92,20 @@ class teacher_course_analytics_graph extends external_api {
             'series' => new external_multiple_structure(
                 new external_single_structure([
                     'values' => new external_multiple_structure(new external_value(PARAM_FLOAT, 'Series value')),
-                    'title' => new external_value(PARAM_TEXT, 'Series title')
-                ])
+                    'label' => new external_value(PARAM_TEXT, 'Series label')
+                ]),
+                'Series data', false
             ),
             'xlabels' => new external_multiple_structure(
-                new external_value(PARAM_TEXT, 'Formatted date string labels')
+                new external_value(PARAM_TEXT, 'Formatted date string labels'),
+                'X axis labels', false
             ),
             'ylabels' => new external_multiple_structure(
                 new external_single_structure([
                     'value' => new external_value(PARAM_FLOAT, 'Engagement Value'),
                     'label' => new external_value(PARAM_TEXT, 'Engagement Label')
-                ])
+                ]),
+                'Y axis labels', false
             )
         ]);
     }

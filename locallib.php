@@ -44,7 +44,7 @@ function local_ace_teacher_course_graph(int $userid): string {
 }
 
 /**
- * Returns data required for teacher course data, from the users enrolled courses.
+ * Returns data for all courses the user is enrolled in.
  *
  * @param int $userid
  * @param int|null $period
@@ -54,7 +54,7 @@ function local_ace_teacher_course_graph(int $userid): string {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_teacher_course_data(int $userid, ?int $period = null, ?int $start = null, ?int $end = null): array {
+function local_ace_all_enrolled_courses_data(int $userid, ?int $period = null, ?int $start = null, ?int $end = null): array {
     $data = array('series' => [], 'xlabels' => []);
 
     if ($period === null) {
@@ -63,38 +63,18 @@ function local_ace_teacher_course_data(int $userid, ?int $period = null, ?int $s
 
     list($defaultcourseid, $courses) = local_ace_get_user_courses($userid);
 
+    $allvalues = [];
+
     foreach ($courses as $course) {
         $values = local_ace_course_data_values($course->id, $period, $start, $end);
-        $series = array();
-        $laststart = null;
-        $labels = empty($data['xlabels']);
-
-        foreach ($values as $value) {
-            if (!empty($laststart) && $value->endtime > $laststart) {
-                // If this period overlaps with the last week, skip it in the display.
-                continue;
-            }
-
-            if ($labels) {
-                $data['xlabels'][] = userdate($value->endtime, get_string('strftimedate'));
-            }
-            if (empty($value->value)) {
-                $series[] = 0;
-            } else {
-                $series[] = round(($value->value / $value->count) * 100); // Convert to average percentage.
-            }
-            // Make sure we don't show overlapping periods.
-            $laststart = $value->starttime;
-        }
-        if (!empty($series)) {
-            $data['series'][] = [
-                'title' => $course->shortname,
-                'values' => array_reverse($series)
-            ];
-        }
+        $allvalues[$course->shortname] = $values;
     }
 
-    $data['xlabels'] = array_reverse($data['xlabels']);
+    list($series, $xlabels, $max) = local_ace_get_matching_values_to_labels($allvalues);
+    $data['series'] = $series;
+    $data['xlabels'] = $xlabels;
+    $data['max'] = $max;
+    $data['stepsize'] = ceil($max / 2);
 
     $data['ylabels'] = [
         [
@@ -124,6 +104,82 @@ function local_ace_teacher_course_data(int $userid, ?int $period = null, ?int $s
     ];
 
     return $data;
+}
+
+/**
+ * Returns a matching set of labels to values.
+ *
+ * Not every result returned from `local_ace_course_data_values` will have the same amount of values
+ * even within the same period.
+ * This function will take a set of series and create labels, then it fills in any values that don't have a matching label.
+ *
+ * @param array $coursevalues
+ * @return array
+ * @throws coding_exception
+ */
+function local_ace_get_matching_values_to_labels(array $coursevalues): array {
+    $tempvalues = [];
+    $ongoinglargestcount = 0;
+    $labels = [];
+    // Go through every course and arrange the values by date. Find the course with the most values and use its labels.
+    // Doing this means that we end up with the most data possible to display.
+    foreach ($coursevalues as $shortname => $values) {
+        $series = [];
+        $laststart = null;
+        $templabels = [];
+        foreach ($values as $value) {
+            if (!empty($laststart) && $value->endtime > $laststart) {
+                // If this period overlaps with the last week, skip it in the display.
+                continue;
+            }
+
+            $date = userdate($value->endtime, get_string('strftimedate'));
+            $templabels[] = $date;
+            if (empty($value->value)) {
+                $series[$date] = 0;
+            } else {
+                $series[$date] =
+                    round(($value->value / $value->count) * 100); // Convert to average percentage.
+            }
+            // Make sure we don't show overlapping periods.
+            $laststart = $value->starttime;
+        }
+        $tempvalues[$shortname] = array_reverse($series);
+        $count = count($tempvalues[$shortname]);
+        if ($count > $ongoinglargestcount) {
+            $ongoinglargestcount = $count;
+            $labels = $templabels;
+        }
+    }
+
+    $labels = array_reverse($labels);
+
+    $finalvalues = [];
+    $max = 2;
+    // Loop the labels, check that for each course a corresponding value against the label exists, if one doesn't set it to 0.
+    foreach ($labels as $label) {
+        foreach ($tempvalues as $shortname => $valueset) {
+            if (isset($valueset[$label])) {
+                $finalvalues[$shortname][] = $valueset[$label];
+                if ($valueset[$label] > $max) {
+                    $max = ceil($valueset[$label]);
+                }
+            } else {
+                $finalvalues[$shortname][] = 0;
+            }
+        }
+    }
+
+    // We need to return the values ready for displaying in chart.js.
+    $preparedvalues = [];
+    foreach ($finalvalues as $shortname => $values) {
+        $preparedvalues[] = [
+            'label' => $shortname,
+            'values' => $values
+        ];
+    }
+
+    return [$preparedvalues, $labels, $max];
 }
 
 /**
@@ -396,7 +452,7 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
     $config = get_config('local_ace');
 
     $data = local_ace_student_graph_data($userid, $courses, null, null, $showxtitles);
-    if (empty($data['series'])) {
+    if (empty($data['data'])) {
         return '';
     }
 
@@ -404,27 +460,15 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
     $chart->set_legend_options(['display' => false]);
     $chart->set_smooth(true);
 
-    $chart->set_labels($data['labels']);
+    $chart->set_labels($data['xlabels']);
 
-    $chartseries = new \core\chart_series(get_string('yourengagement', 'local_ace'), $data['series']);
-    $chartseries->set_color($config->colouruserhistory);
-    $chart->add_series($chartseries);
-
-    // Check average course comparison data was included.
-    if (count($data['comparison']) == 2) {
-        if (empty($course)) {
-            $averagelabel = get_string('averageengagement', 'local_ace');
-        } else {
-            $averagelabel = get_string('averagecourseengagement', 'local_ace');
+    foreach ($data['data'] as $series) {
+        $chartseries = new \core\chart_series($series['label'], $series['values']);
+        $chartseries->set_color($series['colour']);
+        if (isset($series['fill'])) {
+            $chartseries->set_fill(1);
         }
-        $averageseries = new \core\chart_series($averagelabel, $data['comparison'][0]['values']);
-        $averageseries->set_color($config->colourusercoursehistory);
-        $chart->add_series($averageseries);
-
-        $averageseries2 = new \core\chart_series($averagelabel, $data['comparison'][1]['values']);
-        $averageseries2->set_color($config->colourusercoursehistory);
-        $averageseries2->set_fill(1);
-        $chart->add_series($averageseries2);
+        $chart->add_series($chartseries);
     }
 
     $yaxis0 = $chart->get_yaxis(0, true);
@@ -566,31 +610,34 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     }
     $stepsize = ceil($max / 2);
 
+    $allseries = [
+        [
+            'label' => get_string('yourengagement', 'local_ace'),
+            'values' => array_reverse($series),
+            'colour' => $config->colouruserhistory
+        ]
+    ];
+
     switch ($comparison) {
         case 'average-course-engagement':
-            $comparison = [
-                [
-                    'label' => get_string('averagecourseengagement', 'local_ace'),
-                    'values' => array_reverse($average1),
-                    'colour' => $config->colourusercoursehistory,
-                ],
-                [
-                    'label' => get_string('averagecourseengagement', 'local_ace'),
-                    'values' => array_reverse($average2),
-                    'colour' => $config->colourusercoursehistory,
-                    'fill' => true,
-                ]
+            $allseries[] = [
+                'label' => get_string('averagecourseengagement', 'local_ace'),
+                'values' => array_reverse($average1),
+                'colour' => $config->colourusercoursehistory,
+            ];
+            $allseries[] = [
+                'label' => get_string('averagecourseengagement', 'local_ace'),
+                'values' => array_reverse($average2),
+                'colour' => $config->colourusercoursehistory,
+                'fill' => true,
             ];
             break;
-        default:
-            $comparison = [];
     }
 
     // Reverse Series/labels to order by date correctly.
     return array(
-        'series' => array_reverse($series),
-        'labels' => array_reverse($labels),
-        'comparison' => $comparison,
+        'data' => $allseries,
+        'xlabels' => array_reverse($labels),
         'max' => $max,
         'stepsize' => $stepsize,
     );
