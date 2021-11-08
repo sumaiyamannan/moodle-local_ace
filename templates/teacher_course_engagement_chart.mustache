@@ -34,6 +34,11 @@
             <!-- Settings sidebar -->
             <div style="flex: auto; max-width: 20%" class="px-2">
                 {{> local_ace/chart_filters }}
+                <div id="course-filter-wrap" style="display: none;">
+                    <div class="form-group">
+                        <button class="btn btn-secondary" id="course-filter">{{#str}}coursefilter, local_ace{{/str}}</button>
+                    </div>
+                </div>
             </div>
         </div>
     </div>

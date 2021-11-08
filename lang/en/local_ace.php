@@ -88,6 +88,7 @@ $string['changegraph'] = 'Change Graph';
 $string['showallcourses'] = 'Show all courses';
 $string['showyourcourse'] = 'Show your course';
 $string['yourengagement'] = 'Your engagement';
+$string['coursefilter'] = 'Course filter';
 
 $string['privacy:metadata:local_ace'] = 'Summary of user analytics data';
 $string['privacy:metadata:local_ace:userid'] = 'The Moodle userid';
