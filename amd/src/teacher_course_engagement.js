@@ -24,18 +24,69 @@
 import Ajax from 'core/ajax';
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
-import {init as filtersInit} from 'local_ace/chart_filters';
 import Notification from 'core/notification';
+import ModalFactory from 'core/modal_factory';
+import ModalEvents from "core/modal_events";
 import ChartJS from 'core/chartjs-lazy';
+import Templates from "core/templates";
+import {init as filtersInit} from 'local_ace/chart_filters';
 
 // Stores randomised colours against course shortnames.
 let COURSE_COLOUR_MATCH = [];
 // List of course shortnames hidden on the graph.
 let HIDDEN_COURSES = [];
+// List of courses that could be displayed on the graph, updated after fetching engagement data.
+let COURSES = [];
 
 export const init = () => {
     filtersInit(updateGraph);
     updateGraph(null, null);
+
+    document.querySelector("#course-filter").addEventListener("click", courseFilter);
+};
+
+/**
+ * Presents a modal for user to select courses to be shown, hides all unselected courses.
+ */
+const courseFilter = () => {
+    var modalPromise = ModalFactory.create({type: ModalFactory.types.SAVE_CANCEL});
+
+    modalPromise.then(function(modal) {
+        modal.getRoot()[0].classList.add('chart-comparison-modal');
+        modal.setTitle("Course filter");
+        let templatePromise = Templates.render('local_ace/course_filter_modal', {courses: COURSES});
+        modal.setBody(templatePromise);
+        modal.setSaveButtonText("Filter");
+
+        // Set any course that is hidden to be unchecked in modal.
+        modal.getRoot().on(ModalEvents.bodyRendered, function() {
+            HIDDEN_COURSES.forEach((shortname) => {
+                let input = document.querySelector('input[id=course-filter-' + shortname + ']');
+                if (input !== null) {
+                    input.checked = false;
+                }
+            });
+        });
+
+        // Update the hidden courses list, hiding them on the chart and legend.
+        modal.getRoot().on(ModalEvents.save, function() {
+            let checkedCourses = document.querySelectorAll('input[name="course-filter-options"]:not(:checked)');
+            checkedCourses.forEach((ele) => {
+                if (!HIDDEN_COURSES.includes(ele.value)) {
+                    HIDDEN_COURSES.push(ele.value);
+                }
+            });
+            updateGraph();
+        });
+
+        modal.getRoot().on(ModalEvents.hidden, () => {
+            // Destroy when hidden, removes modal HTML from document.
+            modal.destroy();
+        });
+
+        modal.show();
+        return modal;
+    }).fail(Notification.exception);
 };
 
 const updateGraph = (startDate, endDate) => {
@@ -45,7 +96,10 @@ const updateGraph = (startDate, endDate) => {
             return null;
         }
         let data = getGraphDataPlaceholder();
+        // Reset courses list, stops us from showing courses that are no longer returned.
+        COURSES = [];
         response.series.forEach((series) => {
+            COURSES.push({shortname: series.label});
             // Store colours against courses so when switching history they stay the same colour.
             if (!COURSE_COLOUR_MATCH[series.label]) {
                 COURSE_COLOUR_MATCH[series.label] = parseInt(Math.random() * 0xffffff).toString(16);
@@ -64,6 +118,11 @@ const updateGraph = (startDate, endDate) => {
             yLabels[element.value] = element.label;
         });
         data.axes.y[0].labels = yLabels;
+
+        if (response.series.length > 8) {
+            document.querySelector("#course-filter-wrap").style.display = 'inline-block';
+        }
+
         return data;
     }).catch(() => {
         displayError("API Error");
@@ -88,7 +147,8 @@ const updateGraph = (startDate, endDate) => {
                 if (courseList === null) {
                     return;
                 }
-                HIDDEN_COURSES = courseList.split(",");
+                HIDDEN_COURSES.push(courseList.split(","));
+                // This gets all chartjs instances on the page, there is no filtering of non teacher course engagement charts.
                 ChartJS.helpers.each(ChartJS.instances, function(instance) {
                     let chart = instance.chart;
                     for (let dataset in chart.data.datasets) {
