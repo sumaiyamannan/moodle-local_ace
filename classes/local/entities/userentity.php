@@ -35,6 +35,7 @@ use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\entities\base;
+use core_reportbuilder\local\report\base as base_report;
 
 /**
  * User entity class implementation.
@@ -173,6 +174,8 @@ class userentity extends user {
                     GROUP BY contextid
                 ) AS {$logstorealiassub2} ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
         ";
+
+        $columns[] = base_report::is_selectable(true, $this, $usertablealias);
 
         // Fullname column.
         $columns[] = (new column(

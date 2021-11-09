@@ -21,6 +21,7 @@ namespace local_ace\reportbuilder\datasource;
 use core_reportbuilder\datasource;
 use local_ace\local\entities\userentity;
 use core_reportbuilder\local\helpers\database;
+use lang_string;
 
 /**
  * Users datasource
@@ -63,6 +64,14 @@ class users extends datasource {
         $this->add_columns_from_entity($userentityname);
         $this->add_filters_from_entity($userentityname);
         $this->add_conditions_from_entity($userentityname);
+
+        $emailselected = new lang_string('bulkactionbuttonvalue', 'local_ace');
+
+        $this->add_action_button([
+            'formaction' => '/local/ace/bulkaction.php',
+            'buttonvalue' => $emailselected,
+            'buttonid' => 'emailallselected',
+        ], true);
     }
 
     /**
