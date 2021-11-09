@@ -103,7 +103,7 @@ class user_analytics_graph extends external_api {
         list($courseid, $courses) = local_ace_get_user_courses($params['userid'], $params['courseid']);
         // Get data for all courses user is enrolled in.
         if ($showallcourses) {
-            $data = local_ace_all_enrolled_courses_data($params['userid'], null, $params['start'], $params['end']);
+            $data = local_ace_enrolled_courses_user_data($params['userid'], null, $params['start'], $params['end']);
             if (empty($data['series'])) {
                 return array(
                     'error' => get_string('noanalytics', 'local_ace')
