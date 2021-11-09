@@ -51,6 +51,14 @@ export const init = (parameters) => {
     filtersInit(updateGraph);
     updateGraph();
 
+    // Hide the 'Show all courses' button on every tab except 'Overall' (course=0).
+    let params = new URLSearchParams(new URL(window.location.href).search);
+    if (params.has('course')) {
+        if (parseInt(params.get('course')) === 0) {
+            document.querySelector('#show-courses-buttons').style.display = null;
+        }
+    }
+
     // Setup chart comparison control.
     let chartComparisonButton = document.querySelector("#chart-comparison");
     chartComparisonButton.addEventListener("click", createChartComparisonModal);
@@ -144,6 +152,7 @@ const updateGraph = (startDatetime = START_TIME, endDateTime = END_TIME) => {
     }
     let engagementDataPromise = getUserEngagementData(courseid, USER_ID, START_TIME, END_TIME)
         .then(function(response) {
+            // Check for any errors before processing.
             if (response.error !== null) {
                 displayError(response.error);
                 return null;
@@ -163,6 +172,7 @@ const updateGraph = (startDatetime = START_TIME, endDateTime = END_TIME) => {
                 let series = getSeriesPlaceholder();
                 series.label = data.label;
                 series.values = data.values;
+                // Randomise the colour of courses.
                 if (SHOW_ALL_COURSES || data.colour === undefined) {
                     if (!COURSE_COLOUR_MATCH[series.label]) {
                         COURSE_COLOUR_MATCH[series.label] = parseInt(Math.random() * 0xffffff).toString(16);
