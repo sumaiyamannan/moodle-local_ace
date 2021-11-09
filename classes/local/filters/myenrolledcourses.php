@@ -20,24 +20,22 @@ namespace local_ace\local\filters;
 
 use MoodleQuickForm;
 use core_reportbuilder\local\helpers\database;
+use context_system;
 
 /**
- * Select report filter
+ * Restricts the courses displayed to the ones the logged in user is enrolled in.
  *
  * @package     local_ace
  * @copyright   2021 University of Canterbury
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course extends \core_reportbuilder\local\filters\base {
+class myenrolledcourses extends \core_reportbuilder\local\filters\base {
 
     /** @var int Any value */
-    public const ANY_VALUE = 0;
+    public const ENROLLED_ONLY = 0;
 
     /** @var int Equal to */
-    public const EQUAL_TO = 1;
-
-    /** @var int Not equal to */
-    public const NOT_EQUAL_TO = 2;
+    public const ALL_ACCESSIBLE = 1;
 
     /**
      * Returns an array of comparison operators
@@ -46,9 +44,8 @@ class course extends \core_reportbuilder\local\filters\base {
      */
     private function get_operators(): array {
         $operators = [
-            self::ANY_VALUE => get_string('filterisanyvalue', 'core_reportbuilder'),
-            self::EQUAL_TO => get_string('filterisequalto', 'core_reportbuilder'),
-            self::NOT_EQUAL_TO => get_string('filterisnotequalto', 'core_reportbuilder')
+            self::ENROLLED_ONLY => get_string('enrolledonly', 'local_ace'),
+            self::ALL_ACCESSIBLE => get_string('allaccessible', 'local_ace')
         ];
 
         return $this->filter->restrict_limited_operators($operators);
@@ -66,7 +63,7 @@ class course extends \core_reportbuilder\local\filters\base {
 
         $mform->addElement('group', $this->name . '_group', '', $elements, '', false);
 
-        $mform->hideIf($this->name . '_value', $this->name . '_operator', 'eq', self::ANY_VALUE);
+        $mform->hideIf($this->name . '_value', $this->name . '_operator', 'eq', self::ENROLLED_ONLY);
     }
 
     /**
@@ -78,39 +75,33 @@ class course extends \core_reportbuilder\local\filters\base {
      * @return array array of two elements - SQL query and named parameters
      */
     public function get_sql_filter(array $values): array {
-        global $PAGE;
-        $coursecontext = $PAGE->context->get_course_context(false);
-        if (!empty($coursecontext)) {
-            $courseid = $coursecontext->instanceid;
-        } else {
-            $courseid = SITEID;
-        }
-        $name = database::generate_param_name();
+        global $DB;
+        $operator = $values["{$this->name}_operator"] ?? self::ENROLLED_ONLY;
 
-        $operator = $values["{$this->name}_operator"] ?? self::ANY_VALUE;
-
-        $fieldsql = $this->filter->get_field_sql();
-        $params = $this->filter->get_field_params();
-
-        // Validate filter form values.
         if (!$this->validate_filter_values((int) $operator)) {
             // Filter configuration is invalid. Ignore the filter.
             return ['', []];
         }
 
-        switch ($operator) {
-            case self::EQUAL_TO:
-                $fieldsql .= "=:$name";
-                $params[$name] = $courseid;
-                break;
-            case self::NOT_EQUAL_TO:
-                $fieldsql .= "<>:$name";
-                $params[$name] = $courseid;
-                break;
-            default:
+        $allaccessible = false;
+        if ($operator == self::ALL_ACCESSIBLE) {
+            if (is_siteadmin() || has_capability('moodle/course:view', context_system::instance())) {
+                // This user can view all courses - just ignore the filter rather than passing all of the site course ids.
                 return ['', []];
+            }
+            $allaccessible = true;
         }
-        return [$fieldsql, $params];
+
+        $courses = enrol_get_my_courses('id', null, 0, [], $allaccessible);
+        $courseids = array_keys($courses);
+
+        $fieldsql = $this->filter->get_field_sql();
+        $params = $this->filter->get_field_params();
+
+        $paramprefix = database::generate_param_name() . '_';
+        [$courseselect, $courseparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, $paramprefix);
+
+        return ["{$fieldsql} $courseselect", array_merge($params, $courseparams)];
     }
 
     /**
