@@ -71,7 +71,7 @@ class teacher_course_analytics_graph extends external_api {
             )
         );
 
-        $data = local_ace_all_enrolled_courses_data($USER->id, null, $start, $end);
+        $data = local_ace_enrolled_courses_average_data($USER->id, null, $start, $end);
         if (empty($data['series'])) {
             return array(
                 'error' => get_string('noanalytics', 'local_ace')

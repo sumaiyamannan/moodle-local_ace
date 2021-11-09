@@ -24,6 +24,8 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+require_once($CFG->libdir . '/enrollib.php');
+
 /**
  * Returns the HTML output for the teacher course engagement graph
  *
@@ -44,7 +46,123 @@ function local_ace_teacher_course_graph(int $userid): string {
 }
 
 /**
- * Returns data for all courses the user is enrolled in.
+ * Returns users engagement data in their enrolled courses.
+ *
+ * @param int $userid
+ * @param int|null $period
+ * @param int|null $start
+ * @param int|null $end
+ * @return array
+ * @throws coding_exception
+ * @throws dml_exception
+ */
+function local_ace_enrolled_courses_user_data(int $userid, ?int $period = null, ?int $start = null, ?int $end = null): array {
+    $data = array('series' => [], 'xlabels' => []);
+
+    $config = get_config('local_ace');
+
+    if ($period === null) {
+        $period = (int) $config->displayperiod;
+    }
+
+    if ($start === null) {
+        $start = time() - $config->userhistory;
+    }
+
+    list($defaultcourseid, $courses) = local_ace_get_user_courses($userid);
+
+    $allvalues = [];
+    foreach ($courses as $course) {
+        $allvalues[$course->shortname] = $values = local_ace_get_individuals_course_data($userid, $course->id, $period, $start, $end);
+    }
+
+    list($series, $xlabels, $max) = local_ace_get_matching_values_to_labels($allvalues);
+    $data['series'] = $series;
+    $data['xlabels'] = $xlabels;
+    $data['max'] = $max;
+    $data['stepsize'] = ceil($max / 2);
+
+    $data['ylabels'] = [
+        [
+            'value' => 0,
+            'label' => get_string('none', 'local_ace')
+        ],
+        [
+            'value' => 20,
+            'label' => ''
+        ],
+        [
+            'value' => 40,
+            'label' => get_string('medium', 'local_ace')
+        ],
+        [
+            'value' => 60,
+            'label' => ''
+        ],
+        [
+            'value' => 80,
+            'label' => ''
+        ],
+        [
+            'value' => 100,
+            'label' => get_string('high', 'local_ace')
+        ]
+    ];
+
+    return $data;
+}
+
+/**
+ * Get a users engagement data in a single course, returned data contains only the engagement values.
+ *
+ * @param int $userid
+ * @param int $courseid
+ * @param int|null $period
+ * @param int|null $start
+ * @param int|null $end
+ * @return array
+ * @throws dml_exception
+ */
+function local_ace_get_individuals_course_data(int $userid, int $courseid, int $period = null, int $start = null,
+    int $end = null): array {
+    global $DB;
+
+    $params = [
+        'userid' => $userid,
+        'courseid' => $courseid,
+        'per' => $period
+    ];
+    $startendsql = "";
+    if ($start != null) {
+        $startendsql .= "AND endtime > :start ";
+        $params['start'] = $start;
+    }
+    if ($end != null) {
+        $startendsql .= "AND endtime < :end ";
+        $params['end'] = $end;
+    }
+
+    $sql = "WITH samples AS (
+                SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
+                       EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
+                       value,
+                       userid
+                FROM {local_ace_samples} s
+                JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
+                JOIN {course} co ON cx.instanceid = co.id
+                WHERE (endtime - starttime = :per) "
+        . $startendsql . " AND co.id = :courseid
+            )
+            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value
+              FROM samples s
+              WHERE s.userid = :userid
+              GROUP BY s.starttime, s.endtime
+              ORDER BY s.starttime DESC";
+    return $DB->get_records_sql($sql, $params);
+}
+
+/**
+ * Returns the course average data from the courses the user is enrolled in.
  *
  * @param int $userid
  * @param int|null $period
@@ -54,20 +172,69 @@ function local_ace_teacher_course_graph(int $userid): string {
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_all_enrolled_courses_data(int $userid, ?int $period = null, ?int $start = null, ?int $end = null): array {
+function local_ace_enrolled_courses_average_data(int $userid, ?int $period = null, ?int $start = null, ?int $end = null): array {
+    global $DB;
+
     $data = array('series' => [], 'xlabels' => []);
 
+    $config = get_config('local_ace');
+
     if ($period === null) {
-        $period = (int) get_config('local_ace', 'displayperiod');
+        $period = (int) $config->displayperiod;
     }
 
-    list($defaultcourseid, $courses) = local_ace_get_user_courses($userid);
+    $params = [
+        'userid' => $userid,
+        'active' => ENROL_USER_ACTIVE,
+        'enabled' => ENROL_INSTANCE_ENABLED
+    ];
+
+    // Selecting courses which have start date within the last six months, this ~should~ only get courses in the current semester.
+    // Unless $start is defined, in which case we do not filter for the current semester.
+    $filtersql = "WHERE ";
+    if (!isset($start)) {
+        $filtersql .= "co.startdate >= :coursestart AND co.startdate <= :now";
+        $params['coursestart'] = time() - 15768000; // TODO: Move into a setting, to support uni's that do trimesters.
+        $params['now'] = time();
+    }
+
+    $shortnameregs = $config->courseregex;
+    if (!empty($shortnameregs)) {
+        if (!isset($start)) {
+            $filtersql .= " AND ";
+        }
+        $filtersql .= "co.shortname ~ '$shortnameregs'";
+    }
+
+    // Only get enrolled courses, filter by shortname if required.
+    $sql = "SELECT co.id, co.shortname, co.enddate, co.fullname
+                FROM {course} co
+                JOIN (SELECT DISTINCT e.courseid
+                        FROM {enrol} e
+                        JOIN {user_enrolments} ue ON (ue.enrolid = e.id AND ue.userid = :userid)
+                        WHERE ue.status = :active AND e.status = :enabled
+                    ) en ON (en.courseid = co.id)
+                    $filtersql ORDER BY co.shortname";
+    $courses = $DB->get_records_sql($sql, $params);
+
+    // Filter courses that are excluded by custom field.
+    $excludefield = \core_customfield\field::get_record(['shortname' => 'ucanalyticscourseexclude']);
+    foreach ($courses as $course) {
+        if (!empty($excludefield)) {
+            $data = \core_customfield\data::get_record(['instanceid' => $course->id, 'fieldid' => $excludefield->get('id')]);
+            if (!empty($data) && !empty($data->get('intvalue'))) {
+                unset($courses[$course->id]);
+            }
+        }
+    }
 
     $allvalues = [];
 
     foreach ($courses as $course) {
         $values = local_ace_course_data_values($course->id, $period, $start, $end);
-        $allvalues[$course->shortname] = $values;
+        if (!empty($values)) {
+            $allvalues[$course->shortname] = $values;
+        }
     }
 
     list($series, $xlabels, $max) = local_ace_get_matching_values_to_labels($allvalues);
@@ -330,7 +497,7 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
  * @throws dml_exception
  * @throws moodle_exception
  */
-function local_ace_student_full_graph(int $userid, ?int $courseid = 0) {
+function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
     global $PAGE, $OUTPUT;
 
     list($courseid, $courses) = local_ace_get_user_courses($userid, $courseid);
@@ -484,6 +651,7 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
 
 /**
  * Fetch graph data for specific user.
+ * When passing in an array of course ids it will only return the averaged value, not individual course data.
  *
  * @param int $userid
  * @param int|array $course
@@ -524,8 +692,8 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     list($insql, $inparamscf1) = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, 'pa');
     $coursefilter = "AND co.id $insql";
 
-    // Get this users stats.
-    // Get Latest values first, so we always show the most recent data-set.
+    // Get the users stats.
+    // Get the latest values first, so we always show the most recent data-set.
     $sql = "WITH samples AS (
                 SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
                        EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
