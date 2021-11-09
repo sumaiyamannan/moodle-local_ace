@@ -120,7 +120,7 @@ const updateGraph = (startDate, endDate) => {
         data.axes.y[0].labels = yLabels;
 
         if (response.series.length > 8) {
-            document.querySelector("#course-filter-wrap").style.display = 'inline-block';
+            document.querySelector("#course-filter-wrap").style.display = null;
         }
 
         return data;

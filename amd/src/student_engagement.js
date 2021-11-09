@@ -61,14 +61,16 @@ export const init = (parameters) => {
 
 const showAllCourses = function() {
     document.querySelector("#show-all-courses").style.display = 'none';
-    document.querySelector("#show-your-course").style.display = 'inline-block';
+    document.querySelector("#show-your-course").style.display = null;
     SHOW_ALL_COURSES = true;
+    document.querySelector("#student-engagement-legend").style.display = 'none';
     updateGraph();
 };
 
 const showYourCourse = function() {
     document.querySelector("#show-your-course").style.display = 'none';
-    document.querySelector("#show-all-courses").style.display = 'inline-block';
+    document.querySelector("#show-all-courses").style.display = null;
+    document.querySelector("#student-engagement-legend").style.display = null;
     SHOW_ALL_COURSES = false;
     updateGraph();
 };
