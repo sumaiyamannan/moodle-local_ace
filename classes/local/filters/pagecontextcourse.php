@@ -22,37 +22,13 @@ use MoodleQuickForm;
 use core_reportbuilder\local\helpers\database;
 
 /**
- * Select report filter
+ * Get course context from global $PAGE and use it as a filter.
  *
  * @package     local_ace
  * @copyright   2021 University of Canterbury
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class course extends \core_reportbuilder\local\filters\base {
-
-    /** @var int Any value */
-    public const ANY_VALUE = 0;
-
-    /** @var int Equal to */
-    public const EQUAL_TO = 1;
-
-    /** @var int Not equal to */
-    public const NOT_EQUAL_TO = 2;
-
-    /**
-     * Returns an array of comparison operators
-     *
-     * @return array
-     */
-    private function get_operators(): array {
-        $operators = [
-            self::ANY_VALUE => get_string('filterisanyvalue', 'core_reportbuilder'),
-            self::EQUAL_TO => get_string('filterisequalto', 'core_reportbuilder'),
-            self::NOT_EQUAL_TO => get_string('filterisnotequalto', 'core_reportbuilder')
-        ];
-
-        return $this->filter->restrict_limited_operators($operators);
-    }
+class pagecontextcourse extends \core_reportbuilder\local\filters\base {
 
     /**
      * Adds controls specific to this filter in the form.
@@ -60,13 +36,7 @@ class course extends \core_reportbuilder\local\filters\base {
      * @param MoodleQuickForm $mform
      */
     public function setup_form(MoodleQuickForm $mform): void {
-        $elements = [];
-        $elements['operator'] = $mform->createElement('select', $this->name . '_operator',
-            get_string('filterfieldoperator', 'core_reportbuilder', $this->get_header()), $this->get_operators());
-
-        $mform->addElement('group', $this->name . '_group', '', $elements, '', false);
-
-        $mform->hideIf($this->name . '_value', $this->name . '_operator', 'eq', self::ANY_VALUE);
+        // This filter doesn't have any specific controls.
     }
 
     /**
@@ -87,29 +57,11 @@ class course extends \core_reportbuilder\local\filters\base {
         }
         $name = database::generate_param_name();
 
-        $operator = $values["{$this->name}_operator"] ?? self::ANY_VALUE;
-
         $fieldsql = $this->filter->get_field_sql();
         $params = $this->filter->get_field_params();
 
-        // Validate filter form values.
-        if (!$this->validate_filter_values((int) $operator)) {
-            // Filter configuration is invalid. Ignore the filter.
-            return ['', []];
-        }
-
-        switch ($operator) {
-            case self::EQUAL_TO:
-                $fieldsql .= "=:$name";
-                $params[$name] = $courseid;
-                break;
-            case self::NOT_EQUAL_TO:
-                $fieldsql .= "<>:$name";
-                $params[$name] = $courseid;
-                break;
-            default:
-                return ['', []];
-        }
+        $fieldsql .= "=:$name";
+        $params[$name] = $courseid;
         return [$fieldsql, $params];
     }
 
@@ -120,6 +72,6 @@ class course extends \core_reportbuilder\local\filters\base {
      * @return bool
      */
     private function validate_filter_values(?int $operator): bool {
-        return !($operator === null);
+        return true; // No form config for this filter.
     }
 }

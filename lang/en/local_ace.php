@@ -103,6 +103,6 @@ $string['emailfailed'] = 'Unfortunately something went wrong and the emails have
 $string['bulkemailheading'] = 'Bulk emails';
 $string['bulkemailbreadcrumbs'] = 'Bulk email messages';
 $string['bulkactionbuttonvalue'] = 'Email Selected';
-
+$string['pagecontextcourse'] = 'Page course context';
 
 

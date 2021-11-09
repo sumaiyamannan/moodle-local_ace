@@ -28,7 +28,7 @@ use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
-use local_ace\local\filters\course;
+use local_ace\local\filters\pagecontextcourse;
 use core_reportbuilder\local\helpers\user_profile_fields;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
@@ -466,9 +466,9 @@ class userentity extends user {
             ->add_joins($this->get_joins());
 
         $filters[] = (new filter(
-            course::class,
+            pagecontextcourse::class,
             'course',
-            new lang_string('course'),
+            new lang_string('pagecontextcourse', 'local_ace'),
             $this->get_entity_name(),
             "{$coursetablealias}.id"
         ))
