@@ -221,8 +221,8 @@ function local_ace_enrolled_courses_average_data(int $userid, ?int $period = nul
     $excludefield = \core_customfield\field::get_record(['shortname' => 'ucanalyticscourseexclude']);
     foreach ($courses as $course) {
         if (!empty($excludefield)) {
-            $data = \core_customfield\data::get_record(['instanceid' => $course->id, 'fieldid' => $excludefield->get('id')]);
-            if (!empty($data) && !empty($data->get('intvalue'))) {
+            $fielddata = \core_customfield\data::get_record(['instanceid' => $course->id, 'fieldid' => $excludefield->get('id')]);
+            if (!empty($fielddata) && !empty($fielddata->get('intvalue'))) {
                 unset($courses[$course->id]);
             }
         }
