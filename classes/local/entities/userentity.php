@@ -29,6 +29,7 @@ use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
 use local_ace\local\filters\pagecontextcourse;
+use local_ace\local\filters\myenrolledcourses;
 use core_reportbuilder\local\helpers\user_profile_fields;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
@@ -469,6 +470,15 @@ class userentity extends user {
             pagecontextcourse::class,
             'course',
             new lang_string('pagecontextcourse', 'local_ace'),
+            $this->get_entity_name(),
+            "{$coursetablealias}.id"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            myenrolledcourses::class,
+            'enrolledcourse',
+            new lang_string('myenrolledcourses', 'local_ace'),
             $this->get_entity_name(),
             "{$coursetablealias}.id"
         ))

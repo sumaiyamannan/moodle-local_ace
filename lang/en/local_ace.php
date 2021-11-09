@@ -104,5 +104,6 @@ $string['bulkemailheading'] = 'Bulk emails';
 $string['bulkemailbreadcrumbs'] = 'Bulk email messages';
 $string['bulkactionbuttonvalue'] = 'Email Selected';
 $string['pagecontextcourse'] = 'Page course context';
-
-
+$string['myenrolledcourses'] = 'My enrolled courses';
+$string['allaccessible'] = 'All accessible to this user';
+$string['enrolledonly'] = 'Enrolled only';
