@@ -93,6 +93,7 @@ const setupFilters = () => {
 
     let dateRangeFilter = filtersNode.querySelector(Selectors.dateRange);
     let picker = new Litepicker({
+        format: 'DD-MM-YYYY',
         element: dateRangeFilter,
         singleMode: false,
         splitView: false,
