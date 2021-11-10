@@ -80,6 +80,7 @@ const setupFilters = () => {
     courseToDateFilter.addEventListener("click", () => {
         setActiveFilter(courseToDateFilter);
         updateFunc(null, null);
+        picker.clearSelection();
     });
 
     let last12DaysFilter = filtersNode.querySelector(Selectors.last12Days);
@@ -89,6 +90,7 @@ const setupFilters = () => {
         date.setDate(date.getDate() - 12);
         let val = date.getTime() / 1000;
         updateFunc(val.toFixed(0), null);
+        picker.clearSelection();
     });
 
     let dateRangeFilter = filtersNode.querySelector(Selectors.dateRange);
