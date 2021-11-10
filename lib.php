@@ -34,5 +34,10 @@ function local_ace_user_preferences() {
             'null' => NULL_ALLOWED,
             'default' => 'none'
         ],
+        'local_ace_comparison_method' => [
+            'type' => PARAM_TEXT,
+            'null' => NULL_ALLOWED,
+            'default' => 'none'
+        ],
     ];
 }

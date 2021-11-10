@@ -49,7 +49,6 @@ let COURSE_COLOUR_MATCH = [];
 export const init = (parameters) => {
     USER_ID = parameters.userid;
     filtersInit(updateGraph);
-    updateGraph();
 
     // Hide the 'Show all courses' button on every tab except 'Overall' (course=0).
     let params = new URLSearchParams(new URL(window.location.href).search);
@@ -62,6 +61,19 @@ export const init = (parameters) => {
     // Setup chart comparison control.
     let chartComparisonButton = document.querySelector("#chart-comparison");
     chartComparisonButton.addEventListener("click", createChartComparisonModal);
+    // Retrieve user preference and set our comparison option, then update the graph.
+    getComparisonMethodPreference().then(response => {
+        if (response.error) {
+            displayError(response.error);
+            return;
+        }
+        if (response.preferences[0].value !== null) {
+            COMPARISON_OPTION = response.preferences[0].value;
+        }
+        updateGraph();
+        return;
+    }).catch(Notification.exception);
+
 
     document.querySelector("#show-all-courses").addEventListener("click", showAllCourses);
     document.querySelector("#show-your-course").addEventListener("click", showYourCourse);
@@ -117,6 +129,7 @@ const createChartComparisonModal = function() {
                 COMPARISON_OPTION = 'none';
             }
             updateGraph();
+            updateComparisonMethodPreference();
         });
 
         modal.getRoot().on(ModalEvents.hidden, () => {
@@ -246,6 +259,40 @@ const getUserEngagementData = (courseid, userid, start, end, comparison = COMPAR
             'showallcourses': SHOW_ALL_COURSES,
         },
     }])[0];
+};
+
+/**
+ * Updates the comparison method user preference.
+ */
+const updateComparisonMethodPreference = function() {
+    let request = {
+        methodname: 'core_user_update_user_preferences',
+        args: {
+            preferences: [
+                {
+                    type: 'local_ace_comparison_method',
+                    value: COMPARISON_OPTION
+                }
+            ]
+        }
+    };
+
+    Ajax.call([request])[0].fail(Notification.exception);
+};
+
+/**
+ * Return a promise for the comparison method user preference.
+ *
+ * @returns {Promise}
+ */
+const getComparisonMethodPreference = function() {
+    let request = {
+        methodname: 'core_user_get_user_preferences',
+        args: {
+            name: 'local_ace_comparison_method'
+        }
+    };
+    return Ajax.call([request])[0];
 };
 
 /**
