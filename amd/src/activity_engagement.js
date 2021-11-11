@@ -33,6 +33,8 @@ let CUMULATIVE = false;
 // Stores the current time method, allowing us to update the graph without supplying values.
 let START_TIME = null;
 let END_TIME = null;
+// Colour of the activity engagement line.
+let COLOUR_ACTIVITY_ENGAGEMENT = null;
 
 /**
  * Initialise the course engagement graph
@@ -43,6 +45,7 @@ export const init = (parameters) => {
     if (CMID !== 0) {
         return;
     }
+    COLOUR_ACTIVITY_ENGAGEMENT = parameters.colouractivityengagement;
     CMID = parameters.cmid;
     filtersInit(updateGraph);
     updateGraph();
@@ -141,7 +144,7 @@ const getGraphDataPlaceholder = () => {
                 "labels": null,
                 "type": null,
                 "values": null,
-                "colors": ['#613d7c'],
+                "colors": [COLOUR_ACTIVITY_ENGAGEMENT],
                 "fill": null,
                 "axes": {
                     "x": null,

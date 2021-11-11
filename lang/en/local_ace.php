@@ -67,6 +67,8 @@ $string['colourusercoursehistory'] = 'User course average';
 $string['colourusercoursehistory_desc'] = 'The colour used for the average course engagment level';
 $string['colouruserhistory'] = 'User average';
 $string['colouruserhistory_desc'] = 'The colour used for the average user engagement level';
+$string['colouractivityengagement'] = 'Activity engagement';
+$string['colouractivityengagement_desc'] = 'The colour used for the activity engagement level';
 $string['courseregex'] = 'Course shortname regex';
 $string['courseregex_desc'] =
     'Regex to cover courses we want to be included in the analytics. The data entered here will be compared against the course shortname.';

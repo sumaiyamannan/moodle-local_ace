@@ -821,9 +821,12 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
 function local_ace_course_module_engagement_graph(int $cmid): string {
     global $PAGE;
 
+    $config = get_config('local_ace');
+
     $renderer = $PAGE->get_renderer('core');
     $output = $renderer->render_from_template('local_ace/activity_engagement_chart', null);
     $context = [
+        'colouractivityengagement' => $config->colouractivityengagement ?? '#613d7c',
         'cmid' => $cmid,
     ];
     $PAGE->requires->js_call_amd('local_ace/activity_engagement', 'init', [$context]);

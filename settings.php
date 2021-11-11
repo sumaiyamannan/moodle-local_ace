@@ -94,6 +94,13 @@ if ($hassiteconfig) {
             '#5cb85c'
         ));
 
+        $settings->add(new admin_setting_configcolourpicker(
+            'local_ace/colouractivityengagement',
+            new lang_string('colouractivityengagement', 'local_ace'),
+            new lang_string('colouractivityengagement_desc', 'local_ace'),
+            '#613d7c'
+        ));
+
         $settings->add(new admin_setting_configtext(
             'local_ace/courseregex',
             new lang_string('courseregex', 'local_ace'),
