@@ -55,6 +55,16 @@ $functions = array(
         'ajax' => true,
         'services' => array('local_ace_webservice')
     ),
+    'local_ace_get_activity_analytics_graph' => array(
+        'classname' => 'activity_analytics_graph',
+        'methodname' => 'get_activity_analytics_graph',
+        'classpath' => 'local/ace/classes/external/activity_analytics_graph.php',
+        'description' => 'Get activity analytics data',
+        'type' => 'read',
+        'capabilities' => '',
+        'ajax' => true,
+        'services' => array('local_ace_webservice')
+    ),
 );
 
 $services = array(
