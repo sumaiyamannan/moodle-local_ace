@@ -73,7 +73,7 @@ function local_ace_enrolled_courses_user_data(int $userid, ?int $period = null, 
 
     $allvalues = [];
     foreach ($courses as $course) {
-        $allvalues[$course->shortname] = $values = local_ace_get_individuals_course_data($userid, $course->id, $period, $start, $end);
+        $allvalues[$course->shortname] = local_ace_get_individuals_course_data($userid, $course->id, $period, $start, $end);
     }
 
     list($series, $xlabels, $max) = local_ace_get_matching_values_to_labels($allvalues);
@@ -808,6 +808,131 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         'xlabels' => array_reverse($labels),
         'max' => $max,
         'stepsize' => $stepsize,
+    );
+}
+
+/**
+ * Returns the HTML output for showing the activity engagement graph.
+ *
+ * @param int $cmid Course module ID
+ * @return string
+ * @throws moodle_exception
+ */
+function local_ace_course_module_engagement_graph(int $cmid): string {
+    global $PAGE;
+
+    $config = get_config('local_ace');
+
+    $renderer = $PAGE->get_renderer('core');
+    $output = $renderer->render_from_template('local_ace/activity_engagement_chart', null);
+    $context = [
+        'colouractivityengagement' => $config->colouractivityengagement ?? '#613d7c',
+        'cmid' => $cmid,
+    ];
+    $PAGE->requires->js_call_amd('local_ace/activity_engagement', 'init', [$context]);
+    return $output;
+}
+
+/**
+ * Get the activity engagement data from the logstore table.
+ *
+ * @param int $cmid Course module ID
+ * @param int|null $start
+ * @param int|null $end
+ * @param bool $cumulative
+ * @return array|string
+ * @throws coding_exception
+ * @throws dml_exception
+ */
+function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, ?int $end = null, bool $cumulative = false) {
+    global $DB;
+
+    $cm = $DB->get_record('course_modules', ['id' => $cmid], 'course');
+    if ($cm == null) {
+        return get_string('noanalytics', 'local_ace');
+    }
+
+    $config = get_config('local_ace');
+    if ($start === null) {
+        $start = time() - $config->userhistory;
+    }
+    if ($end === null) {
+        $end = time();
+    }
+
+    // It's not required to add the course in the WHERE, but it helps with performance.
+    $sql = "SELECT to_timestamp(timecreated)::date as date, COUNT(*)
+                FROM {logstore_standard_log}
+                WHERE contextlevel = :modulelevel AND courseid = :courseid AND contextinstanceid = :contextinstanceid
+                    AND timecreated >= :start AND timecreated <= :end
+                GROUP BY date ORDER BY date";
+    $params = [
+        'modulelevel' => CONTEXT_MODULE,
+        'courseid' => $cm->course,
+        'contextinstanceid' => $cmid,
+        'start' => $start,
+        'end' => $end,
+    ];
+    $records = $DB->get_records_sql($sql, $params);
+
+    // Graph requires 2+ records to operate.
+    if (count($records) <= 1) {
+        return get_string('noanalytics', 'local_ace');
+    }
+
+    $series = [];
+    $labels = [];
+
+    if ($cumulative) {
+        $max = array_sum(array_column($records, 'count'));
+    } else {
+        $max = max(array_column($records, 'count'));
+    }
+    $min = min(array_column($records, 'count'));
+
+    $count = 0;
+    foreach ($records as $record) {
+        $labels[] = userdate(strtotime($record->date), get_string('strftimedate'));
+        // Normalise the value into a 0-100 range.
+        if ($cumulative) {
+            $count += $record->count;
+            $series[] = (($count - $min) / ($max - $min)) * 100;
+        } else {
+            $series[] = (($record->count - $min) / ($max - $min)) * 100;
+        }
+    }
+
+    $ylabels = [
+        [
+            'value' => 0,
+            'label' => get_string('none', 'local_ace')
+        ],
+        [
+            'value' => 20,
+            'label' => ''
+        ],
+        [
+            'value' => 40,
+            'label' => get_string('medium', 'local_ace')
+        ],
+        [
+            'value' => 60,
+            'label' => ''
+        ],
+        [
+            'value' => 80,
+            'label' => ''
+        ],
+        [
+            'value' => 100,
+            'label' => get_string('high', 'local_ace')
+        ]
+    ];
+
+    return array(
+        'series' => $series,
+        'xlabels' => $labels,
+        'ylabels' => $ylabels,
     );
 }
 
