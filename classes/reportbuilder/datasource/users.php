@@ -22,6 +22,7 @@ use core_reportbuilder\datasource;
 use local_ace\local\entities\userentity;
 use core_reportbuilder\local\helpers\database;
 use lang_string;
+use moodle_url;
 
 /**
  * Users datasource
@@ -66,9 +67,10 @@ class users extends datasource {
         $this->add_conditions_from_entity($userentityname);
 
         $emailselected = new lang_string('bulkactionbuttonvalue', 'local_ace');
+        $action = new moodle_url('/local/ace/bulkaction.php');
 
         $this->add_action_button([
-            'formaction' => '/local/ace/bulkaction.php',
+            'formaction' => $action,
             'buttonvalue' => $emailselected,
             'buttonid' => 'emailallselected',
         ], true);
