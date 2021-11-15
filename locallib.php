@@ -664,7 +664,7 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
  * @throws dml_exception
  */
 function local_ace_student_graph_data(int $userid, $course, ?int $start = null, ?int $end = null, ?bool $showxtitles = true,
-    string $comparison = 'average-course-engagement') {
+    string $comparison = 'average-course-engagement', bool $normalisevalues = true) {
     global $DB;
 
     $config = get_config('local_ace');
@@ -734,6 +734,18 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     $average2 = array();
     $laststart = null;
 
+    $max = 0;
+    $min = 0;
+    foreach ($values as $value) {
+        $val = ($value->value / $value->count) * 100;
+        if ($val > $max) {
+            $max = $val;
+        }
+        if ($val < $min) {
+            $min = $val;
+        }
+    }
+
     foreach ($values as $value) {
         if (!empty($laststart) && $value->endtime > ($laststart + (DAYSECS))) {
             // If this period overlaps with the last week, skip it in the display.
@@ -748,15 +760,24 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         if (empty($value->value)) {
             $series[] = 0;
         } else {
-            $series[] = ($value->value / $value->count) * 100; // Convert to average percentage.
+            if ($normalisevalues) {
+                $series[] = local_ace_normalise_value(($value->value / $value->count) * 100, $min, $max);
+            } else {
+                $series[] = ($value->value / $value->count) * 100;
+            }
         }
 
         if (empty($value->avg)) {
             $average1[] = 0;
             $average2[] = 0;
         } else {
-            $average1[] = ($value->avg - ($value->stddev / 2)) * 100;
-            $average2[] = ($value->avg + ($value->stddev / 2)) * 100;
+            if ($normalisevalues) {
+                $average1[] = local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, $min, $max);
+                $average2[] = local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, $min, $max);
+            } else {
+                $average1[] = ($value->avg - ($value->stddev / 2)) * 100;
+                $average2[] = ($value->avg + ($value->stddev / 2)) * 100;
+            }
         }
         // Make sure we don't show overlapping periods.
         $laststart = $value->starttime;
@@ -896,9 +917,9 @@ function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, 
         // Normalise the value into a 0-100 range.
         if ($cumulative) {
             $count += $record->count;
-            $series[] = (($count - $min) / ($max - $min)) * 100;
+            $series[] = local_ace_normalise_value($count, $min, $max);
         } else {
-            $series[] = (($record->count - $min) / ($max - $min)) * 100;
+            $series[] = local_ace_normalise_value($record->count, $min, $max);
         }
     }
 
@@ -934,6 +955,18 @@ function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, 
         'xlabels' => $labels,
         'ylabels' => $ylabels,
     );
+}
+
+/**
+ * Normalise value to be within a 0-100 range.
+ *
+ * @param mixed $value
+ * @param int $min
+ * @param int $max
+ * @return float|int
+ */
+function local_ace_normalise_value($value, int $min, int $max) {
+    return (($value - $min) / ($max - $min)) * 100;
 }
 
 /**
