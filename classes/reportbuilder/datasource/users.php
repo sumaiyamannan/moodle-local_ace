@@ -19,7 +19,9 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use local_ace\local\entities\userentity;
+use core_reportbuilder\local\entities\user;
+use core_reportbuilder\local\entities\course;
+use local_ace\local\entities\userenrolment;
 use core_reportbuilder\local\helpers\database;
 use lang_string;
 use moodle_url;
@@ -48,23 +50,47 @@ class users extends datasource {
     protected function initialise(): void {
         global $CFG;
 
-        $userentity = new userentity();
+        // Join the user entity to the cohort member entity.
+        $userentity = new user();
         $usertablealias = $userentity->get_table_alias('user');
 
         $this->set_main_table('user', $usertablealias);
+
+        $this->add_entity($userentity);
 
         $userparamguest = database::generate_param_name();
         $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0"
             , [$userparamguest => $CFG->siteguest,
             ]);
 
-        // Add all columns from entities to be available in custom reports.
-        $this->add_entity($userentity);
+        // Enrolment entity.
+        $enrolmententity = new userenrolment();
+        $uetablealias = $enrolmententity->get_table_alias('user_enrolments');
+        $enrolalias = $enrolmententity->get_table_alias('enrol');
 
-        $userentityname = $userentity->get_entity_name();
-        $this->add_columns_from_entity($userentityname);
-        $this->add_filters_from_entity($userentityname);
-        $this->add_conditions_from_entity($userentityname);
+        // Join Enrolments entity to Users entity.
+        $userenrolmentjoin = "JOIN {user_enrolments} {$uetablealias}
+                              ON {$uetablealias}.userid = {$usertablealias}.id";
+
+        $this->add_entity($enrolmententity->add_join($userenrolmentjoin));
+
+        $courseentity = new course();
+        $coursetablealias = $courseentity->get_table_alias('course');
+        $coursejoin = "JOIN {course} {$coursetablealias} on {$coursetablealias}.id = {$enrolalias}.courseid";
+
+        $this->add_entity($courseentity->add_join($coursejoin));
+
+        $this->add_columns_from_entity($userentity->get_entity_name());
+        $this->add_columns_from_entity($enrolmententity->get_entity_name());
+        $this->add_columns_from_entity($courseentity->get_entity_name());
+
+        $this->add_filters_from_entity($userentity->get_entity_name());
+        $this->add_filters_from_entity($enrolmententity->get_entity_name());
+        $this->add_filters_from_entity($courseentity->get_entity_name());
+
+        $this->add_conditions_from_entity($userentity->get_entity_name());
+        $this->add_conditions_from_entity($enrolmententity->get_entity_name());
+        $this->add_conditions_from_entity($courseentity->get_entity_name());
 
         $emailselected = new lang_string('bulkactionbuttonvalue', 'local_ace');
         $action = new moodle_url('/local/ace/bulkaction.php');
@@ -82,7 +108,7 @@ class users extends datasource {
      * @return string[]
      */
     public function get_default_columns(): array {
-        return ['userentity:fullname', 'userentity:username', 'userentity:email', 'userentity:lastaccessedtocourse'];
+        return ['userentity:fullname', 'userentity:username', 'userentity:email'];
     }
 
     /**
