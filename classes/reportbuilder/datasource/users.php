@@ -21,6 +21,7 @@ namespace local_ace\reportbuilder\datasource;
 use core_reportbuilder\datasource;
 use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\entities\course;
+use local_ace\local\entities\acesamples;
 use local_ace\local\entities\userenrolment;
 use core_reportbuilder\local\helpers\database;
 use lang_string;
@@ -74,23 +75,36 @@ class users extends datasource {
 
         $this->add_entity($enrolmententity->add_join($userenrolmentjoin));
 
+        // Add course entity.
         $courseentity = new course();
         $coursetablealias = $courseentity->get_table_alias('course');
-        $coursejoin = "JOIN {course} {$coursetablealias} on {$coursetablealias}.id = {$enrolalias}.courseid";
+        $contexttablealias = $courseentity->get_table_alias('context');
+        $coursejoin = "JOIN {course} {$coursetablealias} ON {$coursetablealias}.id = {$enrolalias}.courseid";
 
         $this->add_entity($courseentity->add_join($coursejoin));
+
+        // Add Ace samples entity.
+        $acesamplesentity = new acesamples();
+        $acesamplesalias = $acesamplesentity->get_table_alias('local_ace_samples');
+        $acesamplejoin = "LEFT JOIN {local_ace_samples} {$acesamplesalias}
+                             ON {$acesamplesalias}.userid = {$usertablealias}.id
+                             AND {$contexttablealias}.id = {$acesamplesalias}.contextid";
+        $this->add_entity($acesamplesentity->add_join($acesamplejoin));
 
         $this->add_columns_from_entity($userentity->get_entity_name());
         $this->add_columns_from_entity($enrolmententity->get_entity_name());
         $this->add_columns_from_entity($courseentity->get_entity_name());
+        $this->add_columns_from_entity($acesamplesentity->get_entity_name());
 
         $this->add_filters_from_entity($userentity->get_entity_name());
         $this->add_filters_from_entity($enrolmententity->get_entity_name());
         $this->add_filters_from_entity($courseentity->get_entity_name());
+        $this->add_filters_from_entity($acesamplesentity->get_entity_name());
 
         $this->add_conditions_from_entity($userentity->get_entity_name());
         $this->add_conditions_from_entity($enrolmententity->get_entity_name());
         $this->add_conditions_from_entity($courseentity->get_entity_name());
+        $this->add_conditions_from_entity($acesamplesentity->get_entity_name());
 
         $emailselected = new lang_string('bulkactionbuttonvalue', 'local_ace');
         $action = new moodle_url('/local/ace/bulkaction.php');

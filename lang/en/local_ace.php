@@ -119,3 +119,8 @@ $string['timecreated'] = 'Time created';
 $string['enrol'] = 'Enrol';
 $string['role'] = 'Role';
 $string['useraccess'] = 'User last accessed';
+
+$string['sampleentitytitle'] = 'ACE samples';
+$string['studentengagement'] = 'Student engagement';
+$string['starttime'] = 'Start time';
+$string['endtime'] = 'End time';
