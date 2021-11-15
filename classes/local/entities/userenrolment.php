@@ -168,6 +168,7 @@ class userenrolment extends base {
                                   ON {$userlastaccessalias}.userid = {$userenrolmentsalias}.id
                                   AND {$enrolalias}.courseid = {$userlastaccessalias}.courseid")
             ->set_is_sortable(true)
+            ->set_type(column::TYPE_TIMESTAMP)
             ->add_fields("$userlastaccessalias.timeaccess")
             ->set_callback([format::class, 'userdate']);
 
