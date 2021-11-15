@@ -82,32 +82,7 @@ function local_ace_enrolled_courses_user_data(int $userid, ?int $period = null, 
     $data['max'] = $max;
     $data['stepsize'] = ceil($max / 2);
 
-    $data['ylabels'] = [
-        [
-            'value' => 0,
-            'label' => get_string('none', 'local_ace')
-        ],
-        [
-            'value' => 20,
-            'label' => ''
-        ],
-        [
-            'value' => 40,
-            'label' => get_string('medium', 'local_ace')
-        ],
-        [
-            'value' => 60,
-            'label' => ''
-        ],
-        [
-            'value' => 80,
-            'label' => ''
-        ],
-        [
-            'value' => 100,
-            'label' => get_string('high', 'local_ace')
-        ]
-    ];
+    $data['ylabels'] = local_ace_get_ylabels();
 
     return $data;
 }
@@ -243,32 +218,7 @@ function local_ace_enrolled_courses_average_data(int $userid, ?int $period = nul
     $data['max'] = $max;
     $data['stepsize'] = ceil($max / 2);
 
-    $data['ylabels'] = [
-        [
-            'value' => 0,
-            'label' => get_string('none', 'local_ace')
-        ],
-        [
-            'value' => 20,
-            'label' => ''
-        ],
-        [
-            'value' => 40,
-            'label' => get_string('medium', 'local_ace')
-        ],
-        [
-            'value' => 60,
-            'label' => ''
-        ],
-        [
-            'value' => 80,
-            'label' => ''
-        ],
-        [
-            'value' => 100,
-            'label' => get_string('high', 'local_ace')
-        ]
-    ];
+    $data['ylabels'] = local_ace_get_ylabels();
 
     return $data;
 }
@@ -453,32 +403,7 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
         return get_string('noanalyticsfoundcourse', 'local_ace');
     }
 
-    $ylabels = [
-        [
-            'value' => 0,
-            'label' => get_string('none', 'local_ace')
-        ],
-        [
-            'value' => 20,
-            'label' => ''
-        ],
-        [
-            'value' => 40,
-            'label' => get_string('medium', 'local_ace')
-        ],
-        [
-            'value' => 60,
-            'label' => ''
-        ],
-        [
-            'value' => 80,
-            'label' => ''
-        ],
-        [
-            'value' => 100,
-            'label' => get_string('high', 'local_ace')
-        ]
-    ];
+    $ylabels = local_ace_get_ylabels();
 
     return array(
         'series' => array_reverse($series),
@@ -659,12 +584,13 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
  * @param int|null $end Display period end
  * @param bool $showxtitles
  * @param string $comparison Comparison data source, defaults to average course engagement
+ * @param bool $normalisevalues normalise values to be within a 0-100 range
  * @return array|string
  * @throws coding_exception
  * @throws dml_exception
  */
 function local_ace_student_graph_data(int $userid, $course, ?int $start = null, ?int $end = null, ?bool $showxtitles = true,
-    string $comparison = 'average-course-engagement') {
+    string $comparison = 'average-course-engagement', bool $normalisevalues = true) {
     global $DB;
 
     $config = get_config('local_ace');
@@ -734,6 +660,18 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     $average2 = array();
     $laststart = null;
 
+    $max = 0;
+    $min = 0;
+    foreach ($values as $value) {
+        $val = ($value->value / $value->count) * 100;
+        if ($val > $max) {
+            $max = $val;
+        }
+        if ($val < $min) {
+            $min = $val;
+        }
+    }
+
     foreach ($values as $value) {
         if (!empty($laststart) && $value->endtime > ($laststart + (DAYSECS))) {
             // If this period overlaps with the last week, skip it in the display.
@@ -748,15 +686,24 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         if (empty($value->value)) {
             $series[] = 0;
         } else {
-            $series[] = ($value->value / $value->count) * 100; // Convert to average percentage.
+            if ($normalisevalues) {
+                $series[] = local_ace_normalise_value(($value->value / $value->count) * 100, $min, $max);
+            } else {
+                $series[] = ($value->value / $value->count) * 100;
+            }
         }
 
         if (empty($value->avg)) {
             $average1[] = 0;
             $average2[] = 0;
         } else {
-            $average1[] = ($value->avg - ($value->stddev / 2)) * 100;
-            $average2[] = ($value->avg + ($value->stddev / 2)) * 100;
+            if ($normalisevalues) {
+                $average1[] = local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, $min, $max);
+                $average2[] = local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, $min, $max);
+            } else {
+                $average1[] = ($value->avg - ($value->stddev / 2)) * 100;
+                $average2[] = ($value->avg + ($value->stddev / 2)) * 100;
+            }
         }
         // Make sure we don't show overlapping periods.
         $laststart = $value->starttime;
@@ -896,13 +843,78 @@ function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, 
         // Normalise the value into a 0-100 range.
         if ($cumulative) {
             $count += $record->count;
-            $series[] = (($count - $min) / ($max - $min)) * 100;
+            $series[] = local_ace_normalise_value($count, $min, $max);
         } else {
-            $series[] = (($record->count - $min) / ($max - $min)) * 100;
+            $series[] = local_ace_normalise_value($record->count, $min, $max);
         }
     }
 
-    $ylabels = [
+    $ylabels = local_ace_get_ylabels();
+
+    return array(
+        'series' => $series,
+        'xlabels' => $labels,
+        'ylabels' => $ylabels,
+    );
+}
+
+/**
+ * Normalise value to be within a 0-100 range.
+ *
+ * @param mixed $value
+ * @param int $min
+ * @param int $max
+ * @return float|int
+ */
+function local_ace_normalise_value($value, int $min, int $max) {
+    return (($value - $min) / ($max - $min)) * 100;
+}
+
+/**
+ * Send bulk emails to users.
+ *
+ * @param array $userids - submitted user id's.
+ * @param string $emailsubject - email subject.
+ * @param string $messagehtml - email message.
+ * @return bool
+ */
+function local_ace_send_bulk_email($userids, $emailsubject, $messagehtml): bool {
+    global $DB;
+
+    if (!empty($userids)) {
+        foreach ($userids as $userid) {
+            // Get user emails address from id.
+            $userdata = $DB->get_record('user', array('id' => $userid));
+
+            if (!$userdata) {
+                return false;
+            }
+
+            $fromuser = \core_user::get_support_user();
+            if (!$fromuser) {
+                return false;
+            }
+
+            $messagetext = html_to_text($messagehtml);
+
+            try {
+                email_to_user($userdata, $fromuser, $emailsubject, $messagetext, $messagehtml, '', '', true);
+                return true;
+            } catch (Exception $e) {
+                return false;
+            }
+        }
+    }
+    return false;
+}
+
+/**
+ * Returns an array of the standard y-axis labels.
+ *
+ * @return array[]
+ */
+function local_ace_get_ylabels(): array {
+    return [
         [
             'value' => 0,
             'label' => get_string('none', 'local_ace')
@@ -928,54 +940,4 @@ function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, 
             'label' => get_string('high', 'local_ace')
         ]
     ];
-
-    return array(
-        'series' => $series,
-        'xlabels' => $labels,
-        'ylabels' => $ylabels,
-    );
-}
-
-/**
- * Send bulk emails to users.
- *
- * @param array $userids - submitted user id's.
- * @param string $emailsubject - email subject.
- * @param string $messagehtml - email message.
- * @return bool
- */
-function local_ace_send_bulk_email($userids, $emailsubject, $messagehtml): bool {
-
-    global $DB;
-    global $CFG;
-
-    if (!empty($userids)) {
-
-        foreach ($userids as $userid) {
-
-            // Get user emails address from id.
-            $userdata = $DB->get_record('user', array('id' => $userid));
-
-            if (!$userdata) {
-                return false;
-            }
-
-            $fromuser = \core_user::get_support_user();
-
-            if (!$fromuser) {
-                return false;
-            }
-
-            $messagetext = html_to_text($messagehtml);
-
-            try {
-                email_to_user($userdata, $fromuser, $emailsubject, $messagetext, $messagehtml, '', '', true);
-                return true;
-            } catch (Exception $e) {
-                return false;
-            }
-        }
-    } else {
-        return false;
-    }
 }
