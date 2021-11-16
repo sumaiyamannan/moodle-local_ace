@@ -121,21 +121,6 @@ class user_analytics_graph extends external_api {
             );
         }
 
-        $data['ylabels'] = array(
-            [
-                'value' => 0,
-                'label' => get_string('low', 'local_ace')
-            ],
-            [
-                'value' => $data['stepsize'],
-                'label' => get_string('medium', 'local_ace')
-            ],
-            [
-                'value' => $data['max'],
-                'label' => get_string('high', 'local_ace')
-            ]
-        );
-
         return $data;
     }
 

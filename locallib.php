@@ -567,9 +567,12 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
     $yaxis0->set_min(0);
     $yaxis0->set_max($data['max']);
     $yaxis0->set_stepsize($data['stepsize']);
-    $yaxis0->set_labels(array(0 => get_string('low', 'local_ace'),
-        $data['stepsize'] => get_string('medium', 'local_ace'),
-        $data['max'] => get_string('high', 'local_ace')));
+    $yaxis0->set_labels(array(0 => '0%',
+        25 => '25%',
+        50 => '50%',
+        75 => '75%',
+        100 => '100%'
+    ));
 
     return $OUTPUT->render($chart);
 }
@@ -714,7 +717,11 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     }
 
     // Get max value to use as upper level of graph.
-    $max = ceil(max(max($series), max($average1), max($average2)));
+    if ($normalisevalues) {
+        $max = 100;
+    } else {
+        $max = ceil(max(max($series), max($average1), max($average2)));
+    }
 
     // Charts.js doesn't cope when the stepsize is under 1.
     // Some of the courses have very little engagement so we occasionally end up with very low values.
@@ -723,7 +730,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     if ($max < 2) {
         $max = 2;
     }
-    $stepsize = ceil($max / 2);
+    $stepsize = ceil($max / 4);
 
     $allseries = [
         [
@@ -755,6 +762,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         'xlabels' => array_reverse($labels),
         'max' => $max,
         'stepsize' => $stepsize,
+        'ylabels' => local_ace_get_percentage_ylabels()
     );
 }
 
@@ -861,12 +869,12 @@ function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, 
 /**
  * Normalise value to be within a 0-100 range.
  *
- * @param mixed $value
- * @param int $min
- * @param int $max
- * @return float|int
+ * @param float $value
+ * @param float $min
+ * @param float $max
+ * @return float
  */
-function local_ace_normalise_value($value, int $min, int $max) {
+function local_ace_normalise_value(float $value, float $min, float $max) {
     return (($value - $min) / ($max - $min)) * 100;
 }
 
@@ -906,6 +914,36 @@ function local_ace_send_bulk_email($userids, $emailsubject, $messagehtml): bool 
         }
     }
     return false;
+}
+
+/**
+ * Returns an array of 4 labels with percentage labels.
+ *
+ * @return array[]
+ */
+function local_ace_get_percentage_ylabels(): array {
+    return [
+        [
+            'value' => 0,
+            'label' => '0%'
+        ],
+        [
+            'value' => 25,
+            'label' => '25%'
+        ],
+        [
+            'value' => 50,
+            'label' => '50%'
+        ],
+        [
+            'value' => 75,
+            'label' => '75%'
+        ],
+        [
+            'value' => 100,
+            'label' => '100%'
+        ],
+    ];
 }
 
 /**
