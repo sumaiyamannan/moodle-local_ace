@@ -41,3 +41,22 @@ function local_ace_user_preferences() {
         ],
     ];
 }
+
+/**
+ * Returns the list of all modules using a static var to prevent multiple db lookups.
+ *
+ * @return array where key is the module id and value is (component name without 'mod_')
+ */
+function local_ace_get_module_types() {
+    static $modnames = null;
+    global $DB, $CFG;
+    if ($modnames === null) {
+        $allmods = $DB->get_records("modules"); // TODO - cache this? find a better way?
+        foreach ($allmods as $mod) {
+            if (file_exists("$CFG->dirroot/mod/$mod->name/lib.php") && $mod->visible) {
+                $modnames[$mod->id] = clean_param($mod->name, PARAM_ALPHANUMEXT);
+            }
+        }
+    }
+    return $modnames;
+}

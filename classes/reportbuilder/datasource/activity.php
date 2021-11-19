@@ -19,9 +19,8 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use local_ace\local\entities\activityentity;
+use local_ace\local\entities\coursemodules;
 use local_ace\local\entities\course;
-use core_reportbuilder\local\helpers\database;
 
 /**
  * Users datasource
@@ -45,18 +44,14 @@ class activity extends datasource {
      * Initialise report
      */
     protected function initialise(): void {
-        global $CFG;
+        $activityentity = new coursemodules();
+        $coursemodulealias = $activityentity->get_table_alias('course_modules');
 
-        $userentity = new activityentity();
-        $usertablealias = $userentity->get_table_alias('user');
+        $this->set_main_table('course_modules', $coursemodulealias);
 
-        $this->set_main_table('user', $usertablealias);
+        $this->add_entity($activityentity);
 
-        $userparamguest = database::generate_param_name();
-
-        $this->add_entity($userentity);
-
-        $userentityname = $userentity->get_entity_name();
+        $userentityname = $activityentity->get_entity_name();
         $this->add_columns_from_entity($userentityname);
         $this->add_filters_from_entity($userentityname);
         $this->add_conditions_from_entity($userentityname);
