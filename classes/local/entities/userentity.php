@@ -242,7 +242,6 @@ class userentity extends base {
 
         $tablealias = $this->get_table_alias('user');
 
-
         $enrolalias = $this->get_table_alias('enrol');
         $logstorealiassub1 = 'logs_sub_select_1';
         $logstorealiassub2 = 'logs_sub_select_2';
