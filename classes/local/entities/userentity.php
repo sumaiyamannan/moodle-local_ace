@@ -18,11 +18,9 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
+use Behat\Behat\Definition\Context\Annotation\DefinitionAnnotationReader;
 use context_system;
-use html_writer;
 use lang_string;
-use moodle_url;
-use stdClass;
 use core_user\fields;
 use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\date;
@@ -30,11 +28,8 @@ use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
 use local_ace\local\filters\pagecontextcourse;
 use local_ace\local\filters\myenrolledcourses;
-use core_reportbuilder\local\helpers\user_profile_fields;
-use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
-use core_reportbuilder\local\entities\user;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\report\base as base_report;
 
@@ -113,40 +108,37 @@ class userentity extends base {
         $usertablealias = $this->get_table_alias('user');
         $userenrolmentsalias = $this->get_table_alias('user_enrolments');
         $coursealias = $this->get_table_alias('course');
-        $coursemodulesalias = $this->get_table_alias('course_modules');
-        $modulesalias = $this->get_table_alias('modules');
         $enrolalias = $this->get_table_alias('enrol');
-        $assignalias = $this->get_table_alias('assign');
-        $assignsubmissionalias = $this->get_table_alias('assign_submission');
-        $logstorealias = $this->get_table_alias('logstore_standard_log');
-        $userlastaccessalias = $this->get_table_alias('user_lastaccess');
         $contexttablealias = $this->get_table_alias('context');
         $logstorealiassub1 = 'logs_sub_select_1';
         $logstorealiassub2 = 'logs_sub_select_2';
 
-        $join = "
-                INNER JOIN {user_enrolments} {$userenrolmentsalias}
-                ON {$userenrolmentsalias}.userid = {$usertablealias}.id
-                INNER JOIN {enrol} {$enrolalias}
-                ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
-                INNER JOIN {course} {$coursealias}
-                ON {$enrolalias}.courseid = {$coursealias}.id
-                LEFT JOIN {context} {$contexttablealias}
-                ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
-                AND {$contexttablealias}.instanceid = {$coursealias}.id
-                LEFT JOIN (
-                    SELECT contextid, max(timecreated) AS maxtimecreated, COUNT(*) AS last7
-                    FROM {logstore_standard_log}
-                    WHERE timecreated > extract(epoch from (now() - interval '7 days'))
-                    GROUP BY contextid
-                    ) AS {$logstorealiassub1} ON {$logstorealiassub1}.contextid = {$contexttablealias}.id
-                    LEFT JOIN (
+        $daysago7 = time() - (DAYSECS * 7);
+        $daysago30 = time() - (DAYSECS * 30);
+
+        // TODO: This is not a very clean join - we should tidy it up and split it.
+        $join = "JOIN {user_enrolments} {$userenrolmentsalias} ON {$userenrolmentsalias}.userid = {$usertablealias}.id
+                 JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
+                 JOIN {course} {$coursealias} ON {$enrolalias}.courseid = {$coursealias}.id
+                 JOIN {context} {$contexttablealias} ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
+                      AND {$contexttablealias}.instanceid = {$coursealias}.id";
+        $this->add_join($join);
+
+        $join7day = "LEFT JOIN (
+                    SELECT contextid, userid, max(timecreated) AS maxtimecreated, COUNT(*) AS last7
+                      FROM {logstore_standard_log}
+                     WHERE timecreated > $daysago7
+                  GROUP BY contextid, userid) AS {$logstorealiassub1}
+                   ON {$logstorealiassub1}.contextid = {$contexttablealias}.id
+                   AND {$logstorealiassub1}.userid = {$usertablealias}.id";
+
+        $join30day = "LEFT JOIN (
                     SELECT contextid, COUNT(*) AS last30
-                    FROM {logstore_standard_log}
-                    WHERE timecreated > extract(epoch from (now() - interval '30 days'))
-                    GROUP BY contextid
-                ) AS {$logstorealiassub2} ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
-        ";
+                      FROM {logstore_standard_log}
+                     WHERE timecreated > $daysago30
+                  GROUP BY contextid, userid) AS {$logstorealiassub2}
+                   ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
+                   AND {$logstorealiassub1}.userid = {$usertablealias}.id";
 
         $columns[] = base_report::is_selectable(true, $this, $usertablealias);
 
@@ -156,7 +148,8 @@ class userentity extends base {
             new lang_string('last7', 'local_ace'),
             $this->get_entity_name()
         ))
-            ->add_join($join)
+            ->add_joins($this->get_joins())
+            ->add_join($join7day)
             ->set_is_sortable(true)
             ->add_field("$logstorealiassub1.last7")
             ->add_callback(static function ($value): string {
@@ -172,7 +165,8 @@ class userentity extends base {
             new lang_string('last30', 'local_ace'),
             $this->get_entity_name()
         ))
-            ->add_join($join)
+            ->add_joins($this->get_joins())
+            ->add_join($join30day)
             ->set_is_sortable(true)
             ->add_fields("$logstorealiassub2.last30")
             ->add_callback(static function ($value): string {
@@ -247,80 +241,11 @@ class userentity extends base {
         $filters = [];
 
         $tablealias = $this->get_table_alias('user');
-        $coursetablealias = $this->get_table_alias('course');
-        $userenrolmentsalias = $this->get_table_alias('user_enrolments');
-        $coursealias = $this->get_table_alias('course');
-        $coursemodulesalias = $this->get_table_alias('course_modules');
-        $modulesalias = $this->get_table_alias('modules');
+
+
         $enrolalias = $this->get_table_alias('enrol');
-        $assignalias = $this->get_table_alias('assign');
-        $assignsubmissionalias = $this->get_table_alias('assign_submission');
-        $logstorealias = $this->get_table_alias('logstore_standard_log');
-        $userlastaccessalias = $this->get_table_alias('user_lastaccess');
-        $contexttablealias = $this->get_table_alias('context');
         $logstorealiassub1 = 'logs_sub_select_1';
         $logstorealiassub2 = 'logs_sub_select_2';
-
-        $join = "
-                INNER JOIN {user_enrolments} {$userenrolmentsalias}
-                ON {$userenrolmentsalias}.userid = {$tablealias}.id
-                INNER JOIN {enrol} {$enrolalias}
-                ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
-                INNER JOIN {course} {$coursetablealias}
-                ON {$enrolalias}.courseid = {$coursetablealias}.id
-                LEFT JOIN {context} {$contexttablealias}
-                ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
-                AND {$contexttablealias}.instanceid = {$coursealias}.id
-                LEFT JOIN (
-                    SELECT contextid, max(timecreated) AS maxtimecreated, COUNT(*) AS last7
-                    FROM {logstore_standard_log}
-                    WHERE timecreated > extract(epoch from (now() - interval '7 days'))
-                    GROUP BY contextid
-                    ) AS {$logstorealiassub1} ON {$logstorealiassub1}.contextid = {$contexttablealias}.id
-                    LEFT JOIN (
-                    SELECT contextid, COUNT(*) AS last30
-                    FROM {logstore_standard_log}
-                    WHERE timecreated > extract(epoch from (now() - interval '30 days'))
-                    GROUP BY contextid
-                ) AS {$logstorealiassub2} ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
-        ";
-
-        $userenrolmentsalias = $this->get_table_alias('user_enrolments');
-        $coursealias = $this->get_table_alias('course');
-        $coursemodulesalias = $this->get_table_alias('course_modules');
-        $modulesalias = $this->get_table_alias('modules');
-        $enrolalias = $this->get_table_alias('enrol');
-        $assignalias = $this->get_table_alias('assign');
-        $assignsubmissionalias = $this->get_table_alias('assign_submission');
-        $logstorealias = $this->get_table_alias('logstore_standard_log');
-        $userlastaccessalias = $this->get_table_alias('user_lastaccess');
-        $contexttablealias = $this->get_table_alias('context');
-        $logstorealiassub1 = 'logs_sub_select_1';
-        $logstorealiassub2 = 'logs_sub_select_2';
-
-        $join = "
-                INNER JOIN {user_enrolments} {$userenrolmentsalias}
-                ON {$userenrolmentsalias}.userid = {$tablealias}.id
-                INNER JOIN {enrol} {$enrolalias}
-                ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid
-                INNER JOIN {course} {$coursetablealias}
-                ON {$enrolalias}.courseid = {$coursetablealias}.id
-                LEFT JOIN {context} {$contexttablealias}
-                ON {$contexttablealias}.contextlevel = " . CONTEXT_COURSE . "
-                AND {$contexttablealias}.instanceid = {$coursetablealias}.id
-                LEFT JOIN (
-                    SELECT contextid, max(timecreated) AS maxtimecreated, COUNT(*) AS last7
-                    FROM {logstore_standard_log}
-                    WHERE timecreated > extract(epoch from (now() - interval '7 days'))
-                    GROUP BY contextid
-                    ) AS {$logstorealiassub1} ON {$logstorealiassub1}.contextid = {$contexttablealias}.id
-                    LEFT JOIN (
-                    SELECT contextid, COUNT(*) AS last30
-                    FROM {logstore_standard_log}
-                    WHERE timecreated > extract(epoch from (now() - interval '30 days'))
-                    GROUP BY contextid
-                ) AS {$logstorealiassub2} ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
-        ";
 
         // Fullname filter.
         $canviewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
@@ -374,7 +299,7 @@ class userentity extends base {
             $this->get_entity_name(),
             "$logstorealiassub1.last7"
         ))
-            ->add_join($join);
+            ->add_joins($this->get_joins());
 
                 // End Time  filter.
         $filters[] = (new filter(
@@ -384,7 +309,25 @@ class userentity extends base {
             $this->get_entity_name(),
             "$logstorealiassub2.last30"
         ))
-            ->add_join($join);
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            pagecontextcourse::class,
+            'course',
+            new lang_string('pagecontextcourse', 'local_ace'),
+            $this->get_entity_name(),
+            "{$enrolalias}.courseid"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            myenrolledcourses::class,
+            'enrolledcourse',
+            new lang_string('myenrolledcourses', 'local_ace'),
+            $this->get_entity_name(),
+            "{$enrolalias}.courseid"
+        ))
+            ->add_joins($this->get_joins());
 
         return $filters;
     }

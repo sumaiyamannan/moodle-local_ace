@@ -25,6 +25,8 @@ use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\helpers\format;
+use local_ace\local\filters\pagecontextcourse;
+use local_ace\local\filters\myenrolledcourses;
 
 /**
  * Userenrolment entity class implementation.
@@ -103,6 +105,8 @@ class userenrolment extends base {
         $rolealias = $this->get_table_alias('role');
         $userlastaccessalias = $this->get_table_alias('user_lastaccess');
 
+        $this->add_join("INNER JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid");
+
         // Time enrolment started (user_enrolments.timestart).
         $columns[] = (new column(
             'timestart',
@@ -143,7 +147,6 @@ class userenrolment extends base {
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
-            ->add_join("INNER JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid")
             ->set_is_sortable(true)
             ->add_fields("$enrolalias.enrol");
 
@@ -251,6 +254,24 @@ class userenrolment extends base {
             new lang_string('lastaccessed', 'local_ace'),
             $this->get_entity_name(),
             "{$userlastaccessalias}.timeaccess"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            pagecontextcourse::class,
+            'course',
+            new lang_string('pagecontextcourse', 'local_ace'),
+            $this->get_entity_name(),
+            "{$enrolalias}.courseid"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            myenrolledcourses::class,
+            'enrolledcourse',
+            new lang_string('myenrolledcourses', 'local_ace'),
+            $this->get_entity_name(),
+            "{$enrolalias}.courseid"
         ))
             ->add_joins($this->get_joins());
 
