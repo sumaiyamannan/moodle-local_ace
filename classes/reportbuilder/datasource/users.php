@@ -125,15 +125,6 @@ class users extends datasource {
         $this->add_conditions_from_entity($courseentity->get_entity_name());
         $this->add_conditions_from_entity($acesamplesentity->get_entity_name());
         $this->add_conditions_from_entity($coursemodulesentity->get_entity_name());
-
-        $emailselected = new lang_string('bulkactionbuttonvalue', 'local_ace');
-        $action = new moodle_url('/local/ace/bulkaction.php');
-
-        $this->add_action_button([
-            'formaction' => $action,
-            'buttonvalue' => $emailselected,
-            'buttonid' => 'emailallselected',
-        ], true);
     }
 
     /**
