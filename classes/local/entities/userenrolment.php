@@ -25,6 +25,7 @@ use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\helpers\format;
+use local_ace\local\filters\acedate;
 use local_ace\local\filters\pagecontextcourse;
 use local_ace\local\filters\myenrolledcourses;
 
@@ -156,6 +157,7 @@ class userenrolment extends base {
             new lang_string('role', 'local_ace'),
             $this->get_entity_name()
         ))
+            ->add_joins($this->get_joins())
             ->add_join("JOIN {role} {$rolealias} ON {$rolealias}.id = {$enrolalias}.roleid")
             ->set_is_sortable(true)
             ->add_fields("$rolealias.shortname");
@@ -165,6 +167,7 @@ class userenrolment extends base {
             new lang_string('lastaccessed', 'local_ace'),
             $this->get_entity_name()
         ))
+            ->add_joins($this->get_joins())
             ->add_join("LEFT JOIN {user_lastaccess} {$userlastaccessalias}
                         ON {$userlastaccessalias}.userid = {$userenrolmentsalias}.id
                         AND {$enrolalias}.courseid = {$userlastaccessalias}.courseid")
@@ -249,9 +252,9 @@ class userenrolment extends base {
 
         // User last access (join with mdl_user_lastaccess table).
         $filters[] = (new filter(
-            text::class,
+            acedate::class,
             'lastaccess',
-            new lang_string('lastaccessed', 'local_ace'),
+            new lang_string('lastaccessedtocourse', 'local_ace'),
             $this->get_entity_name(),
             "{$userlastaccessalias}.timeaccess"
         ))

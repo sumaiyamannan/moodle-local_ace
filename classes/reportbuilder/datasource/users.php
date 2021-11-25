@@ -125,6 +125,18 @@ class users extends datasource {
         $this->add_conditions_from_entity($courseentity->get_entity_name());
         $this->add_conditions_from_entity($acesamplesentity->get_entity_name());
         $this->add_conditions_from_entity($coursemodulesentity->get_entity_name());
+
+        // Set default filter if not active - sets the default userenrolment filter to before 7days ago.
+        $filtervalues = $this->get_filter_values();
+        if (empty($filtervalues)) {
+            $lastmidnight = usergetmidnight(time());
+            $days7 = $lastmidnight - WEEKSECS;
+            $defaultfilter['userenrolment:lastaccess_operator'] = 3;
+            $defaultfilter['userenrolment:lastaccess_value'] = 1;
+            $defaultfilter['userenrolment:lastaccess_unit'] = 1;
+            $defaultfilter['userenrolment:lastaccess_to'] = $days7;
+            $this->set_filter_values($defaultfilter);
+        }
     }
 
     /**
