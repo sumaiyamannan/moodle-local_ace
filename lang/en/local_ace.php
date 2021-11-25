@@ -130,3 +130,4 @@ $string['endtime'] = 'End time';
 $string['userentitytitle'] = 'Users';
 $string['totalviews']  = 'All user views';
 $string['totalviewsuser']  = 'Total views';
+$string['filternotsince'] = 'Not since';
