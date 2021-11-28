@@ -31,6 +31,8 @@ use local_ace\local\filters\myenrolledcourses;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\base;
+use core_reportbuilder\local\entities\user;
+use moodle_url;
 use core_reportbuilder\local\report\base as base_report;
 
 /**
@@ -115,6 +117,31 @@ class userentity extends base {
 
         $daysago7 = time() - (DAYSECS * 7);
         $daysago30 = time() - (DAYSECS * 30);
+        $viewfullnames = user::get_name_fields_select($usertablealias);
+        // Fullname column.
+        $columns[] = (new column(
+            'fullnamedashboardlink',
+            new lang_string('fullnamedasboardlink', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_fields($viewfullnames)
+            ->add_field("{$usertablealias}.id")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true)
+            ->add_callback(static function(?string $value, \stdClass $row) use ($viewfullnames): string {
+                if ($value === null) {
+                    return '';
+                }
+
+                // Ensure we populate all required name properties.
+                $namefields = fields::get_name_fields();
+                foreach ($namefields as $namefield) {
+                    $row->{$namefield} = $row->{$namefield} ?? '';
+                }
+                $url = new moodle_url('/local/ace/goto.php', ['userid' => $row->id]);
+                return \html_writer::link($url, fullname($row, $viewfullnames));
+            });
 
         // TODO: This is not a very clean join - we should tidy it up and split it.
         $join = "JOIN {user_enrolments} {$userenrolmentsalias} ON {$userenrolmentsalias}.userid = {$usertablealias}.id
@@ -240,55 +267,9 @@ class userentity extends base {
     protected function get_all_filters(): array {
         $filters = [];
 
-        $tablealias = $this->get_table_alias('user');
-
         $enrolalias = $this->get_table_alias('enrol');
         $logstorealiassub1 = 'logs_sub_select_1';
         $logstorealiassub2 = 'logs_sub_select_2';
-
-        // Fullname filter.
-        $canviewfullnames = has_capability('moodle/site:viewfullnames', context_system::instance());
-        [$fullnamesql, $fullnameparams] = fields::get_sql_fullname($tablealias, $canviewfullnames);
-        $filters[] = (new filter(
-            text::class,
-            'fullname',
-            new lang_string('fullname'),
-            $this->get_entity_name(),
-            $fullnamesql,
-            $fullnameparams
-        ))
-            ->add_joins($this->get_joins());
-
-        // User fields filters.
-        $fields = $this->get_user_fields();
-        foreach ($fields as $field => $name) {
-            $optionscallback = [static::class, 'get_options_for_' . $field];
-            if (is_callable($optionscallback)) {
-                $classname = select::class;
-            } else if ($this->get_user_field_type($field) === column::TYPE_BOOLEAN) {
-                $classname = boolean_select::class;
-            } else if ($this->get_user_field_type($field) === column::TYPE_TIMESTAMP) {
-                $classname = date::class;
-            } else {
-                $classname = text::class;
-            }
-
-            $filter = (new filter(
-                $classname,
-                $field,
-                $name,
-                $this->get_entity_name(),
-                $tablealias . '.' . $field
-            ))
-                ->add_joins($this->get_joins());
-
-            // Populate filter options by callback, if available.
-            if (is_callable($optionscallback)) {
-                $filter->set_options_callback($optionscallback);
-            }
-
-            $filters[] = $filter;
-        }
 
         // End Time  filter.
         $filters[] = (new filter(

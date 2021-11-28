@@ -31,6 +31,14 @@ if ($hassiteconfig) {
 
     if ($ADMIN->fulltree) {
 
+        $settings->add(new admin_setting_configtext('local_ace/userdashboardurl',
+            get_string('userdashboardurl', 'local_ace'),
+            get_string('userdashboardurl_desc', 'local_ace'), ''));
+
+        $settings->add(new admin_setting_configtext('local_ace/coursedashboardurl',
+            get_string('coursedashboardurl', 'local_ace'),
+            get_string('coursedashboardurl_desc', 'local_ace'), ''));
+
         $settings->add(new admin_setting_configtext(
             'local_ace/displayperiod',
             new lang_string('displayperiod', 'local_ace'),
@@ -112,8 +120,7 @@ if ($hassiteconfig) {
             new lang_string('colours', 'local_ace'),
             new lang_string('colours_desc', 'local_ace'),
             '#2e2c2fff,#23c9ffff,#d64045ff,#729b79ff,#475b63ff,#467599ff,#1d3354ff,#37515fff'));
-
-        $ADMIN->add('localplugins', $settings);
     }
+    $ADMIN->add('localplugins', $settings);
 }
 

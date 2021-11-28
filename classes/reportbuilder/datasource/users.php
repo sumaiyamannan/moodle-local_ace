@@ -19,11 +19,11 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use core_reportbuilder\local\entities\course;
 use core_reportbuilder\local\entities\user;
 use local_ace\local\entities\coursemodules;
 use local_ace\local\entities\userentity;
 use local_ace\local\entities\acesamples;
+use local_ace\local\entities\acecourse;
 use local_ace\local\entities\userenrolment;
 use core_reportbuilder\local\helpers\database;
 use lang_string;
@@ -80,7 +80,7 @@ class users extends datasource {
         $this->add_entity($enrolmententity->add_join($userenrolmentjoin));
 
         // Add course entity.
-        $courseentity = new course();
+        $courseentity = new acecourse();
         $coursetablealias = $courseentity->get_table_alias('course');
         $contexttablealias = 'cctxx';
         $coursejoin = "JOIN {course} {$coursetablealias} ON {$coursetablealias}.id = {$enrolalias}.courseid";
