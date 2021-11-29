@@ -50,7 +50,7 @@ if ($hassiteconfig) {
             'local_ace/userhistory',
             new lang_string('userhistory', 'local_ace'),
             new lang_string('userhistory_desc', 'local_ace'),
-            WEEKSECS * 4
+            YEARSECS / 2
         ));
 
         $settings->add(new admin_setting_configcolourpicker(
