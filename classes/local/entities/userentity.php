@@ -165,7 +165,7 @@ class userentity extends base {
                    ON {$logstorealiassub2}.contextid = {$contexttablealias}.id
                    AND {$logstorealiassub1}.userid = {$usertablealias}.id";
 
-        $this->add_selectable_column($usertablealias);
+        $this->add_selectable_column('u');
 
         // Last access in 7 days column.
         $columns[] = (new column(
