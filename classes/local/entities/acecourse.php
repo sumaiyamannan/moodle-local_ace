@@ -28,7 +28,7 @@ use stdClass;
 use moodle_url;
 use local_ace\local\filters\pagecontextcourse;
 use local_ace\local\filters\myenrolledcourses;
-
+use local_ace\local\filters\courseregex;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -100,6 +100,15 @@ class acecourse extends \core_reportbuilder\local\entities\course {
             new lang_string('myenrolledcourses', 'local_ace'),
             $this->get_entity_name(),
             "{$tablealias}.id"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            courseregex::class,
+            'courseregex',
+            new lang_string('courseregex', 'local_ace'),
+            $this->get_entity_name(),
+            "{$tablealias}.shortname"
         ))
             ->add_joins($this->get_joins());
 
