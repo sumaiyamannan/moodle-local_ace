@@ -74,8 +74,14 @@ class acecourse extends \core_reportbuilder\local\entities\course {
         return $columns;
     }
 
-    protected function get_all_filters(): array  {
-        $filters =  parent::get_all_filters();
+    /**
+     * Get all filters.
+     * @return array
+     * @throws \coding_exception
+     * @throws \moodle_exception
+     */
+    protected function get_all_filters(): array {
+        $filters = parent::get_all_filters();
 
         $tablealias = $this->get_table_alias('course');
 
