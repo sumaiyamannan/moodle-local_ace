@@ -21,10 +21,14 @@ namespace local_ace\local\entities;
 use context_course;
 use context_helper;
 use core_reportbuilder\local\report\column;
+use core_reportbuilder\local\report\filter;
 use html_writer;
 use lang_string;
 use stdClass;
 use moodle_url;
+use local_ace\local\filters\pagecontextcourse;
+use local_ace\local\filters\myenrolledcourses;
+
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -68,5 +72,31 @@ class acecourse extends \core_reportbuilder\local\entities\course {
 
         $columns[] = $column;
         return $columns;
+    }
+
+    protected function get_all_filters(): array  {
+        $filters =  parent::get_all_filters();
+
+        $tablealias = $this->get_table_alias('course');
+
+        $filters[] = (new filter(
+            pagecontextcourse::class,
+            'course',
+            new lang_string('pagecontextcourse', 'local_ace'),
+            $this->get_entity_name(),
+            "{$tablealias}.id"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            myenrolledcourses::class,
+            'enrolledcourse',
+            new lang_string('myenrolledcourses', 'local_ace'),
+            $this->get_entity_name(),
+            "{$tablealias}.id"
+        ))
+            ->add_joins($this->get_joins());
+
+        return $filters;
     }
 }

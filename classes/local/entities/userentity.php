@@ -26,8 +26,6 @@ use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\filters\text;
-use local_ace\local\filters\pagecontextcourse;
-use local_ace\local\filters\myenrolledcourses;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\base;
@@ -53,10 +51,10 @@ class userentity extends base {
      */
     protected function get_default_table_aliases(): array {
         return [
-            'user' => 'u',
-            'enrol' => 'ue',
-            'user_enrolments' => 'uue',
-            'user_lastaccess' => 'uul',
+            'user' => 'aceu',
+            'enrol' => 'aceue',
+            'user_enrolments' => 'aceuue',
+            'user_lastaccess' => 'aceuul',
             'course' => 'uc',
             'course_modules' => 'ucm',
             'modules' => 'um',
@@ -288,24 +286,6 @@ class userentity extends base {
             new lang_string('last30', 'local_ace'),
             $this->get_entity_name(),
             "$logstorealiassub2.last30"
-        ))
-            ->add_joins($this->get_joins());
-
-        $filters[] = (new filter(
-            pagecontextcourse::class,
-            'course',
-            new lang_string('pagecontextcourse', 'local_ace'),
-            $this->get_entity_name(),
-            "{$enrolalias}.courseid"
-        ))
-            ->add_joins($this->get_joins());
-
-        $filters[] = (new filter(
-            myenrolledcourses::class,
-            'enrolledcourse',
-            new lang_string('myenrolledcourses', 'local_ace'),
-            $this->get_entity_name(),
-            "{$enrolalias}.courseid"
         ))
             ->add_joins($this->get_joins());
 

@@ -51,41 +51,37 @@ class users extends datasource {
      * Initialise report
      */
     protected function initialise(): void {
-        global $CFG;
-
-        $usercore = new user();
-        $usercorealias = $usercore->get_table_alias('user');
-        $this->add_entity($usercore);
-        $this->set_main_table('user', $usercorealias);
-
-        // Join the user entity to the cohort member entity.
-        $userentity = new userentity();
-        $usertablealias = $userentity->get_table_alias('user');
-        $this->add_entity($userentity);
-
-        $userparamguest = database::generate_param_name();
-        $this->add_base_condition_sql("{$usertablealias}.id != :{$userparamguest} AND {$usertablealias}.deleted = 0"
-            , [$userparamguest => $CFG->siteguest,
-            ]);
-
         // Enrolment entity.
         $enrolmententity = new userenrolment();
         $uetablealias = $enrolmententity->get_table_alias('user_enrolments');
         $enrolalias = $enrolmententity->get_table_alias('enrol');
 
-        // Join Enrolments entity to Users entity.
-        $userenrolmentjoin = "JOIN {user_enrolments} {$uetablealias}
-                              ON {$uetablealias}.userid = {$usertablealias}.id";
+        $this->set_main_table('user_enrolments', $uetablealias);
+        $this->add_entity($enrolmententity);
 
-        $this->add_entity($enrolmententity->add_join($userenrolmentjoin));
+        // Add core user join.
+        $usercore = new user();
+        $usercorealias = $usercore->get_table_alias('user');
+        $usercorejoin = "JOIN {user} {$usercorealias} ON {$usercorealias}.id = {$uetablealias}.userid";
+        $this->add_entity($usercore->add_join($usercorejoin));
 
         // Add course entity.
         $courseentity = new acecourse();
         $coursetablealias = $courseentity->get_table_alias('course');
         $contexttablealias = 'cctxx';
-        $coursejoin = "JOIN {course} {$coursetablealias} ON {$coursetablealias}.id = {$enrolalias}.courseid";
+        $coursejoin = "JOIN {enrol} exex1 ON exex1.id = $uetablealias.enrolid
+                       JOIN {course} {$coursetablealias} ON {$coursetablealias}.id = exex1.courseid";
 
         $this->add_entity($courseentity->add_join($coursejoin));
+
+        // Join the custom user entity to the table too.
+        $userentity = new userentity();
+        $usertablealias = $userentity->get_table_alias('user');
+        $coursealias = $userentity->get_table_alias('course');
+
+        $userentityjoin = "JOIN {user} {$usertablealias} ON {$usertablealias}.id = {$uetablealias}.userid
+                           AND {$coursealias}.id = {$enrolalias}.courseid";
+        $this->add_entity($userentity->add_join($userentityjoin));
 
         // Add Ace samples entity.
         $acesamplesentity = new acesamples();
