@@ -138,3 +138,4 @@ $string['userdashboardurl_desc'] = 'The main user dashboard url';
 $string['coursedashboardurl'] = 'Course dashboard url';
 $string['coursedashboardurl_desc'] = 'The main course dashboard url';
 $string['courseshortnamedashboardlink'] = 'Course shortname with dashboard link';
+$string['courseregex'] = 'ACE course regex';
