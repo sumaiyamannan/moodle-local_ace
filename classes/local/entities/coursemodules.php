@@ -31,6 +31,7 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/course/lib.php');
 require_once($CFG->dirroot . '/local/ace/lib.php');
+require_once($CFG->dirroot.'/local/ace/locallib.php');
 
 /**
  * Course entity class implementation
@@ -106,19 +107,17 @@ class coursemodules extends base {
     protected function get_all_columns(): array {
         global $USER, $PAGE;
         // Note this custom report source is restricted to showing activities.
-        $course = 0;
+        $course = local_ace_get_course_helper();
+        if (!empty($course)) {
+            $courseid = $course->id;
+        } else {
+            $courseid = 0; // Should not happen when using this entity correctly, set to 0 to prevent SQL dying.
+        }
 
         // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.
         $userid = $USER->id;
         if (!empty($PAGE->context) && $PAGE->context->contextlevel == CONTEXT_USER) {
             $userid = $PAGE->context->instanceid;
-        } else if (!empty($PAGE) &&
-            $PAGE->state != \moodle_page::STATE_BEFORE_HEADER ) { // When building a report $PAGE doesn't really exist.
-
-            $coursecontext = $PAGE->context->get_course_context(false);
-            if (!empty($coursecontext)) {
-                $course = $coursecontext->instanceid;
-            }
         }
 
         $cmalias = $this->get_table_alias('course_modules');
@@ -141,7 +140,7 @@ class coursemodules extends base {
             // This injects params into in-line sql, but we cast and clean all to make safe.
             $modulejoins[] = "SELECT id, name, $mid as module, $duedatecolumn as duedate
                                 FROM {".$mname."}
-                               WHERE course = $course";
+                               WHERE course = $courseid";
         }
         $modulejoin = implode(' UNION ALL ', $modulejoins);
         $this->add_join("JOIN ({$modulejoin}) mmj ON mmj.id = {$cmalias}.instance AND mmj.module = {$cmalias}.module");
@@ -186,7 +185,7 @@ class coursemodules extends base {
 
         $viewcountsql = "LEFT JOIN (SELECT COUNT(id) as viewcounttotal, contextinstanceid
                                  FROM {logstore_standard_log}
-                                WHERE courseid = $course
+                                WHERE courseid = $courseid
                                       AND contextlevel = ".CONTEXT_MODULE."
                                       AND crud = 'r'
                              GROUP BY contextinstanceid) {$totalviewcountalias}
@@ -204,7 +203,7 @@ class coursemodules extends base {
 
         $viewcountusersql = "LEFT JOIN (SELECT COUNT(id) as viewcounttotal, contextinstanceid
                                  FROM {logstore_standard_log}
-                                WHERE courseid = $course AND userid = $userid
+                                WHERE courseid = $courseid AND userid = $userid
                                       AND contextlevel = ".CONTEXT_MODULE."
                                       AND crud = 'r'
                              GROUP BY contextinstanceid) {$totalviewcountuseralias}
