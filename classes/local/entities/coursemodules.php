@@ -23,8 +23,12 @@ use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\base;
-use lang_string;
 use local_ace\local\filters\coursemoduletype;
+use lang_string;
+use stdClass;
+use context_course;
+use html_writer;
+use moodle_url;
 
 defined('MOODLE_INTERNAL') || die();
 
@@ -170,6 +174,24 @@ class coursemodules extends base {
             ->add_joins($this->get_joins())
             ->set_is_sortable(true)
             ->add_field("mmj.name");
+
+        $columns[] = (new column(
+            'namedashboardlink',
+            new lang_string('activitynamedashboardlink', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_TEXT)
+            ->add_fields("mmj.name as namedashboardlink, {$cmalias}.id")
+            ->set_is_sortable(true)
+            ->add_callback(static function(?string $value, stdClass $row): string {
+                if ($value === null) {
+                    return '';
+                }
+                $url = new moodle_url('/local/ace/goto.php', ['cmid' => $row->id]);
+                return html_writer::link($url,
+                    format_string($value, true));
+            });
 
         // Date due.
         $columns[] = (new column(

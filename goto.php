@@ -26,7 +26,8 @@ require('../../config.php');
 
 $userid = optional_param('userid', null, PARAM_INT);
 $courseid = optional_param('course', null, PARAM_INT);
-if (empty($userid) && empty($courseid)) {
+$cmid = optional_param('cmid', null, PARAM_INT);
+if (empty($userid) && empty($courseid) && empty($cmid)) {
     redirect($CFG->wwwroot);
 }
 require_login($courseid);
@@ -35,10 +36,17 @@ if (!empty($userid)) {
     // Get user context from userid.
     $context = context_user::instance($userid);
     $url = new moodle_url(get_config('local_ace', 'userdashboardurl'), ['contextid' => $context->id]);
+    if (!empty($courseid)) { // Add courseid to param if passed.
+        $url->param('course', $courseid);
+    }
     redirect($url);
 } else if (!empty($courseid)) {
     $context = context_course::instance($courseid);
     $url = new moodle_url(get_config('local_ace', 'coursedashboardurl'), ['contextid' => $context->id]);
+    redirect($url);
+} else if (!empty($cmid)) {
+    $context = context_module::instance($cmid);
+    $url = new moodle_url(get_config('local_ace', 'coursemoduledashboardurl'), ['contextid' => $context->id]);
     redirect($url);
 }
 
