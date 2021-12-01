@@ -169,7 +169,7 @@ class userenrolment extends base {
         ))
             ->add_joins($this->get_joins())
             ->add_join("LEFT JOIN {user_lastaccess} {$userlastaccessalias}
-                        ON {$userlastaccessalias}.userid = {$userenrolmentsalias}.id
+                        ON {$userlastaccessalias}.userid = {$userenrolmentsalias}.userid
                         AND {$enrolalias}.courseid = {$userlastaccessalias}.courseid")
             ->set_is_sortable(true)
             ->set_type(column::TYPE_TIMESTAMP)
