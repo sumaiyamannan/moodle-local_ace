@@ -248,7 +248,8 @@ class userenrolment extends base {
             $this->get_entity_name(),
             "{$rolealias}.shortname"
         ))
-            ->add_joins($this->get_joins());
+            ->add_joins($this->get_joins())
+            ->add_join("JOIN {role} {$rolealias} ON {$rolealias}.id = {$enrolalias}.roleid");
 
         // User last access (join with mdl_user_lastaccess table).
         $filters[] = (new filter(
