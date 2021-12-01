@@ -39,6 +39,10 @@ if ($hassiteconfig) {
             get_string('coursedashboardurl', 'local_ace'),
             get_string('coursedashboardurl_desc', 'local_ace'), ''));
 
+        $settings->add(new admin_setting_configtext('local_ace/coursemoduledashboardurl',
+            get_string('coursemoduledashboardurl', 'local_ace'),
+            get_string('coursemoduledashboardurl_desc', 'local_ace'), ''));
+
         $settings->add(new admin_setting_configtext(
             'local_ace/displayperiod',
             new lang_string('displayperiod', 'local_ace'),
