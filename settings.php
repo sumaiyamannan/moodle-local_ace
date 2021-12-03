@@ -35,6 +35,10 @@ if ($hassiteconfig) {
             get_string('userdashboardurl', 'local_ace'),
             get_string('userdashboardurl_desc', 'local_ace'), ''));
 
+        $settings->add(new admin_setting_configtext('local_ace/teacherdashboardurl',
+            get_string('teacherdashboardurl', 'local_ace'),
+            get_string('teacherdashboardurl_desc', 'local_ace'), ''));
+
         $settings->add(new admin_setting_configtext('local_ace/coursedashboardurl',
             get_string('coursedashboardurl', 'local_ace'),
             get_string('coursedashboardurl_desc', 'local_ace'), ''));
