@@ -147,3 +147,8 @@ $string['courseregex'] = 'ACE course regex';
 $string['moduletype'] = 'Course Module Type';
 $string['courseselect'] = 'Course Selection';
 $string['activitynamedashboardlink'] = 'Activity name with dashboard link';
+
+$string['userengagementdatasource'] = 'Users Engagement';
+$string['engagementlevelstitle'] = 'Engagement Level';
+$string['currentengagement'] = 'Current Engagement';
+$string['engagementlevelfilter'] = 'Engagement Level';
