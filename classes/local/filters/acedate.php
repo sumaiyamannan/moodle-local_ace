@@ -126,7 +126,7 @@ class acedate extends base {
                 $dateto = (int)($values["{$this->name}_to"] ?? 0);
                 if ($dateto > 0) {
                     $paramdateto = database::generate_param_name();
-                    $clauses[] = "({$fieldsql} > :{$paramdateto} OR {$fieldsql} IS NULL OR {$fieldsql} = 0)";
+                    $clauses[] = "({$fieldsql} < :{$paramdateto} OR {$fieldsql} IS NULL OR {$fieldsql} = 0)";
                     $params[$paramdateto] = $dateto;
                 }
 
