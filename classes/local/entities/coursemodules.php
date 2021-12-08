@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace local_ace\local\entities;
 
 use core_reportbuilder\local\filters\text;
+use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
@@ -26,7 +27,6 @@ use core_reportbuilder\local\entities\base;
 use local_ace\local\filters\coursemoduletype;
 use lang_string;
 use stdClass;
-use context_course;
 use html_writer;
 use moodle_url;
 
@@ -241,6 +241,26 @@ class coursemodules extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_fields("{$totalviewcountuseralias}.viewcounttotal");
 
+        $logalias = $this->get_table_alias('logstore_standard_log');
+        $lastaccessjoin = "LEFT JOIN (SELECT contextinstanceid, MAX(timecreated) as timecreated
+                                        FROM {logstore_standard_log}
+                                       WHERE courseid = $courseid
+                                             AND userid = $userid
+                                    GROUP BY contextinstanceid) {$logalias}
+                                     ON {$logalias}.contextinstanceid = {$cmalias}.id";
+
+        $columns[] = (new column(
+            'lastaccess',
+            new lang_string('lastaccess'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($lastaccessjoin)
+            ->set_is_sortable(true)
+            ->set_type(column::TYPE_TIMESTAMP)
+            ->add_field("{$logalias}.timecreated")
+            ->set_callback([format::class, 'userdate']);
+
         return $columns;
     }
 
@@ -254,7 +274,7 @@ class coursemodules extends base {
         $filters = [];
         $cmalias = $this->get_table_alias('course_modules');
         $modulesalias = $this->get_table_alias('modules');
-
+        $logalias = $this->get_table_alias('logstore_standard_log');
         // Module name filter.
         $filters[] = (new filter(
             text::class,
@@ -272,6 +292,15 @@ class coursemodules extends base {
             $this->get_entity_name(),
             "{$cmalias}.module"
         ))->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            date::class,
+            'lastaccess',
+            new lang_string('lastaccessed', 'local_ace'),
+            $this->get_entity_name(),
+            "{$logalias}.timecreated"
+        ))
+            ->add_joins($this->get_joins());
 
         return $filters;
     }
