@@ -25,6 +25,7 @@ use local_ace\local\entities\userentity;
 use local_ace\local\entities\acesamples;
 use local_ace\local\entities\acecourse;
 use local_ace\local\entities\userenrolment;
+use local_ace\local\filters\acedate;
 use core_reportbuilder\local\helpers\database;
 use lang_string;
 use moodle_url;
@@ -120,12 +121,8 @@ class users extends datasource {
         // Set default filter if not active - sets the default userenrolment filter to before 7days ago.
         $filtervalues = $this->get_filter_values();
         if (empty($filtervalues)) {
-            $lastmidnight = usergetmidnight(time());
-            $days7 = $lastmidnight - WEEKSECS;
-            $defaultfilter['userenrolment:lastaccess_operator'] = 3;
-            $defaultfilter['userenrolment:lastaccess_value'] = 1;
-            $defaultfilter['userenrolment:lastaccess_unit'] = 1;
-            $defaultfilter['userenrolment:lastaccess_to'] = $days7;
+            $defaultfilter['userenrolment:lastaccess_operator'] = acedate::DATE_NOTLAST;
+            $defaultfilter['userenrolment:lastaccess_lastdays'] = 7;
             $this->set_filter_values($defaultfilter);
         }
 
