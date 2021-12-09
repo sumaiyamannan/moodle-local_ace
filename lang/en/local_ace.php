@@ -138,6 +138,7 @@ $string['userentitytitle'] = 'Users';
 $string['totalviews']  = 'All user views';
 $string['totalviewsuser']  = 'Total views';
 $string['filternotsince'] = 'Not since';
+$string['filternotinlast'] = 'Not in last number of days';
 $string['fullnamedasboardlink'] = 'User fullname with dashboard link';
 $string['userdashboardurl'] = 'User dashboard url';
 $string['userdashboardurl_desc'] = 'The main user dashboard url';

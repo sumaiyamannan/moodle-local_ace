@@ -46,17 +46,8 @@ class acedate extends base {
     /** @var int Not accessed since  */
     public const DATE_NOTSINCE = 3;
 
-    /** @var int Relative date unit for a day */
-    public const DATE_UNIT_DAY = 1;
-
-    /** @var int Relative date unit for a week */
-    public const DATE_UNIT_WEEK = 2;
-
-    /** @var int Relative date unit for a month */
-    public const DATE_UNIT_MONTH = 3;
-
-    /** @var int Relative date unit for a month */
-    public const DATE_UNIT_YEAR = 4;
+    /** @var int Not in last X days */
+    public const DATE_NOTLAST = 4;
 
     /**
      * Return an array of operators available for this filter
@@ -69,6 +60,7 @@ class acedate extends base {
             self::DATE_NOT_EMPTY => new lang_string('filterisnotempty', 'core_reportbuilder'),
             self::DATE_EMPTY => new lang_string('filterisempty', 'core_reportbuilder'),
             self::DATE_NOTSINCE => new lang_string('filternotsince', 'local_ace'),
+            self::DATE_NOTLAST => new lang_string('filternotinlast', 'local_ace'),
         ];
 
         return $this->filter->restrict_limited_operators($operators);
@@ -92,6 +84,11 @@ class acedate extends base {
         $mform->setType("{$this->name}_to", PARAM_INT);
         $mform->setDefault("{$this->name}_to", 0);
         $mform->hideIf("{$this->name}_to", "{$this->name}_operator", 'neq', self::DATE_NOTSINCE);
+
+        $mform->addElement('select', "{$this->name}_lastdays", get_string('days'), [7 => '7', 14 => '14', 30 => '30']);
+        $mform->setType("{$this->name}_lastdays", PARAM_INT);
+        $mform->setDefault("{$this->name}_lastdays", '7');
+        $mform->hideIf("{$this->name}_lastdays", "{$this->name}_operator", 'neq', self::DATE_NOTLAST);
     }
 
     /**
@@ -132,6 +129,16 @@ class acedate extends base {
 
                 $sql = implode(' AND ', $clauses);
 
+                break;
+            case self::DATE_NOTLAST:
+                $days = (int)($values["{$this->name}_lastdays"] ?? 0);
+                $sql = '';
+                if ($days > 0) {
+                    $dateto = time() - ($days * DAYSECS);
+                    $paramdateto = database::generate_param_name();
+                    $sql = "({$fieldsql} < :{$paramdateto} OR {$fieldsql} IS NULL OR {$fieldsql} = 0)";
+                    $params[$paramdateto] = $dateto;
+                }
                 break;
             default:
                 // Invalid or inactive filter.
