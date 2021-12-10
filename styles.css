@@ -121,7 +121,7 @@
 
 /* graph tabs */
 .useranalytics .nav-tabs {
-    margin-top: 2rem;
+    margin-top: 0;
     margin-bottom: 2rem;
     border-bottom: 0;
 }
