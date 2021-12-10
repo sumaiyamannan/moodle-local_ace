@@ -47,6 +47,14 @@ require_once($CFG->dirroot.'/local/ace/locallib.php');
  * @license     http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 class coursemodules extends base {
+    /**
+     * Custom aliases for the logstore_standard_log table as we can't define multiple per entity using the API.
+     * We need separate aliases for each in case the multiple columns are added to the same report.
+     */
+    /** @var string */
+    private $logstorealias1 = "cmlsls1";
+    /** @var string */
+    private $logstorealias2 = "cmlsls2";
 
     /**
      * Database tables that this entity uses and their default aliases
@@ -241,24 +249,41 @@ class coursemodules extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_fields("{$totalviewcountuseralias}.viewcounttotal");
 
-        $logalias = $this->get_table_alias('logstore_standard_log');
-        $lastaccessjoin = "LEFT JOIN (SELECT contextinstanceid, MAX(timecreated) as timecreated
+        $lastaccessanyjoin = "LEFT JOIN (SELECT contextinstanceid, MAX(timecreated) as lastaccessany
                                         FROM {logstore_standard_log}
                                        WHERE courseid = $courseid
-                                             AND userid = $userid
-                                    GROUP BY contextinstanceid) {$logalias}
-                                     ON {$logalias}.contextinstanceid = {$cmalias}.id";
+                                    GROUP BY contextinstanceid) {$this->logstorealias1}
+                                     ON {$this->logstorealias1}.contextinstanceid = {$cmalias}.id";
 
         $columns[] = (new column(
-            'lastaccess',
-            new lang_string('lastaccess'),
+            'lastaccessanyuser',
+            new lang_string('lastaccessanyuser', 'local_ace'),
             $this->get_entity_name()
         ))
             ->add_joins($this->get_joins())
-            ->add_join($lastaccessjoin)
+            ->add_join($lastaccessanyjoin)
             ->set_is_sortable(true)
             ->set_type(column::TYPE_TIMESTAMP)
-            ->add_field("{$logalias}.timecreated")
+            ->add_field("{$this->logstorealias1}.lastaccessany")
+            ->set_callback([format::class, 'userdate']);
+
+        $lastaccessthisjoin = "LEFT JOIN (SELECT contextinstanceid, MAX(timecreated) as lastaccessthis
+                                        FROM {logstore_standard_log}
+                                       WHERE courseid = $courseid
+                                             AND userid = $userid
+                                    GROUP BY contextinstanceid) {$this->logstorealias2}
+                                     ON {$this->logstorealias2}.contextinstanceid = {$cmalias}.id";
+
+        $columns[] = (new column(
+            'lastaccessthisuser',
+            new lang_string('lastaccessthisuser', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($lastaccessthisjoin)
+            ->set_is_sortable(true)
+            ->set_type(column::TYPE_TIMESTAMP)
+            ->add_field("{$this->logstorealias2}.lastaccessthis")
             ->set_callback([format::class, 'userdate']);
 
         return $columns;
@@ -274,7 +299,7 @@ class coursemodules extends base {
         $filters = [];
         $cmalias = $this->get_table_alias('course_modules');
         $modulesalias = $this->get_table_alias('modules');
-        $logalias = $this->get_table_alias('logstore_standard_log');
+
         // Module name filter.
         $filters[] = (new filter(
             text::class,
@@ -295,10 +320,19 @@ class coursemodules extends base {
 
         $filters[] = (new filter(
             date::class,
-            'lastaccess',
-            new lang_string('lastaccessed', 'local_ace'),
+            'lastaccessthis',
+            new lang_string('lastaccessthisuser', 'local_ace'),
             $this->get_entity_name(),
-            "{$logalias}.timecreated"
+            "{$this->logstorealias2}.lastaccessthis"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            date::class,
+            'lastaccessany',
+            new lang_string('lastaccessanyuser', 'local_ace'),
+            $this->get_entity_name(),
+            "{$this->logstorealias1}.lastaccessany"
         ))
             ->add_joins($this->get_joins());
 
