@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
+use core\event\course_content_deleted;
 use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\helpers\format;
@@ -307,6 +308,7 @@ class coursemodules extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_field("{$this->logstorealias3}.countallusers");
 
+        $studentroleid = (int)get_config('local_ace', 'studentrole');
         // This hard-codes against the student role which is usually not ideal, however we make a column above available
         // for sites that do not use wish to use the student role.
         $countallstudentsjoin = "LEFT JOIN (SELECT count(distinct casjl.userid) as countallusers, casjl.contextinstanceid
@@ -314,12 +316,13 @@ class coursemodules extends base {
                                            JOIN {context} casjc ON casjc.instanceid = casjl.courseid
                                                 AND casjc.contextlevel = " . CONTEXT_COURSE . "
                                            JOIN {role_assignments} casjra ON casjra.contextid = casjc.id
-                                                AND casjl.userid = casjra.userid
-                                           JOIN {role} casjr on casjr.id = casjra.roleid AND casjr.shortname = 'student'
+                                                AND casjl.userid = casjra.userid AND casjra.roleid = {$studentroleid}
                                           WHERE casjl.courseid = $courseid AND casjl.contextlevel = ".CONTEXT_MODULE ."
                                                 AND crud = 'r'
                                        GROUP BY contextinstanceid) {$this->logstorealias4}
                                         ON {$this->logstorealias4}.contextinstanceid = {$cmalias}.id";
+
+        $usercount = $this->get_usercount($courseid);
         $columns[] = (new column(
             'countallstudents',
             new lang_string('countallstudents', 'local_ace'),
@@ -329,7 +332,14 @@ class coursemodules extends base {
             ->add_join($countallstudentsjoin)
             ->set_is_sortable(true)
             ->set_type(column::TYPE_INTEGER)
-            ->add_field("{$this->logstorealias4}.countallusers");
+            ->add_field("{$this->logstorealias4}.countallusers")
+            ->add_callback(static function(?int $value) use ($usercount): string {
+                if ($value === null) {
+                    return '';
+                }
+                $percentage = empty($value) ? "0" : round(($value / $usercount) * 100);
+                return $percentage . "% (".$value . '/'.$usercount.")";
+            });
         return $columns;
     }
 
@@ -381,5 +391,35 @@ class coursemodules extends base {
             ->add_joins($this->get_joins());
 
         return $filters;
+    }
+
+    /**
+     * Gets a count of the number of students in the course.
+     *
+     * @param int $course
+     * @return int
+     * @throws \coding_exception
+     * @throws \dml_exception
+     */
+    protected function get_usercount($course): int {
+        global $DB;
+        $cache = \cache::make('local_ace', 'coursestudentcount');
+
+        $usercount = $cache->get($course);
+        if ($usercount !== false) {
+            return $usercount;
+        }
+        $studentroleid = (int)get_config('local_ace', 'studentrole');
+
+        $sql = "SELECT COUNT(DISTINCT u.id)
+                  FROM {user} u
+                  JOIN {role_assignments} ra ON ra.userid = u.id AND ra.roleid = :roleid
+                  JOIN {context} cx ON cx.id = ra.contextid AND cx.contextlevel = " . CONTEXT_COURSE . "
+                        AND cx.instanceid = :courseid
+             WHERE u.deleted = 0";
+
+        $count = $DB->count_records_sql($sql, ['courseid' => $course, 'roleid' => $studentroleid]);
+        $cache->set($course, $count);
+        return $count;
     }
 }
