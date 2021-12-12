@@ -170,3 +170,6 @@ $string['lastaccessanyuser'] = 'Last access by any user';
 $string['lastaccessthisuser'] = 'Last access by this user';
 $string['countallusers'] = 'Number of users who have accessed this activity';
 $string['countallstudents'] = 'Number of students who have accessed this activity';
+$string['cachedef_coursestudentcount'] = 'This contains a cache of the total number of students in a course.';
+$string['studentrole'] = 'Student role';
+$string['studentrole_desc'] = 'This is the role usually used as the student role in the course, it is used in the student related reportbuilder columns';
