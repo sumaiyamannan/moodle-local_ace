@@ -173,6 +173,7 @@ class coursemodules extends base {
             ->add_joins($this->get_joins())
             ->set_is_sortable(true)
             ->add_field("{$modulesalias}.name")
+            ->set_is_downloadable(false)
             ->add_callback(static function ($v): string {
                 global $OUTPUT;
                 return $OUTPUT->pix_icon('icon', $v, $v, array('class' => 'icon'));
