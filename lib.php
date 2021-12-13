@@ -100,3 +100,51 @@ function local_ace_get_module_types() {
     }
     return $modnames;
 }
+
+/**
+ * This function extends the navigation with the report items
+ *
+ * @param navigation_node $navigation The navigation node to extend
+ * @param stdClass $course The course to object for the report
+ * @param stdClass $context The context of the course
+ */
+function local_ace_extend_navigation_course($navigation, $course, $context) {
+    $showonnavigation = has_capability('local/ace:view', $context);
+    $coursedashboardurl = get_config('local_ace', 'coursedashboardurl');
+    if ($showonnavigation && !empty($coursedashboardurl)) {
+        $reportnode = $navigation->get('coursereports');
+        $url = new moodle_url($coursedashboardurl, ['contextid' => $context->id]);
+        $settingsnode = navigation_node::create(get_string('navigationlink', 'local_ace'), $url,
+                    navigation_node::TYPE_SETTING, null, null, new pix_icon('i/report', ''));
+        if (isset($settingsnode) && !empty($reportnode)) {
+            $reportnode->add_node($settingsnode);
+        }
+    }
+}
+
+/**
+ * Add nodes to myprofile page.
+ *
+ * @param \core_user\output\myprofile\tree $tree Tree object
+ * @param stdClass $user user object
+ * @param bool $iscurrentuser
+ * @param stdClass $course Course object
+ *
+ * @return bool
+ */
+function local_ace_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
+    if (isguestuser() or !isloggedin()) {
+        return;
+    }
+
+    $context = context_user::instance($user->id);
+    $userdashboardurl = get_config('local_ace', 'userdashboardurl');
+    if (has_capability('local/ace:view', $context) && !empty($userdashboardurl)) {
+        $url = new moodle_url($userdashboardurl, ['contextid' => $context->id]);
+        $node = new core_user\output\myprofile\node('reports', 'ace',
+            get_string('navigationlink', 'local_ace'), null,
+            $url);
+        $tree->add_node($node);
+    }
+    return true;
+}
