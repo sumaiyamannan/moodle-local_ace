@@ -292,7 +292,7 @@ class coursemodules extends base {
             ->add_field("{$this->logstorealias2}.lastaccessthis")
             ->set_callback([format::class, 'userdate']);
 
-        $countallusersjoin = "LEFT JOIN (SELECT count(distinct userid) as countallusers, contextinstanceid
+        $countallusersjoin = "JOIN (SELECT count(distinct userid) as countallusers, contextinstanceid
                                            FROM {logstore_standard_log}
                                           WHERE courseid = $courseid AND contextlevel = ".CONTEXT_MODULE ."
                                                 AND crud = 'r'
@@ -312,7 +312,7 @@ class coursemodules extends base {
         $studentroleid = (int)get_config('local_ace', 'studentrole');
         // This hard-codes against the student role which is usually not ideal, however we make a column above available
         // for sites that do not use wish to use the student role.
-        $countallstudentsjoin = "LEFT JOIN (SELECT count(distinct casjl.userid) as countallusers, casjl.contextinstanceid
+        $countallstudentsjoin = "JOIN (SELECT count(distinct casjl.userid) as countallusers, casjl.contextinstanceid
                                            FROM {logstore_standard_log} casjl
                                            JOIN {context} casjc ON casjc.instanceid = casjl.courseid
                                                 AND casjc.contextlevel = " . CONTEXT_COURSE . "
