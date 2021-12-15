@@ -63,14 +63,6 @@ function local_ace_render_navbar_output(\renderer_base $renderer) {
 
     $config = get_config('local_ace');
 
-    // If on the user dashboard page we add the teacher url to the second node.
-    if (count($PAGE->navbar->get_items()) >= 2 && strpos($PAGE->url->out(), $config->userdashboardurl) === 0) {
-        $dashboardnode = $PAGE->navbar->get_items()[1];
-        $dashboardnode->text = get_string('myacedashboard', 'local_ace');
-        $dashboardnode->action = new moodle_url($config->teacherdashboardurl);
-        return;
-    }
-
     // This catches the course & activity context dashboards for both enrolled and unenrolled users.
     foreach ($PAGE->navbar->get_items() as $item) {
         if ($item instanceof breadcrumb_navigation_node) {
@@ -154,4 +146,32 @@ function local_ace_myprofile_navigation(core_user\output\myprofile\tree $tree, $
         $tree->add_node($node);
     }
     return true;
+}
+
+/**
+ * Modify user dashboard breadcrumbs when a teacher is viewing a student dashboard.
+ *
+ * @return void
+ * @throws coding_exception
+ * @throws dml_exception
+ * @throws moodle_exception
+ */
+function local_ace_before_http_headers() {
+    global $PAGE;
+    if (strpos($PAGE->url->get_path(), '/local/vxg_dashboard/index.php') !== 0) {
+        return;
+    }
+
+    if (!has_capability('local/ace:view', $PAGE->context)) {
+        return;
+    }
+
+    $config = get_config('local_ace');
+    // If on the user dashboard page we add the teacher url to the second node.
+    if (strpos($PAGE->url->out(), $config->userdashboardurl) === 0) {
+        $PAGE->navbar->add(get_string('studentacedashboard', 'local_ace'));
+        $dashboardnode = $PAGE->navbar->get_items()[1];
+        $dashboardnode->text = get_string('myacedashboard', 'local_ace');
+        $dashboardnode->action = new moodle_url($config->teacherdashboardurl);
+    }
 }
