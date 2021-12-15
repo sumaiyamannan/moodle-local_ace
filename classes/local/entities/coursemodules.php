@@ -131,6 +131,9 @@ class coursemodules extends base {
             $courseid = 0; // Should not happen when using this entity correctly, set to 0 to prevent SQL dying.
         }
 
+        // Only include relevant logs table logs - 4 weeks before startdate, or last 30 weeks.
+        $timestart = !empty($course->startdate) ? $course->startdate - (4 * WEEKSECS) : time() - (30 * WEEKSECS);
+
         // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.
         $userid = $USER->id;
         if (!empty($PAGE->context) && $PAGE->context->contextlevel == CONTEXT_USER) {
@@ -221,7 +224,8 @@ class coursemodules extends base {
 
         $viewcountsql = "LEFT JOIN (SELECT COUNT(id) as viewcounttotal, contextinstanceid
                                  FROM {logstore_standard_log}
-                                WHERE courseid = $courseid
+                                WHERE timecreated > $timestart
+                                      AND courseid = $courseid
                                       AND contextlevel = ".CONTEXT_MODULE."
                                       AND crud = 'r'
                              GROUP BY contextinstanceid) {$totalviewcountalias}
@@ -239,7 +243,7 @@ class coursemodules extends base {
 
         $viewcountusersql = "LEFT JOIN (SELECT COUNT(id) as viewcounttotal, contextinstanceid
                                  FROM {logstore_standard_log}
-                                WHERE courseid = $courseid AND userid = $userid
+                                WHERE timecreated > $timestart AND courseid = $courseid AND userid = $userid
                                       AND contextlevel = ".CONTEXT_MODULE."
                                       AND crud = 'r'
                              GROUP BY contextinstanceid) {$totalviewcountuseralias}
@@ -294,7 +298,7 @@ class coursemodules extends base {
 
         $countallusersjoin = "JOIN (SELECT count(distinct userid) as countallusers, contextinstanceid
                                            FROM {logstore_standard_log}
-                                          WHERE courseid = $courseid AND contextlevel = ".CONTEXT_MODULE ."
+                                          WHERE timecreated > $timestart AND courseid = $courseid AND contextlevel = ".CONTEXT_MODULE ."
                                                 AND crud = 'r'
                                        GROUP BY contextinstanceid) {$this->logstorealias3}
                                         ON {$this->logstorealias3}.contextinstanceid = {$cmalias}.id";
@@ -318,8 +322,8 @@ class coursemodules extends base {
                                                 AND casjc.contextlevel = " . CONTEXT_COURSE . "
                                            JOIN {role_assignments} casjra ON casjra.contextid = casjc.id
                                                 AND casjl.userid = casjra.userid AND casjra.roleid = {$studentroleid}
-                                          WHERE casjl.courseid = $courseid AND casjl.contextlevel = ".CONTEXT_MODULE ."
-                                                AND crud = 'r'
+                                          WHERE casjl.timecreated > $timestart AND casjl.courseid = $courseid
+                                                AND casjl.contextlevel = ".CONTEXT_MODULE ." AND crud = 'r'
                                        GROUP BY contextinstanceid) {$this->logstorealias4}
                                         ON {$this->logstorealias4}.contextinstanceid = {$cmalias}.id";
 
