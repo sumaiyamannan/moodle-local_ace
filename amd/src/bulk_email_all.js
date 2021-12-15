@@ -52,7 +52,11 @@
          modal.getRoot()[0].classList.add('local_ace-slim-modal');
          modal.setSaveButtonText(emailSend);
          modal.getRoot().on(ModalEvents.save, function() {
-             let tableuniqueid = document.querySelector('.table-dynamic').getAttribute('data-table-uniqueid');
+             let tableuniqueid = document.querySelector('.tab-pane.fade.active.show .table-dynamic');
+             if (tableuniqueid === null) {
+                tableuniqueid = document.querySelector('.table-dynamic');
+             }
+             tableuniqueid = tableuniqueid.getAttribute('data-table-uniqueid');
              let reportid = tableuniqueid.split('custom-report-table-')[1];
              let subject = document.querySelector('#local_ace-email-subject').value;
              let body = document.querySelector('#local_ace-email-body').value;
