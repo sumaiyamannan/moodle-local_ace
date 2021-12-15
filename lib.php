@@ -72,7 +72,7 @@ function local_ace_render_navbar_output(\renderer_base $renderer) {
             }
             $courseurl = new moodle_url('/course/view.php', ['id' => $COURSE->id]);
             if (strpos($PAGE->url->out(), $config->coursemoduledashboardurl) === 0 && !empty($item->action) &&
-                $item->action->compare($courseurl)) {
+                $item->action instanceof moodle_url && $item->action->compare($courseurl)) {
                 $context = context_course::instance($COURSE->id);
                 $item->text = $COURSE->shortname .' ' .get_string('acedashboard', 'local_ace');
                 $item->action = new moodle_url($config->coursedashboardurl, ['contextid' => $context->id]);
