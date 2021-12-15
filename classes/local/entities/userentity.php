@@ -98,6 +98,7 @@ class userentity extends base {
         } else {
             $courseid = 0; // Should not happen when using this entity correctly, set to 0 to prevent SQL dying.
         }
+        $timestart = !empty($course->startdate) ? $course->startdate - (4 * WEEKSECS) : time() - (30 * WEEKSECS);
 
         $daysago7 = time() - (DAYSECS * 7);
         $daysago30 = time() - (DAYSECS * 30);
@@ -124,7 +125,7 @@ class userentity extends base {
         $jointotal = "LEFT JOIN (
                            SELECT courseid, userid, COUNT(*) as total
                                FROM {logstore_standard_log}
-                           WHERE crud = 'r' AND courseid = $courseid
+                           WHERE timecreated > $timestart AND crud = 'r' AND courseid = $courseid
                            GROUP BY courseid, userid) AS {$this->logstorealias3}
                        ON {$this->logstorealias3}.courseid = {$coursealias}.id
                        AND {$this->logstorealias3}.userid = {$usertablealias}.id";
