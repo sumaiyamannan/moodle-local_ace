@@ -49,7 +49,9 @@ $string['studentdetailheader'] =
     'The university uses machine learning to determine how students are engaging in their courses, the following data is included when analysing student engagement.';
 $string['overallengagement'] = 'Overall';
 $string['userreport'] = 'Analytics for course engagement';
-$string['navigationlink'] = 'Engagement analytics';
+$string['courseacedashboard'] = 'Course ACE Dashboard';
+$string['myacedashboard'] = 'My ACE Dashboard';
+$string['studentacedashboard'] = 'Student ACE Dashboard';
 $string['userhistory'] = 'User history timeline';
 $string['userhistory_desc'] = 'How much of the users history should be displayed in the user report - defined in seconds';
 $string['displayperiod'] = 'Display period';

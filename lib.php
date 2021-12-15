@@ -51,7 +51,7 @@ function local_ace_user_preferences() {
  * @return void
  */
 function local_ace_render_navbar_output(\renderer_base $renderer) {
-    global $PAGE, $USER;
+    global $PAGE, $USER, $COURSE;
 
     if (strpos($PAGE->url->get_path(), '/local/vxg_dashboard/index.php') !== 0) {
         return;
@@ -66,7 +66,7 @@ function local_ace_render_navbar_output(\renderer_base $renderer) {
     // If on the user dashboard page we add the teacher url to the second node.
     if (count($PAGE->navbar->get_items()) >= 2 && strpos($PAGE->url->out(), $config->userdashboardurl) === 0) {
         $dashboardnode = $PAGE->navbar->get_items()[1];
-        $dashboardnode->text = get_string('acedashboard', 'local_ace');
+        $dashboardnode->text = get_string('myacedashboard', 'local_ace');
         $dashboardnode->action = new moodle_url($config->teacherdashboardurl);
         return;
     }
@@ -75,8 +75,15 @@ function local_ace_render_navbar_output(\renderer_base $renderer) {
     foreach ($PAGE->navbar->get_items() as $item) {
         if ($item instanceof breadcrumb_navigation_node) {
             if ($item->key === 'mycourses' || $item->key === 'courses') {
-                $item->text = get_string('acedashboard', 'local_ace');
+                $item->text = get_string('myacedashboard', 'local_ace');
                 $item->action = new moodle_url($config->teacherdashboardurl);
+            }
+            $courseurl = new moodle_url('/course/view.php', ['id' => $COURSE->id]);
+            if (strpos($PAGE->url->out(), $config->coursemoduledashboardurl) === 0 && !empty($item->action) &&
+                $item->action->compare($courseurl)) {
+                $context = context_course::instance($COURSE->id);
+                $item->text = $COURSE->shortname .' ' .get_string('acedashboard', 'local_ace');
+                $item->action = new moodle_url($config->coursedashboardurl, ['contextid' => $context->id]);
             }
         }
     }
@@ -114,7 +121,7 @@ function local_ace_extend_navigation_course($navigation, $course, $context) {
     if ($showonnavigation && !empty($coursedashboardurl)) {
         $reportnode = $navigation->get('coursereports');
         $url = new moodle_url($coursedashboardurl, ['contextid' => $context->id]);
-        $settingsnode = navigation_node::create(get_string('navigationlink', 'local_ace'), $url,
+        $settingsnode = navigation_node::create(get_string('courseacedashboard', 'local_ace'), $url,
                     navigation_node::TYPE_SETTING, null, null, new pix_icon('i/report', ''));
         if (isset($settingsnode) && !empty($reportnode)) {
             $reportnode->add_node($settingsnode);
@@ -142,7 +149,7 @@ function local_ace_myprofile_navigation(core_user\output\myprofile\tree $tree, $
     if (has_capability('local/ace:view', $context) && !empty($userdashboardurl)) {
         $url = new moodle_url($userdashboardurl, ['contextid' => $context->id]);
         $node = new core_user\output\myprofile\node('reports', 'ace',
-            get_string('navigationlink', 'local_ace'), null,
+            get_string('studentacedashboard', 'local_ace'), null,
             $url);
         $tree->add_node($node);
     }
