@@ -19,7 +19,7 @@ declare(strict_types=1);
 namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
-use core_reportbuilder\local\entities\user;
+use local_ace\local\entities\aceuser;
 use local_ace\local\entities\activityengagement;
 
 /**
@@ -45,7 +45,7 @@ class useractivity extends datasource {
      */
     protected function initialise(): void {
         $activityengagement = new activityengagement();
-        $userentity = new user();
+        $userentity = new aceuser();
 
         $cmalias = $activityengagement->get_table_alias('course_modules');
         $useralias = $userentity->get_table_alias('user');

@@ -19,6 +19,7 @@ declare(strict_types=1);
 namespace local_ace\local\entities;
 
 use core_reportbuilder\local\entities\base;
+use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use lang_string;
@@ -102,6 +103,7 @@ class activityengagement extends base {
         // @codingStandardsIgnoreStart
 
         $useralias = $this->get_table_alias('user');
+        $this->add_selectable_column($useralias);
         $totalaccessalias = $this->get_table_alias('totalaccess');
         $logalias = $this->get_table_alias('logstore_standard_log');
 
@@ -150,12 +152,7 @@ class activityengagement extends base {
             ->add_join($totalaccessjoin)
             ->set_is_sortable(true)
             ->add_field("{$totalaccessalias}.count")
-            ->add_callback(static function($value): string {
-                if ($value == null) {
-                    return '0';
-                }
-                return $value;
-            });
+            ->set_type(column::TYPE_INTEGER);
 
         return $columns;
     }
@@ -167,6 +164,7 @@ class activityengagement extends base {
      */
     protected function get_all_filters(): array {
         $tablealias = $this->get_table_alias('course_modules');
+        $logalias = $this->get_table_alias('logstore_standard_log');
 
         $filters[] = (new filter(
             pagecontextactivity::class,
@@ -174,6 +172,14 @@ class activityengagement extends base {
             new lang_string('pagecontextactivity', 'local_ace'),
             $this->get_entity_name(),
             "{$tablealias}.id"
+        ))->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            date::class,
+            'lastaccess',
+            new lang_string('lastaccess'),
+            $this->get_entity_name(),
+            "{$logalias}.timecreated"
         ))->add_joins($this->get_joins());
 
         return $filters;
