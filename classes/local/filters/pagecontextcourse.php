@@ -53,7 +53,13 @@ class pagecontextcourse extends \core_reportbuilder\local\filters\base {
         if (!empty($coursecontext)) {
             $courseid = $coursecontext->instanceid;
         } else {
-            $courseid = SITEID;
+            // Use course helper.
+            $course = local_ace_get_course_helper();
+            if (!empty($course)) {
+                $courseid = $course->id;
+            } else {
+                $courseid = SITEID;
+            }
         }
         $name = database::generate_param_name();
 
