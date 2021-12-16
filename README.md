@@ -1,4 +1,4 @@
-# Analytics for course engagement #
+# Analytics for Course Engagement (ACE) #
 
 TODO Describe the plugin shortly here.
 
