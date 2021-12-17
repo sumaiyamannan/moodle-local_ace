@@ -74,6 +74,18 @@ class useractivity extends datasource {
 
         $this->add_conditions_from_entity($activityengagement->get_entity_name());
         $this->add_conditions_from_entity($userentity->get_entity_name());
+
+        $this->add_action_button([
+            'id' => 'emailallselected',
+            'value' => get_string('bulkemailallselected', 'local_ace'),
+            'module' => 'local_ace/bulk_email'
+        ]);
+
+        $this->add_action_button([
+            'id' => 'emailall',
+            'value' => get_string('bulkemailall', 'local_ace'),
+            'module' => 'local_ace/bulk_email_all'
+        ]);
     }
 
     /**
