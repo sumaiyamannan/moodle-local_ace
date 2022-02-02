@@ -279,8 +279,9 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
         $series = [];
         $laststart = null;
         $templabels = [];
+        $allowoverlap = DAYSECS; // Allow an overlap between periods of up to this amount - takes in account slow cron.
         foreach ($values as $value) {
-            if (!empty($laststart) && $value->endtime > $laststart) {
+            if (!empty($laststart) && $value->endtime > $laststart + $allowoverlap) {
                 // If this period overlaps with the last week, skip it in the display.
                 continue;
             }
@@ -419,8 +420,9 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
     $labels = array();
     $series = array();
     $laststart = null;
+    $allowoverlap = DAYSECS; // Allow an overlap between periods of up to this amount - takes in account slow cron.
     foreach ($values as $value) {
-        if (!empty($laststart) && $value->endtime > $laststart) {
+        if (!empty($laststart) && $value->endtime > ($laststart + $allowoverlap)) {
             // If this period overlaps with the last week, skip it in the display.
             continue;
         }
@@ -705,9 +707,9 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
     $average1 = array();
     $average2 = array();
     $laststart = null;
-
+    $allowoverlap = DAYSECS; // Allow an overlap between periods of up to this amount - takes in account slow cron.
     foreach ($values as $value) {
-        if (!empty($laststart) && $value->endtime > ($laststart + (DAYSECS))) {
+        if (!empty($laststart) && $value->endtime > ($laststart + $allowoverlap)) {
             // If this period overlaps with the last week, skip it in the display.
             continue;
         }
