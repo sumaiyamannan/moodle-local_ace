@@ -133,7 +133,7 @@ class coursemodules extends base {
 
         // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.
         $userid = $USER->id;
-        if (!empty($PAGE->context) && $PAGE->context->contextlevel == CONTEXT_USER) {
+        if ($PAGE->context->contextlevel == CONTEXT_USER) {
             $userid = $PAGE->context->instanceid;
         }
 
