@@ -463,6 +463,9 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
     global $PAGE, $OUTPUT;
 
     list($courseid, $courses) = local_ace_get_user_courses($userid, $courseid, true);
+    if (empty($courses)) {
+        return get_string('noanalyticsfound', 'local_ace');
+    }
 
     $config = get_config('local_ace');
 
