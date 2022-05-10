@@ -347,7 +347,6 @@ class coursemodules extends base {
 
         $filters = [];
         $cmalias = $this->get_table_alias('course_modules');
-        $modulesalias = $this->get_table_alias('modules');
 
         // Module name filter.
         $filters[] = (new filter(
@@ -355,7 +354,7 @@ class coursemodules extends base {
             'nameselector',
             new lang_string('name'),
             $this->get_entity_name(),
-            "{$modulesalias}.name"
+            "mmj.name"
         ))
             ->add_joins($this->get_joins());
 
