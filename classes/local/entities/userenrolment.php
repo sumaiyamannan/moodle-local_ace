@@ -102,6 +102,8 @@ class userenrolment extends base {
      * @return column[]
      */
     protected function get_all_columns(): array {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/ace/locallib.php');
 
         $userenrolmentsalias = $this->get_table_alias('user_enrolments');
         $enrolalias = $this->get_table_alias('enrol');
@@ -110,7 +112,12 @@ class userenrolment extends base {
         $contextalias = $this->get_table_alias('context');
         $roleassignmentalias = $this->get_table_alias('role_assignments');
 
-        $this->add_join("INNER JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid");
+        $course = \local_ace_get_course_helper();
+        if (!empty($course) && $course->id !== SITEID) {
+            $coursejoin = " AND {$enrolalias}.courseid = {$course->id}";
+        }
+
+        $this->add_join("INNER JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid".$coursejoin);
 
         $this->add_join("JOIN {context} {$contextalias} ON {$contextalias}.instanceid = {$enrolalias}.courseid
                         AND {$contextalias}.contextlevel = " . CONTEXT_COURSE . "
