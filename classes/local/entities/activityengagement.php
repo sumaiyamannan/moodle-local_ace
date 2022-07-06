@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
+use context_module;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\filters\date;
 use core_reportbuilder\local\report\column;
@@ -90,17 +91,13 @@ class activityengagement extends base {
      * @return column[]
      */
     protected function get_all_columns(): array {
-        global $PAGE;
-
-        try {
-            $context = $PAGE->context;
-            if ($context->contextlevel === CONTEXT_MODULE) {
-                list($course, $cm) = get_course_and_cm_from_cmid($context->instanceid);
-            }
-            // @codingStandardsIgnoreStart
-        } catch (\coding_exception $ignored) {
+        global $CFG;
+        require_once($CFG->dirroot . '/local/ace/locallib.php');
+        $coursemoduleid = local_ace_get_coursemodule_helper();
+        if (!empty($coursemoduleid)) {
+            $context = context_module::instance($coursemoduleid);
+            list($course, $cm) = get_course_and_cm_from_cmid($coursemoduleid);
         }
-        // @codingStandardsIgnoreStart
 
         $useralias = $this->get_table_alias('user');
         $this->add_selectable_column($useralias);
