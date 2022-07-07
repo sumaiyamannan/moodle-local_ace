@@ -21,6 +21,7 @@ namespace local_ace\local\entities;
 use core\event\course_content_deleted;
 use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\filters\date;
+use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
@@ -381,6 +382,15 @@ class coursemodules extends base {
             new lang_string('lastaccessanyuser', 'local_ace'),
             $this->get_entity_name(),
             "{$this->logstorealias1}.lastaccessany"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            boolean_select::class,
+            'visible',
+            new lang_string('coursemodulevisible', 'local_ace'),
+            $this->get_entity_name(),
+            "{$cmalias}.visible"
         ))
             ->add_joins($this->get_joins());
 
