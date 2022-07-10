@@ -81,6 +81,34 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 return \html_writer::link($url, fullname($row, $viewfullnames));
             });
 
+        // Fullname column.
+        $columns[] = (new column(
+            'fullnamelogslink',
+            new lang_string('fullnamelogslink', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_fields($viewfullnames)
+            ->add_field("{$usertablealias}.id")
+            ->add_field("cm.id", 'cmid')
+            ->add_field("{$coursetablealias}.id", 'courseid')
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true)
+            ->add_callback(static function(?string $value, \stdClass $row) use ($viewfullnames): string {
+                if ($value === null) {
+                    return '';
+                }
+
+                // Ensure we populate all required name properties.
+                $namefields = fields::get_name_fields();
+                foreach ($namefields as $namefield) {
+                    $row->{$namefield} = $row->{$namefield} ?? '';
+                }
+                $url = new moodle_url('/report/log/index.php', ['id' => $row->courseid, 'user' => $row->id,
+                                      'modid' => $row->cmid, 'logreader' => 'logstore_standard', 'chooselog' => 1]);
+                return \html_writer::link($url, fullname($row, $viewfullnames));
+            });
+
         return $columns;
     }
 }

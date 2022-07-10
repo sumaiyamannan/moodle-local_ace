@@ -183,3 +183,4 @@ $string['cachedef_coursestudentcount'] = 'This contains a cache of the total num
 $string['studentrole'] = 'Student role';
 $string['studentrole_desc'] = 'This is the role usually used as the student role in the course, it is used in the student related reportbuilder columns';
 $string['logsummary'] = 'Used to generate stats on logs table for course module views.';
+$string['fullnamelogslink'] = 'User fullname linked to logs report.';
