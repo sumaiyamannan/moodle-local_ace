@@ -125,11 +125,11 @@ class engagementlevels extends base {
                 $mediumcutoff = isset($config->mediumengagementcutoff) ? (float) $config->mediumengagementcutoff : 0.3;
                 $value = floatval($value);
                 if ($value >= $highcutoff) {
-                    return new lang_string('high', 'local_ace');
+                    return get_string('high', 'local_ace');
                 } else if ($value >= $mediumcutoff) {
-                    return new lang_string('medium', 'local_ace');
+                    return get_string('medium', 'local_ace');
                 } else {
-                    return new lang_string('low', 'local_ace');
+                    return get_string('low', 'local_ace');
                 }
             });
         return $columns;
