@@ -135,7 +135,7 @@ class coursemodules extends base {
         // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.
         $userid = $USER->id;
         if ($PAGE->context->contextlevel == CONTEXT_USER) {
-            $userid = $PAGE->context->instanceid;
+            $userid = local_ace_get_user_helper();
         }
 
         $cmalias = $this->get_table_alias('course_modules');

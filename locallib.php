@@ -1045,6 +1045,56 @@ function local_ace_get_coursemodule_helper() {
 }
 
 /**
+ * Gets the user module context ID from these places in this order:
+ * - $PAGE context
+ * - `contextid` set in url parameter
+ * - `contextid` set in the referrer
+ *
+ * @return int|null
+ * @throws coding_exception
+ */
+function local_ace_get_user_helper() {
+    global $PAGE, $CFG;
+
+    try {
+        $context = $PAGE->context;
+        if ($context->contextlevel === CONTEXT_MODULE) {
+            return $context->instanceid;
+        }
+        // @codingStandardsIgnoreStart
+    } catch (\coding_exception $ignored) {
+    }
+    // @codingStandardsIgnoreStart
+
+    $contextid = optional_param('contextid', '0', PARAM_INT);
+    if (!empty($contextid)) {
+        $context = context::instance_by_id($contextid);
+        if ($context->contextlevel === CONTEXT_USER) {
+            return $context->instanceid;
+        }
+    }
+
+    $referrer = get_local_referer(false);
+    if (!empty($referrer) &&
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+
+        $urlcomponents = parse_url($referrer);
+        if (!empty($urlcomponents['query'])) {
+            parse_str($urlcomponents['query'], $params);
+
+            if (!empty($params['contextid'])) {
+                $context = context::instance_by_id($params['contextid']);
+                if ($context->contextlevel === CONTEXT_MODULE) {
+                    return $context->instanceid;
+                }
+            }
+        }
+    }
+
+    return null;
+}
+
+/**
  * Nasty hack function to get the course from either the referring page (called by webservice) or from optional_param.
  *
  * @return false|stdClass
