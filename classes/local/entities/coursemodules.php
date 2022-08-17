@@ -125,7 +125,6 @@ class coursemodules extends base {
      * @return column[]
      */
     protected function get_all_columns(): array {
-        global $USER, $PAGE;
         // Note this custom report source is restricted to showing activities.
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
@@ -135,10 +134,7 @@ class coursemodules extends base {
         }
 
         // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.
-        $userid = $USER->id;
-        if ($PAGE->context->contextlevel == CONTEXT_USER) {
-            $userid = $PAGE->context->instanceid;
-        }
+        $userid = local_ace_get_user_helper();
 
         $cmalias = $this->get_table_alias('course_modules');
         $modulesalias = $this->get_table_alias('modules');
