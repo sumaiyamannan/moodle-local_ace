@@ -61,6 +61,8 @@ class coursemodules extends base {
     private $logstorealias3 = "cmlsls3";
     /** @var string */
     private $logstorealias4 = "cmlsls4";
+    /** @var string */
+    private $logstorealias5 = "cmlsls5";
 
     /**
      * Database tables that this entity uses and their default aliases
@@ -335,6 +337,39 @@ class coursemodules extends base {
                 }
                 $percentage = empty($value) ? "0" : round(($value / $usercount) * 100);
                 return $percentage . "% (".$value . '/'.$usercount.")";
+            });
+
+        $completionratejoin  = "LEFT JOIN (
+                                    SELECT COUNT(DISTINCT userid) completionrate, cmid FROM (
+                                        SELECT cmc.userid userid, cm.id cmid
+                                        FROM {course_modules} cm
+                                        JOIN {course_modules_completion} cmc ON cmc.coursemoduleid = cm.id
+                                        JOIN {user} u ON u.id = cmc.userid
+                                        JOIN {role_assignments} ra ON ra.userid = u.id
+                                        AND ra.contextid = $coursecontextid
+                                        AND ra.roleid = $studentroleid
+                                        WHERE cmc.completionstate > 0
+                                        AND cm.course = $courseid
+                                        AND u.deleted = 0
+                                    ) AS completionrate GROUP BY cmid
+                                ) {$this->logstorealias5} ON {$this->logstorealias5}.cmid = {$cmalias}.id";
+
+        $columns[] = (new column(
+            'completionrate',
+            new lang_string('completionrate', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($completionratejoin)
+            ->set_is_sortable(true)
+            ->set_type(column::TYPE_INTEGER)
+            ->add_field("{$this->logstorealias5}.completionrate")
+            ->add_callback(static function(?int $value) use ($usercount): string {
+                if ($value === null) {
+                    $value = 0;
+                }
+                $percentage = empty($value) ? "0" : round(($value / $usercount) * 100);
+                return $percentage . "% (".$value . '/' . $usercount . ")";
             });
         return $columns;
     }

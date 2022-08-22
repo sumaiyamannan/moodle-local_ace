@@ -177,6 +177,7 @@ $string['pagecontextactivity'] = 'Page activity context';
 $string['totalaccesses'] = 'No. of accesses';
 $string['lastaccessanyuser'] = 'Last access by any user';
 $string['lastaccessthisuser'] = 'Last access by this user';
+$string['completionrate'] = 'Rate of students who have completed this activity';
 $string['countallusers'] = 'Number of users who have accessed this activity';
 $string['countallstudents'] = 'Number of students who have accessed this activity';
 $string['cachedef_coursestudentcount'] = 'This contains a cache of the total number of students in a course.';
