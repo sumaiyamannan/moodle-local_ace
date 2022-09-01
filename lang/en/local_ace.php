@@ -175,6 +175,7 @@ $string['useractivity'] = 'User Activity Engagement';
 $string['activityengagement'] = 'Activity Engagement';
 $string['pagecontextactivity'] = 'Page activity context';
 $string['totalaccesses'] = 'No. of accesses';
+$string['totalwrites'] = 'No. of writes';
 $string['lastaccessanyuser'] = 'Last access by any user';
 $string['lastaccessthisuser'] = 'Last access by this user';
 $string['completionrate'] = 'Rate of students who have completed this activity';

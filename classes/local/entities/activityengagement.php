@@ -49,6 +49,7 @@ class activityengagement extends base {
             'context' => 'ctx',
             'user' => 'u',
             'totalaccess' => 'tolac',
+            'totalwrites' => 'tolwr',
             'logstore_standard_log' => 'lssl',
         ];
     }
@@ -102,6 +103,7 @@ class activityengagement extends base {
         $useralias = $this->get_table_alias('user');
         $this->add_selectable_column($useralias);
         $totalaccessalias = $this->get_table_alias('totalaccess');
+        $totalwritesalias = $this->get_table_alias('totalwrites');
         $logalias = $this->get_table_alias('logstore_standard_log');
 
         $lastaccessjoin = "LEFT JOIN (SELECT max(timecreated) as timecreated, userid
@@ -117,6 +119,14 @@ class activityengagement extends base {
                                     AND contextlevel = " . CONTEXT_MODULE . " AND crud = 'r'
                                 GROUP BY userid)
                             {$totalaccessalias} ON {$totalaccessalias}.userid = {$useralias}.id";
+
+        $totalwritesjoin = "LEFT JOIN (
+                                SELECT COUNT(id) as readactions, userid
+                                FROM {logstore_standard_log}
+                                WHERE courseid = " . ($course->id ?? 'NULL') . " AND contextid = " . ($context->id ?? 'NULL') . "
+                                    AND contextlevel = " . CONTEXT_MODULE . " AND (crud = 'c' OR crud = 'u' OR crud = 'd')
+                                GROUP BY userid)
+                            {$totalwritesalias} ON {$totalwritesalias}.userid = {$useralias}.id";
 
         $columns[] = (new column(
             'lastaccess',
@@ -143,6 +153,17 @@ class activityengagement extends base {
             ->add_join($totalaccessjoin)
             ->set_is_sortable(true)
             ->add_field("{$totalaccessalias}.count")
+            ->set_type(column::TYPE_INTEGER);
+
+        $columns[] = (new column(
+            'totalwrites',
+            new lang_string('totalwrites', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($totalwritesjoin)
+            ->set_is_sortable(true)
+            ->add_field("{$totalwritesjoin}.readactions")
             ->set_type(column::TYPE_INTEGER);
 
         return $columns;
