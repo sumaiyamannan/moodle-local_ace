@@ -163,7 +163,7 @@ class activityengagement extends base {
             ->add_joins($this->get_joins())
             ->add_join($totalwritesjoin)
             ->set_is_sortable(true)
-            ->add_field("{$totalwritesjoin}.readactions")
+            ->add_field("{$totalwritesalias}.readactions")
             ->set_type(column::TYPE_INTEGER);
 
         return $columns;
