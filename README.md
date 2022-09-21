@@ -1,8 +1,25 @@
 # Analytics for Course Engagement (ACE) #
 
-TODO Describe the plugin shortly here.
+Analytics for Course Engagement (ACE) is a platform that provides students and staff with an enhanced real-time view of online engagement with learning systems. It builds on top of the Moodle Analytics API https://moodledev.io/docs/apis/subsystems/analytics/ and the new Reportbuilder API.
 
-TODO Provide more detailed description here.
+The University of Canterbury is currently running this on a heavily modified version of Moodle 3.9 that contains a backport of Moodle's reportbuilder API but are currently working on a version for Moodle 4.1.
+
+It also currently requires the following trackers which we have been working on and trying to get into Moodle core.
+https://tracker.moodle.org/browse/MDL-73184 (now in 4.1)
+https://tracker.moodle.org/browse/MDL-73294 
+https://tracker.moodle.org/browse/MDL-75170
+https://tracker.moodle.org/browse/MDL-72974
+https://tracker.moodle.org/browse/MDL-73104
+https://tracker.moodle.org/browse/MDL-72831
+
+We also use the a custom dashboard plugin (based on local_vxgdashboard) and a block that allows us to embed reportbuilder sources within the dashboard which is not currently available as an open-source plugin.
+
+## Branches
+
+| Moodle version    | Branch             |
+| ----------------- | ------------------ |
+| Moodle 3.9       | `MOODLE_39_STABLE` |
+| 4.1 (under development | `MOODLE_401_STABLE` |
 
 ## Installing via uploaded ZIP file ##
 
