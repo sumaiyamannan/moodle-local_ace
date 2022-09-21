@@ -129,7 +129,9 @@ class userentity extends base {
                                   ON {$this->logstorealias3}.courseid = {$coursealias}.id
                                  AND {$this->logstorealias3}.userid = {$usertablealias}.id";
 
-        $this->add_selectable_column('u');
+        if (method_exists($this, 'add_selectable_column')) {
+            $this->add_selectable_column('u');
+        }
 
         // Last access in 7 days column.
         $columns[] = (new column(

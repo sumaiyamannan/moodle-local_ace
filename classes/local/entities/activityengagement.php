@@ -101,7 +101,9 @@ class activityengagement extends base {
         }
 
         $useralias = $this->get_table_alias('user');
-        $this->add_selectable_column($useralias);
+        if (method_exists($this, 'add_selectable_column')) {
+            $this->add_selectable_column($useralias);
+        }
         $totalaccessalias = $this->get_table_alias('totalaccess');
         $totalwritesalias = $this->get_table_alias('totalwrites');
         $logalias = $this->get_table_alias('logstore_standard_log');
