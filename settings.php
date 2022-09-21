@@ -146,12 +146,16 @@ if ($hassiteconfig) {
         ));
 
         $roles = get_all_roles();
+        $default = null;
         foreach ($roles as $role) {
             $choices[$role->id] = $role->shortname;
+            if ($role->shortname == 'student') {
+                $default = $role->id;
+            }
         }
         $settings->add(new admin_setting_configselect('local_ace/studentrole',
         new lang_string('studentrole', 'local_ace'),
-        new lang_string('studentrole_desc', 'local_ace'), '', $choices));
+        new lang_string('studentrole_desc', 'local_ace'), $default, $choices));
     }
     $ADMIN->add('localplugins', $settings);
 }
