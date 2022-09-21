@@ -61,10 +61,7 @@ class activity extends datasource {
             $this->add_base_condition_sql("{$coursemodulealias}.course is null");
         }
 
-        $userentityname = $activityentity->get_entity_name();
-        $this->add_columns_from_entity($userentityname);
-        $this->add_filters_from_entity($userentityname);
-        $this->add_conditions_from_entity($userentityname);
+        $this->add_all_from_entities();
     }
 
     /**

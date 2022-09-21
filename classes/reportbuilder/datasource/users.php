@@ -97,26 +97,7 @@ class users extends datasource {
 
         $this->add_entity($coursemodulesentity->add_join($coursemodulesjoin));
 
-        $this->add_columns_from_entity($usercore->get_entity_name());
-        $this->add_columns_from_entity($userentity->get_entity_name());
-        $this->add_columns_from_entity($enrolmententity->get_entity_name());
-        $this->add_columns_from_entity($courseentity->get_entity_name());
-        $this->add_columns_from_entity($acesamplesentity->get_entity_name());
-        $this->add_columns_from_entity($coursemodulesentity->get_entity_name());
-
-        $this->add_filters_from_entity($usercore->get_entity_name());
-        $this->add_filters_from_entity($userentity->get_entity_name());
-        $this->add_filters_from_entity($enrolmententity->get_entity_name());
-        $this->add_filters_from_entity($courseentity->get_entity_name());
-        $this->add_filters_from_entity($acesamplesentity->get_entity_name());
-        $this->add_filters_from_entity($coursemodulesentity->get_entity_name());
-
-        $this->add_conditions_from_entity($usercore->get_entity_name());
-        $this->add_conditions_from_entity($userentity->get_entity_name());
-        $this->add_conditions_from_entity($enrolmententity->get_entity_name());
-        $this->add_conditions_from_entity($courseentity->get_entity_name());
-        $this->add_conditions_from_entity($acesamplesentity->get_entity_name());
-        $this->add_conditions_from_entity($coursemodulesentity->get_entity_name());
+        $this->add_all_from_entities();
 
         // Set default filter if not active - sets the default userenrolment filter to before 7days ago.
         $filtervalues = $this->get_filter_values();

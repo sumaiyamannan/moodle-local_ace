@@ -72,17 +72,7 @@ class useractivity extends datasource {
 
         $this->add_entity($userentity->add_join($userjoin));
 
-        $this->add_columns_from_entity($activityengagement->get_entity_name());
-        $this->add_columns_from_entity($userentity->get_entity_name());
-        $this->add_columns_from_entity($enrolmententity->get_entity_name());
-
-        $this->add_filters_from_entity($activityengagement->get_entity_name());
-        $this->add_filters_from_entity($userentity->get_entity_name());
-        $this->add_filters_from_entity($enrolmententity->get_entity_name());
-
-        $this->add_conditions_from_entity($activityengagement->get_entity_name());
-        $this->add_conditions_from_entity($userentity->get_entity_name());
-        $this->add_conditions_from_entity($enrolmententity->get_entity_name());
+        $this->add_all_from_entities();
 
         $this->add_action_button([
             'id' => 'emailallselected',
