@@ -74,7 +74,23 @@ class userengagement extends datasource {
         $userentity = new userentity();
         $this->add_entity($userentity->add_join($coursejoin));
 
-        $this->add_all_from_entities();
+        $this->add_columns_from_entity($usercore->get_entity_name());
+        $this->add_columns_from_entity($enrolmententity->get_entity_name());
+        $this->add_columns_from_entity($courseentity->get_entity_name());
+        $this->add_columns_from_entity($engagementlevels->get_entity_name());
+        $this->add_columns_from_entity($userentity->get_entity_name());
+
+        $this->add_filters_from_entity($usercore->get_entity_name());
+        $this->add_filters_from_entity($enrolmententity->get_entity_name());
+        $this->add_filters_from_entity($courseentity->get_entity_name());
+        $this->add_filters_from_entity($engagementlevels->get_entity_name());
+        $this->add_filters_from_entity($userentity->get_entity_name());
+
+        $this->add_conditions_from_entity($usercore->get_entity_name());
+        $this->add_conditions_from_entity($enrolmententity->get_entity_name());
+        $this->add_conditions_from_entity($courseentity->get_entity_name());
+        $this->add_conditions_from_entity($engagementlevels->get_entity_name());
+        $this->add_conditions_from_entity($userentity->get_entity_name());
 
         $this->add_action_button([
             'id' => 'emailallselected',
