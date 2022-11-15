@@ -20,7 +20,6 @@ We also use the a custom dashboard plugin (based on local_vxgdashboard) and a bl
 | ----------------- | ------------------ |
 | Moodle 3.9       | `MOODLE_39_STABLE` |
 | Moodle 4.0       | `MOODLE_40_STABLE` |
-| 4.1 (under development | `MOODLE_401_STABLE` |
 
 ## Installing via uploaded ZIP file ##
 
