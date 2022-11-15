@@ -150,6 +150,8 @@ $string['endtime'] = 'End time';
 
 $string['userentitytitle'] = 'Users';
 $string['totalviews']  = 'All user views';
+$string['totalviewssevendays']  = 'All user views in the last 7 days';
+$string['maxmodulesfilter']  = 'Max number of modules viewed in the last 7 days to display';
 $string['totalviewsuser']  = 'Total views';
 $string['filternotsince'] = 'Not since';
 $string['filternotinlast'] = 'Not in last number of days';
@@ -167,6 +169,7 @@ $string['courseregex'] = 'ACE course regex';
 $string['moduletype'] = 'Course Module Type';
 $string['courseselect'] = 'Course Selection';
 $string['activitynamedashboardlink'] = 'Activity name with dashboard link';
+$string['activitynamelink'] = 'Activity name with activity link';
 
 $string['userengagementdatasource'] = 'Users Engagement';
 $string['engagementlevelstitle'] = 'Engagement Level';
@@ -190,3 +193,4 @@ $string['studentrole_desc'] = 'This is the role usually used as the student role
 $string['logsummary'] = 'Used to generate stats on logs table for course module views.';
 $string['fullnamelogslink'] = 'User fullname linked to logs report.';
 $string['groups'] = 'Groups';
+$string['modulesviews'] = 'Used to generate stats on logs table for most viewed course modules';

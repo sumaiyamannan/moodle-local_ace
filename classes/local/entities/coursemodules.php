@@ -85,6 +85,7 @@ class coursemodules extends base {
                 'logstore_standard_log' => 'alsl',
                 'context' => 'actx',
                 'totalviewcount' => 'cmtvc',
+                'sevendaysviewcount' => 'cmvcsd',
                 'totalviewcountuser' => 'cmtvcu',
                ];
     }
@@ -142,6 +143,7 @@ class coursemodules extends base {
         $cmalias = $this->get_table_alias('course_modules');
         $modulesalias = $this->get_table_alias('modules');
         $totalviewcountalias = $this->get_table_alias('totalviewcount');
+        $sevendaysviewcountalias = $this->get_table_alias('sevendaysviewcount');
         $totalviewcountuseralias = $this->get_table_alias('totalviewcountuser');
 
         $this->add_join("JOIN {modules} {$modulesalias} ON {$cmalias}.module = {$modulesalias}.id");
@@ -209,6 +211,24 @@ class coursemodules extends base {
                     format_string($value, true));
             });
 
+        $columns[] = (new column(
+            'namelink',
+            new lang_string('activitynamelink', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->set_type(column::TYPE_TEXT)
+            ->add_fields("mmj.name as namelink, {$cmalias}.id, {$modulesalias}.name")
+            ->set_is_sortable(true)
+            ->add_callback(static function(?string $value, stdClass $row): string {
+                if ($value === null) {
+                    return '';
+                }
+                $url = new moodle_url('/mod/' . $row->name . '/view.php', ['id' => $row->id]);
+                return html_writer::link($url,
+                    format_string($value, true));
+            });
+
         // Date due.
         $columns[] = (new column(
             'duedate',
@@ -237,6 +257,20 @@ class coursemodules extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_fields("{$totalviewcountalias}.viewcounttotal");
 
+        $sevendaysviewcountsql = "LEFT JOIN (SELECT viewcount, cmid
+                                               FROM {local_ace_modules_views}
+                                              WHERE courseid = $courseid) {$sevendaysviewcountalias}
+                                                 ON {$sevendaysviewcountalias}.cmid = {$cmalias}.id";
+        $columns[] = (new column(
+            'sevendaysviewcount',
+            new lang_string('totalviewssevendays', 'local_ace'),
+                $this->get_entity_name()
+        ))
+        ->add_join($sevendaysviewcountsql)
+        ->set_is_sortable(true)
+        ->set_type(column::TYPE_INTEGER)
+        ->add_fields("{$sevendaysviewcountalias}.viewcount");
+
         $viewcountusersql = "LEFT JOIN (SELECT SUM(viewcount) AS viewcounttotal, cmid
                                       FROM {local_ace_log_summary}
 	                                 WHERE courseid = $courseid AND userid = $userid
@@ -252,11 +286,11 @@ class coursemodules extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_fields("{$totalviewcountuseralias}.viewcounttotal");
 
-        $lastaccessanyjoin = "LEFT JOIN (SELECT contextinstanceid, MAX(timecreated) as lastaccessany
-                                        FROM {logstore_standard_log}
+        $lastaccessanyjoin = "LEFT JOIN (SELECT cmid, MAX(lastaccessed) as lastaccessany
+                                        FROM {local_ace_log_summary}
                                        WHERE courseid = $courseid
-                                    GROUP BY contextinstanceid) {$this->logstorealias1}
-                                     ON {$this->logstorealias1}.contextinstanceid = {$cmalias}.id";
+                                    GROUP BY cmid) {$this->logstorealias1}
+                                     ON {$this->logstorealias1}.cmid = {$cmalias}.id";
 
         $columns[] = (new column(
             'lastaccessanyuser',
@@ -479,6 +513,15 @@ class coursemodules extends base {
             new lang_string('submissionratefilter', 'local_ace'),
             $this->get_entity_name(),
             "{$this->logstorealias6}.submissionrate"
+        ))
+            ->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            number::class,
+            'maxmodules',
+            new lang_string('maxmodulesfilter', 'local_ace'),
+            $this->get_entity_name(),
+            "cmvcsd.viewcount"
         ))
             ->add_joins($this->get_joins());
 

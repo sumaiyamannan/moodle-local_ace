@@ -112,6 +112,44 @@ function xmldb_local_ace_upgrade($oldversion) {
         upgrade_plugin_savepoint(true, 2021121602, 'local', 'ace');
     }
 
+    if ($oldversion < 2022110100) {
+
+        // Define table local_ace_modules_views to be created.
+        $table = new xmldb_table('local_ace_modules_views');
+
+        // Adding fields to table local_ace_modules_views.
+        $table->add_field('id', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, XMLDB_SEQUENCE, null);
+        $table->add_field('courseid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('cmid', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+        $table->add_field('viewcount', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, null);
+
+        // Adding keys to table local_ace_modules_views.
+        $table->add_key('primary', XMLDB_KEY_PRIMARY, ['id']);
+
+        // Conditionally launch create table for local_ace_modules_views.
+        if (!$dbman->table_exists($table)) {
+            $dbman->create_table($table);
+        }
+
+        // Ace savepoint reached.
+        upgrade_plugin_savepoint(true, 2022110100, 'local', 'ace');
+    }
+
+    if ($oldversion < 2022111400) {
+
+        // Define field lastaccessed to be added to local_ace_log_summary.
+        $table = new xmldb_table('local_ace_log_summary');
+        $field = new xmldb_field('lastaccessed', XMLDB_TYPE_INTEGER, '10', null, XMLDB_NOTNULL, null, 0, 'viewcount');
+
+        // Conditionally launch add field lastaccessed.
+        if (!$dbman->field_exists($table, $field)) {
+            $dbman->add_field($table, $field);
+        }
+
+        // Ace savepoint reached.
+        upgrade_plugin_savepoint(true, 2022111400, 'local', 'ace');
+    }
+
     return true;
 }
 

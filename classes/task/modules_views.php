@@ -18,7 +18,7 @@
  * Tasks
  *
  * @package     local_ace
- * @copyright   2021 University of Canterbury
+ * @copyright   2022 University of Canterbury
  * @license     https://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
@@ -29,30 +29,30 @@ defined('MOODLE_INTERNAL') || die();
 /**
  * Used to get stats for logs to use in reports.
  */
-class log_summary extends \core\task\scheduled_task {
+class modules_views extends \core\task\scheduled_task {
     /**
      * Returns the name of this task.
      */
     public function get_name() {
         // Shown in admin screens.
-        return get_string('logsummary', 'local_ace');
+        return get_string('modulesviews', 'local_ace');
     }
     /**
      * Executes task.
      */
     public function execute() {
         global $DB;
-        $DB->delete_records('local_ace_log_summary');
+        $DB->delete_records('local_ace_modules_views');
 
-        $sql = "INSERT INTO {local_ace_log_summary} (courseid, cmid, userid, viewcount, lastaccessed)
+        $pastweek = time() - WEEKSECS;
+
+        $sql = "INSERT INTO {local_ace_modules_views} (courseid, cmid, viewcount)
                  (SELECT courseid,
                         contextinstanceid as cmid,
-                        userid,
-                        count(*) AS viewcounttotal,
-                        max(timecreated) as lastaccessed
+                        count(*) AS viewcounttotal
                         FROM {logstore_standard_log}
-                       WHERE contextlevel = ".CONTEXT_MODULE ." AND crud = 'r'
-                   GROUP BY courseid, contextinstanceid, userid)";
+                       WHERE contextlevel = ".CONTEXT_MODULE ." AND timecreated > ". $pastweek ." AND crud = 'r'
+                       GROUP BY courseid, contextinstanceid)";
 
         $DB->execute($sql);
     }
