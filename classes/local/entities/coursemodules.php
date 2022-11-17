@@ -87,6 +87,8 @@ class coursemodules extends base {
                 'totalviewcount' => 'cmtvc',
                 'sevendaysviewcount' => 'cmvcsd',
                 'totalviewcountuser' => 'cmtvcu',
+                'activityposition' => 'ap',
+                'activitysection' => 'asec'
                ];
     }
 
@@ -145,6 +147,8 @@ class coursemodules extends base {
         $totalviewcountalias = $this->get_table_alias('totalviewcount');
         $sevendaysviewcountalias = $this->get_table_alias('sevendaysviewcount');
         $totalviewcountuseralias = $this->get_table_alias('totalviewcountuser');
+        $activitypositionalias = $this->get_table_alias('activityposition');
+        $activitysectionalias = $this->get_table_alias('activitysection');
 
         $this->add_join("JOIN {modules} {$modulesalias} ON {$cmalias}.module = {$modulesalias}.id");
 
@@ -228,6 +232,40 @@ class coursemodules extends base {
                 return html_writer::link($url,
                     format_string($value, true));
             });
+
+        // Module section column.
+        $activitysectionsql = "LEFT JOIN (
+            SELECT cm.id, cs.section
+            FROM {course_modules} cm LEFT JOIN {course_sections} cs ON cm.section = cs.id
+            WHERE cm.course = $courseid) {$activitysectionalias}
+            ON {$activitysectionalias}.id = {$cmalias}.id ";
+
+        $columns[] = (new column(
+            'section',
+            new lang_string('section'),
+            $this->get_entity_name()
+        ))
+            ->add_join($activitysectionsql)
+            ->set_is_sortable(true)
+            ->set_type(column::TYPE_INTEGER)
+            ->add_fields("{$activitysectionalias}.section");
+
+        // Module section position column.
+        $activitypositionsql = "LEFT JOIN (
+            SELECT cm.id, position(','||cm.id||',' IN ',' ||cs.sequence||',')
+            FROM {course_modules} cm LEFT JOIN {course_sections} cs ON cm.section = cs.id
+            WHERE cm.course = $courseid) {$activitypositionalias}
+            ON {$activitypositionalias}.id = {$cmalias}.id ";
+
+        $columns[] = (new column(
+            'position',
+            new lang_string('position', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_join($activitypositionsql)
+            ->set_is_sortable(true)
+            ->set_type(column::TYPE_INTEGER)
+            ->add_fields("{$activitypositionalias}.position");
 
         // Date due.
         $columns[] = (new column(

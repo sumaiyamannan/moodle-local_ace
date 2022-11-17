@@ -194,3 +194,4 @@ $string['logsummary'] = 'Used to generate stats on logs table for course module 
 $string['fullnamelogslink'] = 'User fullname linked to logs report.';
 $string['groups'] = 'Groups';
 $string['modulesviews'] = 'Used to generate stats on logs table for most viewed course modules';
+$string['position'] = 'Activity position';
