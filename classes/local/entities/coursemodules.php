@@ -85,7 +85,7 @@ class coursemodules extends base {
                 'logstore_standard_log' => 'alsl',
                 'context' => 'actx',
                 'totalviewcount' => 'cmtvc',
-                'sevendaysviewcount' => 'cmvcsd',
+                'recentviewcount' => 'cmvcr',
                 'totalviewcountuser' => 'cmtvcu',
                 'activityposition' => 'ap',
                 'activitysection' => 'asec'
@@ -145,7 +145,7 @@ class coursemodules extends base {
         $cmalias = $this->get_table_alias('course_modules');
         $modulesalias = $this->get_table_alias('modules');
         $totalviewcountalias = $this->get_table_alias('totalviewcount');
-        $sevendaysviewcountalias = $this->get_table_alias('sevendaysviewcount');
+        $recentviewcountalias = $this->get_table_alias('recentviewcount');
         $totalviewcountuseralias = $this->get_table_alias('totalviewcountuser');
         $activitypositionalias = $this->get_table_alias('activityposition');
         $activitysectionalias = $this->get_table_alias('activitysection');
@@ -295,19 +295,19 @@ class coursemodules extends base {
             ->set_type(column::TYPE_INTEGER)
             ->add_fields("{$totalviewcountalias}.viewcounttotal");
 
-        $sevendaysviewcountsql = "LEFT JOIN (SELECT viewcount, cmid
-                                               FROM {local_ace_modules_views}
-                                              WHERE courseid = $courseid) {$sevendaysviewcountalias}
-                                                 ON {$sevendaysviewcountalias}.cmid = {$cmalias}.id";
+        $recentviewcountsql = "LEFT JOIN (SELECT viewcount, cmid
+                                    FROM {local_ace_modules_views}
+                                    WHERE courseid = $courseid) {$recentviewcountalias}
+                                    ON {$recentviewcountalias}.cmid = {$cmalias}.id";
         $columns[] = (new column(
-            'sevendaysviewcount',
-            new lang_string('totalviewssevendays', 'local_ace'),
+            'recentviewcount',
+            new lang_string('totalviewsrecent', 'local_ace'),
                 $this->get_entity_name()
         ))
-        ->add_join($sevendaysviewcountsql)
+        ->add_join($recentviewcountsql)
         ->set_is_sortable(true)
         ->set_type(column::TYPE_INTEGER)
-        ->add_fields("{$sevendaysviewcountalias}.viewcount");
+        ->add_fields("{$recentviewcountalias}.viewcount");
 
         $viewcountusersql = "LEFT JOIN (SELECT SUM(viewcount) AS viewcounttotal, cmid
                                       FROM {local_ace_log_summary}
@@ -567,7 +567,7 @@ class coursemodules extends base {
             'maxmodules',
             new lang_string('maxmodulesfilter', 'local_ace'),
             $this->get_entity_name(),
-            "cmvcsd.viewcount"
+            "cmvcr.viewcount"
         ))
             ->add_joins($this->get_joins());
 

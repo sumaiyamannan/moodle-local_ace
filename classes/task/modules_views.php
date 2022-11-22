@@ -44,7 +44,9 @@ class modules_views extends \core\task\scheduled_task {
         global $DB;
         $DB->delete_records('local_ace_modules_views');
 
-        $pastweek = time() - WEEKSECS;
+        $recentviewduration = (int) get_config('local_ace', 'coursemodulerecentviewduration');
+
+        $pastweek = time() - (!empty($recentviewduration) || $recentviewduration === 0) ? $recentviewduration : WEEKSECS;
 
         $sql = "INSERT INTO {local_ace_modules_views} (courseid, cmid, viewcount)
                  (SELECT courseid,
