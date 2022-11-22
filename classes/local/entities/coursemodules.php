@@ -511,6 +511,14 @@ class coursemodules extends base {
 
         $filters[] = (new filter(
             date::class,
+            'duedate',
+            new lang_string('due', 'local_ace'),
+            $this->get_entity_name(),
+            "mmj.duedate"
+        ))->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            date::class,
             'lastaccessthis',
             new lang_string('lastaccessthisuser', 'local_ace'),
             $this->get_entity_name(),
