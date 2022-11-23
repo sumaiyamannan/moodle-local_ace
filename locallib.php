@@ -357,6 +357,9 @@ function local_ace_course_graph(int $courseid): string {
     $output = $renderer->render_from_template('local_ace/course_engagement_chart', $context);
     $PAGE->requires->js_call_amd('local_ace/course_engagement', 'init', [$context]);
     $PAGE->requires->css('/local/ace/styles.css');
+
+    $output .= local_ace_get_dedication($courseid);
+
     return $output;
 }
 
@@ -508,8 +511,29 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
     $PAGE->requires->js_call_amd('local_ace/student_engagement', 'init', [$context]);
 
     $output .= html_writer::end_div();
+    $output .= local_ace_get_dedication($courseid);
 
     return $output;
+}
+
+/**
+ * Helper function to print average time spent in course from dedication plugin.
+ *
+ * @param [type] $courseid
+ * @return void
+ */
+function local_ace_get_dedication($courseid) {
+    $config = get_config('local_ace');
+
+    if (class_exists("\block_dedication\lib\utils") && !empty($courseid)) {
+        $dedicationhistory = (empty($config->dedicationhistory)) ? WEEKSECS : $config->dedicationhistory;
+        $timespent = \block_dedication\lib\utils::get_average($courseid, $dedicationhistory);
+        $a = new stdClass();
+        $a->timespent = !empty($timespent['timespent']) ? $timespent['timespent'] : get_string('none');
+        $a->days = $dedicationhistory / DAYSECS;
+        return html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a));
+    }
+    return '';
 }
 
 /**

@@ -51,6 +51,10 @@ if ($hassiteconfig) {
             get_string('coursemodulerecentviewduration', 'local_ace'),
             get_string('coursemodulerecentviewduration_desc', 'local_ace'), WEEKSECS));
 
+        $settings->add(new admin_setting_configduration('local_ace/dedicationhistory',
+            get_string('dedicationhistory', 'local_ace'),
+            get_string('dedicationhistory', 'local_ace'), WEEKSECS));
+
         $settings->add(new admin_setting_configtext(
             'local_ace/displayperiod',
             new lang_string('displayperiod', 'local_ace'),
