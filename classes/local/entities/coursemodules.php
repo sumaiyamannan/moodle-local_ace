@@ -309,6 +309,19 @@ class coursemodules extends base {
         ->set_type(column::TYPE_INTEGER)
         ->add_fields("{$recentviewcountalias}.viewcount");
 
+        $columns[] = (new column(
+            'recentviewcounthide',
+            new lang_string('totalviewsrecenthide', 'local_ace'),
+                $this->get_entity_name()
+        ))
+        ->add_join($recentviewcountsql)
+        ->set_is_sortable(true)
+        ->set_type(column::TYPE_INTEGER)
+        ->add_callback(static function(?int $value) : string {
+                return '';
+        })
+        ->add_fields("{$recentviewcountalias}.viewcount");
+
         $viewcountusersql = "LEFT JOIN (SELECT SUM(viewcount) AS viewcounttotal, cmid
                                       FROM {local_ace_log_summary}
 	                                 WHERE courseid = $courseid AND userid = $userid
