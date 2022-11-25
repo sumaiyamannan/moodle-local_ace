@@ -97,6 +97,19 @@ class users extends datasource {
 
         $this->add_entity($coursemodulesentity->add_join($coursemodulesjoin));
 
+        // If dedication class exists, add it too.
+        if (class_exists('\block_dedication\local\entities\dedication')) {
+            $dedication = new \block_dedication\local\entities\dedication();
+            $dedicationalias = $dedication->get_table_alias('block_dedication');
+            $dedicationjoin = "LEFT JOIN {block_dedication} {$dedicationalias}
+                                ON {$dedicationalias}.userid = {$usertablealias}.id
+                                AND {$dedicationalias}.courseid = {$coursetablealias}.id";
+            $this->add_entity($dedication->add_join($dedicationjoin));
+            $this->add_columns_from_entity($dedication->get_entity_name());
+            $this->add_filters_from_entity($dedication->get_entity_name());
+            $this->add_conditions_from_entity($dedication->get_entity_name());
+        }
+
         $this->add_columns_from_entity($usercore->get_entity_name());
         $this->add_columns_from_entity($userentity->get_entity_name());
         $this->add_columns_from_entity($enrolmententity->get_entity_name());
