@@ -20,6 +20,7 @@ namespace local_ace\reportbuilder\datasource;
 
 use core_reportbuilder\datasource;
 use local_ace\local\entities\coursemodules;
+use local_ace\local\entities\activitycompletion;
 use core_reportbuilder\local\helpers\database;
 
 /**
@@ -48,7 +49,10 @@ class activity extends datasource {
         require_once($CFG->dirroot.'/local/ace/locallib.php');
 
         $activityentity = new coursemodules();
+        $activitycompletion = new activitycompletion();
+
         $coursemodulealias = $activityentity->get_table_alias('course_modules');
+        $activitycompletionalias = $activitycompletion->get_table_alias('course_modules_completion');
 
         $this->set_main_table('course_modules', $coursemodulealias);
 
@@ -62,9 +66,24 @@ class activity extends datasource {
         }
 
         $userentityname = $activityentity->get_entity_name();
+
+        // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.
+        $userid = local_ace_get_user_helper();
+
+        $activitycompletionjoin = "LEFT JOIN {course_modules_completion} {$activitycompletionalias}
+                             ON {$activitycompletionalias}.coursemoduleid = {$coursemodulealias}.id
+                            AND {$activitycompletionalias}.userid = " . $userid;
+
+        $this->add_entity($activitycompletion->add_join($activitycompletionjoin));
+
         $this->add_columns_from_entity($userentityname);
+        $this->add_columns_from_entity($activitycompletion->get_entity_name());
+
         $this->add_filters_from_entity($userentityname);
+        $this->add_filters_from_entity($activitycompletion->get_entity_name());
+
         $this->add_conditions_from_entity($userentityname);
+        $this->add_conditions_from_entity($activitycompletion->get_entity_name());
     }
 
     /**
