@@ -132,10 +132,10 @@
 
 .useranalytics .nav-tabs .nav-link.active,
 .useranalytics .nav-tabs .nav-item.show .nav-link {
-    color: #5cb85b;
+    color: #54959a;
     background-color: #fff;
-    border-color: #5cb85b;
-    border-bottom: 3px solid #5cb85b;
+    border-color: #54959a;
+    border-bottom: 3px solid #54959a;
 }
 
 .useranalytics .nav-tabs .nav-link:hover,
@@ -200,3 +200,9 @@
     padding-top: 15px;
     margin-top: 10px;    
 }
+
+.useranalytics .coursename {
+    padding-top: 10px;
+    padding-bottom: 20px;
+}
+    

@@ -496,7 +496,8 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
     $output .= print_tabs(array($tabs), $courseid, null, null, true);
 
     if (!empty($courseid)) {
-        $output .= $OUTPUT->heading(format_string($courses[$courseid]->fullname), 3, 'coursename');
+        $url = '/course/view.php?id=' . $courseid;
+        $output .= $OUTPUT->heading(html_writer::link($url, $courses[$courseid]->fullname), 3, 'coursename');
     }
 
     $context = array(
