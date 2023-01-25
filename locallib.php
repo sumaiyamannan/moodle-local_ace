@@ -531,7 +531,16 @@ function local_ace_get_dedication($courseid) {
         $a = new stdClass();
         $a->timespent = !empty($timespent['timespent']) ? $timespent['timespent'] : get_string('none');
         $a->days = $dedicationhistory / DAYSECS;
-        return html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a));
+
+        $helper = '<a class="btn btn-link p-0" role="button" data-container="body" data-toggle="popover" data-placement="right" data-content="<p>'. get_string('averagetimespentincoursehelper', 'block_ace').'</p> "
+            data-html="true" tabindex="0" data-trigger="focus" data-original-title="" title="">
+            <i class="icon fa fa-question-circle text-info fa-fw " title="'. get_string('averagetimespentincoursehelper', 'block_ace').'" role="img" aria-label=""></i></a>';
+        
+        $output = html_writer::start_div('course_dedication');
+        $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a). $helper) ;
+        $output .= html_writer::end_div();
+        
+        return $output;
     }
     return '';
 }

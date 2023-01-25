@@ -191,3 +191,12 @@
     margin-left: auto;
     margin-right: auto;
 }
+
+.course_dedication {
+    background-color: #b0dce0;
+    font-size: 20px;
+    height: 60px;
+    text-align: center;
+    padding-top: 15px;
+    margin-top: 10px;    
+}
