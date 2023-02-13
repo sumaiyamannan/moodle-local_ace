@@ -536,11 +536,11 @@ function local_ace_get_dedication($courseid) {
         $helper = '<a class="btn btn-link p-0" role="button" data-container="body" data-toggle="popover" data-placement="right" data-content="<p>'. get_string('averagetimespentincoursehelper', 'block_ace').'</p> "
             data-html="true" tabindex="0" data-trigger="focus" data-original-title="" title="">
             <i class="icon fa fa-question-circle text-info fa-fw " title="'. get_string('averagetimespentincoursehelper', 'block_ace').'" role="img" aria-label=""></i></a>';
-        
+
         $output = html_writer::start_div('course_dedication');
         $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a). $helper) ;
         $output .= html_writer::end_div();
-        
+
         return $output;
     }
     return '';
@@ -1157,6 +1157,23 @@ function local_ace_get_course_helper() {
             // We get the course another way below.
         }
         // @codingStandardsIgnoreEnd
+        // See if $PAGE is set, and if it relates to a user context.
+        // And if user only has one course in the list - use that.
+        try {
+            if ($PAGE->context->contextlevel == CONTEXT_USER) {
+                // Get list of allowed courses.
+                list($courseid, $courses) = local_ace_get_user_courses($PAGE->context->instanceid, 0);
+                if (count($courses) == 1) {
+                    return get_course($courseid);
+                }
+            }
+            // @codingStandardsIgnoreStart
+        } catch (coding_exception $e) {
+            // We get the course another way below.
+        }
+
+        // If this is a user context - check to see if they are only enrolled in one active course.
+        // If so - return that single course.
     }
 
     // Finally check if set in HTTP_REFERRER - will be a webservice call from the dashboard page.
@@ -1173,6 +1190,13 @@ function local_ace_get_course_helper() {
             } else if (!empty($params['contextid'])) {
                 $context = context::instance_by_id($params['contextid'], IGNORE_MISSING);
                 if (!empty($context)) {
+                    if ($context->contextlevel == CONTEXT_USER) {
+                        // Get list of allowed courses.
+                        list($courseid, $courses) = local_ace_get_user_courses($context->instanceid, 0);
+                        if (count($courses) == 1) {
+                            return get_course($courseid);
+                        }
+                    }
                     $coursecontext = $context->get_course_context(false);
                     if (!empty($coursecontext) && !empty($coursecontext->instanceid) && $coursecontext->instanceid != SITEID) {
                         return get_course($coursecontext->instanceid);
