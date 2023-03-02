@@ -59,11 +59,11 @@ class get_stats extends \core\task\scheduled_task {
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
                  WHERE c.timecreated > :runlast
                        AND sampleorigin = \'user_enrolments\'
-                       AND (indicator like \'%\\\\cognitive_depth\' OR indicator like \'%\\\\social_breadth\'
-                            OR indicator = \'\core\analytics\indicator\any_course_access\'
-                            OR indicator = \'\core\analytics\indicator\read_actions\')
-              GROUP BY c.starttime, c.endtime, c.contextid, ue.userid, c.sampleid
-              HAVING count(value) > 1';
+                       AND (indicator like \'%cognitive_depth\' OR indicator like \'%social_breadth\'
+                            OR indicator = \'\\\\core\\\\analytics\\\\indicator\\\\any_course_access\'
+                            OR indicator = \'\\\\core\\\\analytics\\\\indicator\\\\read_actions\'
+                            OR indicator = \'\\\\local_echo360analytics\\\\analytics\\\\indicator\\\\watchtime\')
+              GROUP BY c.starttime, c.endtime, c.contextid, ue.userid, c.sampleid';
 
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
 
@@ -97,9 +97,10 @@ class get_stats extends \core\task\scheduled_task {
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
                  WHERE c.timecreated > :runlast
                        AND sampleorigin = \'user_enrolments\'
-                       AND (indicator like \'%\\\\cognitive_depth\' OR indicator like \'%\\\\social_breadth\'
-                            OR indicator = \'\core\analytics\indicator\any_course_access\'
-                            OR indicator = \'\core\analytics\indicator\read_actions\')
+                       AND (indicator like \'%cognitive_depth\' OR indicator like \'%social_breadth\'
+                            OR indicator = \'\\\\core\\\\analytics\\\\indicator\\\\any_course_access\'
+                            OR indicator = \'\\\\core\\\\analytics\\\\indicator\\\\read_actions\'
+                            OR indicator = \'\\\\local_echo360analytics\\\\analytics\\\\indicator\\\\watchtime\')
               GROUP BY c.starttime, c.endtime, c.contextid';
 
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
@@ -153,7 +154,7 @@ class get_stats extends \core\task\scheduled_task {
             $DB->insert_records('local_ace_samples', $emptysamples);
             mtrace("Added $count empty user enrolment values");
         }
-        // TODO - add "viewcount" records for all recently created analytic entries.
+
         // For each timeframe that we have null entries
         $sql = "SELECT DISTINCT starttime, endtime
                   FROM {local_ace_samples}
