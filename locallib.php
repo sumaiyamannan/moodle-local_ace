@@ -141,6 +141,7 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
                 SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
                        EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
                        value,
+                       viewcount,
                        userid
                 FROM {local_ace_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
@@ -148,7 +149,8 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
                 WHERE (endtime - starttime = :per) "
         . $startendsql . " AND co.id = :courseid
             )
-            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value
+            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value,
+                   sum(s.viewcount) as viewcountvalue, count(s.viewcount) as viewcount
               FROM samples s
               WHERE s.userid = :userid
               GROUP BY s.starttime, s.endtime
@@ -288,12 +290,17 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
 
             $date = userdate($value->endtime, get_string('strftimedateshortmonthabbr', 'langconfig'));
             $templabels[] = $date;
-            if (empty($value->value)) {
-                $series[$date] = 0;
-            } else {
-                $series[$date] =
+            $calcval = 0;
+            if (!empty($value->value)) {
+                $calcval =
                     round(($value->value / $value->count) * 100); // Convert to average percentage.
             }
+            if (!empty($value->viewcountvalue)) {
+                $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
+                // Lets make the view count 50% of the displayed value for now - maybe change later?
+                $calcval = ($calcval + $viewcount) /2;
+            }
+            $series[$date] = $calcval;
             // Make sure we don't show overlapping periods.
             $laststart = $value->starttime;
         }
@@ -704,6 +711,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
                 SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
                        EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
                        value,
+                       viewcount,
                        userid
                 FROM {local_ace_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
@@ -713,15 +721,16 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         . ($end != null ? "AND endtime < :end" : "")
         . " $coursefilter
             )
-            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev
+            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev,
+                   sum(s.viewcount) as viewcountvalue, count(s.viewcount) as viewcount, a.vcstd, a.vcavg
               FROM samples s
               JOIN (
-                        SELECT starttime, endtime, stddev(value), avg(value)
+                        SELECT starttime, endtime, stddev(value), avg(value), stddev(viewcount) as vcstd, avg(viewcount) as vcavg
                         FROM samples s
                         GROUP BY starttime, endtime
                     ) a ON a.starttime = s.starttime AND a.endtime = a.endtime
               WHERE s.userid = :userid
-              GROUP BY s.starttime, s.endtime, avg, stddev
+              GROUP BY s.starttime, s.endtime, avg, stddev, a.vcstd, a.vcavg
               ORDER BY s.starttime DESC";
 
     $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $start);
@@ -750,29 +759,40 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         } else {
             $labels[] = '';
         }
-
-        if (empty($value->value)) {
-            $series[] = 0;
-        } else {
+        $calcval = 0;
+        if (!empty($value->value)) {
             if ($normalisevalues) {
-                $series[] = round(local_ace_normalise_value(($value->value / $value->count) * 100, 0, 100));
+                $calcval = round(local_ace_normalise_value(($value->value / $value->count) * 100, 0, 100));
             } else {
-                $series[] = round(($value->value / $value->count) * 100);
+                $calcval = round(($value->value / $value->count) * 100);
             }
         }
-
-        if (empty($value->avg)) {
-            $average1[] = 0;
-            $average2[] = 0;
-        } else {
+        if (!empty($value->viewcountvalue)) {
+            $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
+            // Lets make the view count 50% of the displayed value for now - maybe change later?
+            $calcval = ($calcval + $viewcount) /2;
+        }
+        $series[] = $calcval;
+        $average1 = 0;
+        $average2 = 0;
+        if (!empty($value->avg)) {
             if ($normalisevalues) {
-                $average1[] = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
-                $average2[] = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
+                $average1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
+                $average2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
             } else {
-                $average1[] = min(round(($value->avg - ($value->stddev / 2)) * 100), 100);
-                $average2[] = min(round(($value->avg + ($value->stddev / 2)) * 100), 100);
+                $average1 = min(round(($value->avg - ($value->stddev / 2)) * 100), 100);
+                $average2 = min(round(($value->avg + ($value->stddev / 2)) * 100), 100);
             }
         }
+        // now add the viewcount stuff.
+        if (!empty($value->vcavg)) {
+            // Again - divide by 2 to make the viewcount avg value worth 50%
+            $average1 = ($average1 + round(local_ace_normalise_value(($value->vcavg - ($value->vcstd / 2)) * 100, 0, 100))) / 2;
+            $average2 = ($average1 + round(local_ace_normalise_value(($value->vcavg + ($value->vcstd / 2)) * 100, 0, 100))) / 2;
+        }
+        $average1[] = $average1;
+        $average2[] = $average2;
+
         // Make sure we don't show overlapping periods.
         $laststart = $value->starttime;
     }
