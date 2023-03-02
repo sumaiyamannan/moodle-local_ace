@@ -125,6 +125,74 @@ class get_stats extends \core\task\scheduled_task {
             $DB->insert_records('local_ace_contexts', $newsamples);
         }
 
+        // Create empty records for all user enrolments with no analytics during that specified time period.
+        // Get unique course and timestart timeend records for users that are not already listed.
+        $sql = "SELECT DISTINCT sa.starttime, sa.endtime, sa.contextid, ue.userid as userid
+                  FROM {local_ace_samples} sa
+                  JOIN {context} cx ON cx.id = sa.contextid AND cx.contextlevel = ". CONTEXT_COURSE. "
+                  JOIN {enrol} e ON e.courseid = cx.instanceid
+                  JOIN {user_enrolments} ue on ue.enrolid = e.id
+                  LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime AND saj.endtime = sa.endtime AND saj.contextid = sa.contextid AND saj.userid = ue.userid
+                  WHERE saj.id is null AND sa.starttime > :runlast AND sa.endtime - sa.starttime = :displayperiod";
+        $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
+        $count = 0;
+        $emptysamples = [];
+        foreach ($recordset as $record) {
+            $sample = new \stdClass();
+            $sample->starttime = $record->starttime;
+            $sample->endtime = $record->endtime;
+            $sample->contextid = $record->contextid;
+            $sample->userid = $record->userid;
+            $sample->value = 0;
+
+            $emptysamples[] = $sample;
+            $count++;
+        }
+        $recordset->close();
+        if (!empty($emptysamples)) {
+            $DB->insert_records('local_ace_samples', $emptysamples);
+            mtrace("Added $count empty user enrolment values");
+        }
+        // TODO - add "viewcount" records for all recently created analytic entries.
+        // For each timeframe that we have null entries
+        $sql = "SELECT DISTINCT starttime, endtime
+                  FROM {local_ace_samples}
+                 WHERE viewcount is null AND starttime > :runlast AND endtime - starttime = :displayperiod";
+        $periods = $DB->get_records_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
+        foreach ($periods as $period) {
+            $sql = "UPDATE {local_ace_samples}
+                       SET viewcount = subquery.vcount
+                      FROM (SELECT cx.id as cxid, l.userid as vuserid, count(l.id) as vcount
+                            FROM {logstore_standard_log} l
+                            JOIN {context} cx on cx.instanceid = l.courseid AND cx.contextlevel = ". CONTEXT_COURSE. "
+                            WHERE (origin = 'web' OR origin = 'ws') AND timecreated > :starttime1 AND timecreated < :endtime1
+                            GROUP BY cx.id, l.userid) AS subquery
+                    WHERE viewcount is null AND starttime = :starttime and endtime = :endtime AND contextid = subquery.cxid AND userid = subquery.vuserid";
+
+            $DB->execute($sql, ['starttime1' => $period->starttime, 'starttime' => $period->starttime,
+                                'endtime' => $period->endtime, 'endtime1' => $period->endtime]);
+            // Set remaining null values for this time period to 0 views.
+            $sql = "UPDATE {local_ace_samples}
+                       SET viewcount = 0
+                       WHERE viewcount is null AND starttime = :starttime and endtime = :endtime";
+            $DB->execute($sql, ['starttime' => $period->starttime, 'endtime' => $period->endtime]);
+        }
+        $sql = "SELECT DISTINCT starttime, endtime
+                  FROM {local_ace_contexts}
+                 WHERE viewcount is null AND starttime > :runlast AND endtime - starttime = :displayperiod";
+        $periods = $DB->get_records_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
+        // Now add those total counts calcuated above to the local_ace_contexts table.
+        foreach ($periods as $period) {
+            $sql = "UPDATE {local_ace_contexts}
+                       SET viewcount = ROUND(subquery.vcount)
+                       FROM (SELECT starttime as vstart, endtime as vend, contextid as vcx, AVG(viewcount) as vcount
+                               FROM {local_ace_samples}
+                              WHERE starttime = :starttime and endtime = :endtime
+                               GROUP BY starttime, endtime, contextid) subquery
+                      WHERE viewcount is null AND starttime = subquery.vstart AND endtime = subquery.vend AND contextid = subquery.vcx";
+            $DB->execute($sql, ['starttime' => $period->starttime, 'endtime' => $period->endtime]);
+        }
+
         set_config('statsrunlast', $now, 'local_ace');
     }
 }
