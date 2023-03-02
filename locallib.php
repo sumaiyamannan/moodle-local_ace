@@ -395,7 +395,8 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
 
     $context = context_course::instance($courseid);
 
-    $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
+    $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value,
+                   sum(s.viewcount) as viewcountvalue, count(s.viewcount) as viewcount
               FROM {local_ace_contexts}
               WHERE contextid = :context AND (endtime - starttime = :period) AND endtime > :start
               " . ($end != null ? "AND endtime < :end " : "") . "
@@ -437,11 +438,16 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
             continue;
         }
         $labels[] = userdate($value->endtime, get_string('strftimedateshortmonthabbr', 'langconfig'));
-        if (empty($value->value)) {
-            $series[] = 0;
-        } else {
-            $series[] = round(($value->value / $value->count) * 100); // Convert to average percentage.
+        $calcval = 0;
+        if (!empty($value->value)) {
+            $calcval = round(($value->value / $value->count) * 100); // Convert to average percentage.
         }
+        if (!empty($value->viewcountvalue)) {
+            $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
+            // Lets make the view count 50% of the displayed value for now - maybe change later?
+            $calcval = ($calcval + $viewcount) /2;
+        }
+        $series[] = $calcval;
         // Make sure we don't show overlapping periods.
         $laststart = $value->starttime;
     }
