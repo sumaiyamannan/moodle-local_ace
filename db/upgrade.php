@@ -153,7 +153,7 @@ function xmldb_local_ace_upgrade($oldversion) {
     if ($oldversion < 2023030200) {
         // Define field viewcount to be added to local_ace_log_summary.
         $table = new xmldb_table('local_ace_contexts');
-        $table->add_field('viewcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $field = new xmldb_field('viewcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
 
         // Conditionally launch add field lastaccessed.
         if (!$dbman->field_exists($table, $field)) {
@@ -161,7 +161,7 @@ function xmldb_local_ace_upgrade($oldversion) {
         }
 
         $table = new xmldb_table('local_ace_samples');
-        $table->add_field('viewcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
+        $field = new xmldb_field('viewcount', XMLDB_TYPE_INTEGER, '10', null, null, null, null);
 
         // Conditionally launch add field lastaccessed.
         if (!$dbman->field_exists($table, $field)) {
