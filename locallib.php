@@ -784,14 +784,13 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         if (!empty($value->avg)) {
             if (!empty($value->vcavg)) {
                 $navg = local_ace_normalise_value($value->vcavg, 0, 750);
-                $value->avg = ($value->avg + $navg) / 2;
-            }
-            if ($normalisevalues) {
+                $avg = local_ace_normalise_value($value->avg * 100, 0, 100);
+                $stddev = ($value->stddev / 2) * 100;
+                $a1 = (($navg  + $avg) / 2) - $stddev;
+                $a2 = (($navg  + $avg) / 2) + $stddev;
+            } else {
                 $a1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
                 $a2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
-            } else {
-                $a1 = min(round(($value->avg - ($value->stddev / 2)) * 100), 100);
-                $a2 = min(round(($value->avg + ($value->stddev / 2)) * 100), 100);
             }
         }
         $average1[] = $a1;
