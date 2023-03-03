@@ -779,25 +779,25 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
             $calcval = ($calcval + $viewcount) /2;
         }
         $series[] = $calcval;
-        $average1 = 0;
-        $average2 = 0;
+        $a1 = 0;
+        $a2 = 0;
         if (!empty($value->avg)) {
             if ($normalisevalues) {
-                $average1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
-                $average2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
+                $a1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
+                $a2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
             } else {
-                $average1 = min(round(($value->avg - ($value->stddev / 2)) * 100), 100);
-                $average2 = min(round(($value->avg + ($value->stddev / 2)) * 100), 100);
+                $a1 = min(round(($value->avg - ($value->stddev / 2)) * 100), 100);
+                $a2 = min(round(($value->avg + ($value->stddev / 2)) * 100), 100);
             }
         }
         // now add the viewcount stuff.
         if (!empty($value->vcavg)) {
             // Again - divide by 2 to make the viewcount avg value worth 50%
-            $average1 = ($average1 + round(local_ace_normalise_value(($value->vcavg - ($value->vcstd / 2)) * 100, 0, 100))) / 2;
-            $average2 = ($average1 + round(local_ace_normalise_value(($value->vcavg + ($value->vcstd / 2)) * 100, 0, 100))) / 2;
+            $a1 = ($a1 + round(local_ace_normalise_value(($value->vcavg - ($value->vcstd / 2)) * 100, 0, 100))) / 2;
+            $a2 = ($a2 + round(local_ace_normalise_value(($value->vcavg + ($value->vcstd / 2)) * 100, 0, 100))) / 2;
         }
-        $average1[] = $average1;
-        $average2[] = $average2;
+        $average1[] = $a1;
+        $average2[] = $a2;
 
         // Make sure we don't show overlapping periods.
         $laststart = $value->starttime;
