@@ -396,7 +396,7 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
     $context = context_course::instance($courseid);
 
     $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value,
-                   sum(s.viewcount) as viewcountvalue, count(s.viewcount) as viewcount
+                   sum(viewcount) as viewcountvalue, count(viewcount) as viewcount
               FROM {local_ace_contexts}
               WHERE contextid = :context AND (endtime - starttime = :period) AND endtime > :start
               " . ($end != null ? "AND endtime < :end " : "") . "
