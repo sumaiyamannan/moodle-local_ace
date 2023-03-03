@@ -782,6 +782,10 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         $a1 = 0;
         $a2 = 0;
         if (!empty($value->avg)) {
+            if (!empty($value->vcavg)) {
+                $navg = local_ace_normalise_value($value->vcavg, 0, 750);
+                $value->avg = ($value->avg + $navg) / 2;
+            }
             if ($normalisevalues) {
                 $a1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
                 $a2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
@@ -789,12 +793,6 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
                 $a1 = min(round(($value->avg - ($value->stddev / 2)) * 100), 100);
                 $a2 = min(round(($value->avg + ($value->stddev / 2)) * 100), 100);
             }
-        }
-        // now add the viewcount stuff.
-        if (!empty($value->vcavg)) {
-            // Again - divide by 2 to make the viewcount avg value worth 50%
-            $a1 = ($a1 + round(local_ace_normalise_value(($value->vcavg - ($value->vcstd / 2)) * 100, 0, 100))) / 2;
-            $a2 = ($a2 + round(local_ace_normalise_value(($value->vcavg + ($value->vcstd / 2)) * 100, 0, 100))) / 2;
         }
         $average1[] = $a1;
         $average2[] = $a2;
