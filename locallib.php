@@ -786,8 +786,8 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
                 $navg = local_ace_normalise_value($value->vcavg, 0, 750);
                 $avg = local_ace_normalise_value($value->avg * 100, 0, 100);
                 $stddev = ($value->stddev / 2) * 100;
-                $a1 = (($navg  + $avg) / 2) - $stddev;
-                $a2 = (($navg  + $avg) / 2) + $stddev;
+                $a1 = round((($navg  + $avg) / 2) - $stddev);
+                $a2 = round((($navg  + $avg) / 2) + $stddev);
             } else {
                 $a1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
                 $a2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
