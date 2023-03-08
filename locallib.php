@@ -141,7 +141,6 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
                 SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
                        EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
                        value,
-                       viewcount,
                        userid
                 FROM {local_ace_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
@@ -149,8 +148,7 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
                 WHERE (endtime - starttime = :per) "
         . $startendsql . " AND co.id = :courseid
             )
-            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value,
-                   sum(s.viewcount) as viewcountvalue, count(s.viewcount) as viewcount
+            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value
               FROM samples s
               WHERE s.userid = :userid
               GROUP BY s.starttime, s.endtime
@@ -395,8 +393,7 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
 
     $context = context_course::instance($courseid);
 
-    $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value,
-                   sum(viewcount) as viewcountvalue, count(viewcount) as viewcount
+    $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
               FROM {local_ace_contexts}
               WHERE contextid = :context AND (endtime - starttime = :period) AND endtime > :start
               " . ($end != null ? "AND endtime < :end " : "") . "
@@ -717,7 +714,6 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
                 SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
                        EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
                        value,
-                       viewcount,
                        userid
                 FROM {local_ace_samples} s
                 JOIN {context} cx ON s.contextid = cx.id AND cx.contextlevel = 50
@@ -727,16 +723,15 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         . ($end != null ? "AND endtime < :end" : "")
         . " $coursefilter
             )
-            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev,
-                   sum(s.viewcount) as viewcountvalue, count(s.viewcount) as viewcount, a.vcstd, a.vcavg
+            SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev
               FROM samples s
               JOIN (
-                        SELECT starttime, endtime, stddev(value), avg(value), stddev(viewcount) as vcstd, avg(viewcount) as vcavg
+                        SELECT starttime, endtime, stddev(value), avg(value)
                         FROM samples s
                         GROUP BY starttime, endtime
                     ) a ON a.starttime = s.starttime AND a.endtime = a.endtime
               WHERE s.userid = :userid
-              GROUP BY s.starttime, s.endtime, avg, stddev, a.vcstd, a.vcavg
+              GROUP BY s.starttime, s.endtime, avg, stddev
               ORDER BY s.starttime DESC";
 
     $params = $inparamscf1 + array('userid' => $userid, 'per' => $period, 'start' => $start);
