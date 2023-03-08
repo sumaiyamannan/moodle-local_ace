@@ -30,6 +30,8 @@ defined('MOODLE_INTERNAL') || die();
  * get_stats class, used to get stats for indicators.
  */
 class get_stats extends \core\task\scheduled_task {
+    /** @var int $insertemptyengagementrecords - should we insert empty engagement records.? */
+    public $insertemptyengagementrecords = true;
     /**
      * Returns the name of this task.
      */
@@ -128,35 +130,37 @@ class get_stats extends \core\task\scheduled_task {
             $DB->insert_records('local_ace_contexts', $newsamples);
         }
 
-        // Create empty records for all user enrolments with no analytics during that specified time period.
-        // Get unique course and timestart timeend records for users that are not already listed.
-        $sql = "SELECT DISTINCT sa.starttime, sa.endtime, sa.contextid, ue.userid as userid
-                  FROM {local_ace_samples} sa
-                  JOIN {context} cx ON cx.id = sa.contextid AND cx.contextlevel = ". CONTEXT_COURSE. "
-                  JOIN {enrol} e ON e.courseid = cx.instanceid
-                  JOIN {user_enrolments} ue on ue.enrolid = e.id
-                  LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime AND saj.endtime = sa.endtime AND saj.contextid = sa.contextid AND saj.userid = ue.userid
-                  WHERE saj.id is null AND sa.starttime > :runlast AND sa.endtime - sa.starttime = :displayperiod";
-        $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
-        $count = 0;
-        $emptysamples = [];
-        foreach ($recordset as $record) {
-            $sample = new \stdClass();
-            $sample->starttime = $record->starttime;
-            $sample->endtime = $record->endtime;
-            $sample->contextid = $record->contextid;
-            $sample->userid = $record->userid;
-            $sample->value = 0;
+        if ($this->insertemptyengagementrecords) {
+            // Create empty records for all user enrolments with no analytics during that specified time period.
+            // Get unique course and timestart timeend records for users that are not already listed.
+            $sql = "SELECT DISTINCT sa.starttime, sa.endtime, sa.contextid, ue.userid as userid
+                      FROM {local_ace_samples} sa
+                      JOIN {context} cx ON cx.id = sa.contextid AND cx.contextlevel = ". CONTEXT_COURSE. "
+                      JOIN {enrol} e ON e.courseid = cx.instanceid
+                      JOIN {user_enrolments} ue on ue.enrolid = e.id
+                      LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime AND saj.endtime = sa.endtime AND saj.contextid = sa.contextid AND saj.userid = ue.userid
+                     WHERE saj.id is null AND sa.starttime > :runlast AND sa.endtime - sa.starttime = :displayperiod";
+            $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
+            $count = 0;
+            $emptysamples = [];
+            foreach ($recordset as $record) {
+                $sample = new \stdClass();
+                $sample->starttime = $record->starttime;
+                $sample->endtime = $record->endtime;
+                $sample->contextid = $record->contextid;
+                $sample->userid = $record->userid;
+                $sample->value = 0;
 
-            $emptysamples[] = $sample;
-            $count++;
+                $emptysamples[] = $sample;
+                $count++;
+            }
+            $recordset->close();
+            if (!empty($emptysamples)) {
+                $DB->insert_records('local_ace_samples', $emptysamples);
+                mtrace("Added $count empty user enrolment values");
+            }
         }
-        $recordset->close();
-        if (!empty($emptysamples)) {
-            $DB->insert_records('local_ace_samples', $emptysamples);
-            mtrace("Added $count empty user enrolment values");
-        }
-
+        /* DISABLE Viewcount queries for now.
         // For each timeframe that we have null entries
         $sql = "SELECT DISTINCT starttime, endtime
                   FROM {local_ace_samples}
@@ -194,7 +198,7 @@ class get_stats extends \core\task\scheduled_task {
                                GROUP BY starttime, endtime, contextid) subquery
                       WHERE viewcount is null AND starttime = subquery.vstart AND endtime = subquery.vend AND contextid = subquery.vcx";
             $DB->execute($sql, ['starttime' => $period->starttime, 'endtime' => $period->endtime]);
-        }
+        }*/
 
         set_config('statsrunlast', $now, 'local_ace');
     }

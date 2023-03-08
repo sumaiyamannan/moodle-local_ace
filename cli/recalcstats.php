@@ -37,5 +37,6 @@ set_config('statsrunlast', $from, 'local_ace');
 
 mtrace ("now manually trigger get stats call");
 $task = new \local_ace\task\get_stats();
+$task->insertemptyengagementrecords = false;
 $task->execute();
 mtrace("done.");
