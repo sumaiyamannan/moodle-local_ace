@@ -38,47 +38,58 @@ $sql = "SELECT DISTINCT starttime, endtime
 
 $timeperiods = $DB->get_recordset_sql($sql, ['timestart' => $timestart, 'displayperiod' => $displayperiod]);
 foreach ($timeperiods as $period) {
-    mtrace("fix for timeperiod:". $period->start);
+    mtrace("fix for timeperiod:". $period->starttime);
     // For each course I care about (start date later than 1st Jan, enddate greater than our timestart setting, and only courseregex courses.)
     $sql = "shortname ~ :cregx AND enddate > :timestart AND startdate > 1672615440";
     $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart, 'cregx' => get_config('local_ace', 'courseregex')]);
     $coursecount = 0;
     foreach ($courses as $course) {
+        mtrace ("doing course". $course->shortname);
         // For each user enrolment in that course.
         $sql = "select ue.*
                   FROM {user_enrolments} ue 
                   JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid";      
         $userenrolments = $DB->get_recordset_sql($sql, ['courseid' => $course->id]);
         $newrecords = [];
+        $lastaccess = $DB->get_records('user_lastaccess', ['courseid' => $course->id], '', 'userid, timeaccess');
         foreach ($userenrolments as $ue) {
             // Set up some data in the samples so it can find user/course in the analytics generation.
             $data = [];
             $user = new stdClass();
             $user->id = $ue->userid;
             $data[$ue->id]['course'] = $course;
-            $data[$ue->id]['user'] = $userid;
+            $data[$ue->id]['user'] = $user;
             
             // Generate the calcuated indicators.
+
+            // Create the class and set the relevant data.
+            $anywriteaction = new core\analytics\indicator\any_write_action_in_course();
+            $anywriteaction->add_sample_data($data);
+
+            // Use reflection to call private calculate method.
             $r = new ReflectionMethod('core\analytics\indicator\any_write_action_in_course', 'calculate_sample');
             $r->setAccessible(true); 
-            $r->add_sample_data($data);
-
-            $writevalue = $r->invoke(new core\analytics\indicator\any_write_action_in_course, $ue->id, 'user_enrolments', $period->starttime, $period->endtime);
+            $writevalue = $r->invoke($anywriteaction, $ue->id, 'user_enrolments', $period->starttime, $period->endtime);
 
             // Generate the calcuated indicators.
-            $ra = new ReflectionMethod('core\analytics\indicator\any_course_access', 'calculate_sample');
-            $ra->setAccessible(true); 
-            $ra->add_sample_data($data);
+            $anycourseaccess = new core\analytics\indicator\any_course_access();
+            $anycourseaccess->lastaccesses = $lastaccess;
+            $anycourseaccess->add_sample_data($data);
 
-            $readvalue = $ra->invoke(new core\analytics\indicator\any_course_access, $ue->id, 'user_enrolments', $period->starttime, $period->endtime);
+
+            $ra = new ReflectionMethod($anycourseaccess, 'calculate_sample');
+            $ra->setAccessible(true); 
+
+            $readvalue = $ra->invoke($anycourseaccess, $ue->id, 'user_enrolments', $period->starttime, $period->endtime);
 
             // Now we have a value, lets insert it into the db.
             $writeaction = new stdClass();
+            $writeaction->sampleid = $ue->id;
             $writeaction->starttime = $period->starttime;
             $writeaction->endtime = $period->endtime;
-            $writeaction->contextid = context_course::instance($course->id);
+            $writeaction->contextid = context_course::instance($course->id)->id;
             $writeaction->sampleorigin = 'user_enrolments';
-            $writeaction->indicator = 'core\analytics\indicator\any_write_action_in_course';
+            $writeaction->indicator = '\core\analytics\indicator\any_write_action_in_course';
             $writeaction->value = $writevalue;
             if (!$DB->record_exists('analytics_indicator_calc', (array) $writeaction)) {
                 $writeaction->timecreated = $now;
@@ -87,11 +98,12 @@ foreach ($timeperiods as $period) {
 
             // Now we have a value, lets insert it into the db.
             $readaction = new stdClass();
+            $readaction->sampleid = $ue->id;
             $readaction->starttime = $period->starttime;
             $readaction->endtime = $period->endtime;
-            $readaction->contextid = context_course::instance($course->id);
+            $readaction->contextid = context_course::instance($course->id)->id;
             $readaction->sampleorigin = 'user_enrolments';
-            $readaction->indicator = 'core\analytics\indicator\any_course_access';
+            $readaction->indicator = '\core\analytics\indicator\any_course_access';
             $readaction->value = $writevalue;
           
             if (!$DB->record_exists('analytics_indicator_calc', (array) $readaction)) {
