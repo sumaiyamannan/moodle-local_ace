@@ -55,7 +55,7 @@ class get_stats extends \core\task\scheduled_task {
         $now = time();
         $onlyacesql = '';
         if ($this->onlyaceperiod) {
-            $onlyacesql = " c.endtime - c.starttime = ". get_config('local_ace', 'displayperiod');
+            $onlyacesql = " AND c.endtime - c.starttime = ". get_config('local_ace', 'displayperiod');
         }
         // Get user stats for each context (course) for indicators that we care about.
         // cognitive and social breadth are stored as values between-1 -> 1
