@@ -32,6 +32,9 @@ defined('MOODLE_INTERNAL') || die();
 class get_stats extends \core\task\scheduled_task {
     /** @var int $insertemptyengagementrecords - should we insert empty engagement records.? */
     public $insertemptyengagementrecords = true;
+
+    /** @var boolean $onlyaceperiod - should only the ace period stats be calculated. */
+    public $onlyaceperiod = false;
     /**
      * Returns the name of this task.
      */
@@ -50,6 +53,10 @@ class get_stats extends \core\task\scheduled_task {
             $runlast = time() - (DAYSECS * 30 * 6);
         }
         $now = time();
+        $onlyacesql = '';
+        if ($this->onlyaceperiod) {
+            $onlyacesql = " c.endtime - c.starttime = ". get_config('local_ace', 'displayperiod');
+        }
         // Get user stats for each context (course) for indicators that we care about.
         // cognitive and social breadth are stored as values between-1 -> 1
         // Exclude potential cognitive/social as these are not user indicators.
@@ -59,7 +66,7 @@ class get_stats extends \core\task\scheduled_task {
         $sql = 'SELECT DISTINCT c.starttime, c.endtime, c.contextid, ue.userid, count(value) as cnt, SUM((value + 1)/2) as value
                   FROM {analytics_indicator_calc} c
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
-                 WHERE c.timecreated > :runlast
+                 WHERE c.timecreated > :runlast '. $onlyacesql .'
                        AND sampleorigin = \'user_enrolments\'
                        AND (indicator like \'%cognitive_depth\'
                             OR indicator like \'%social_breadth\'
@@ -102,7 +109,7 @@ class get_stats extends \core\task\scheduled_task {
         $sql = 'SELECT c.starttime, c.endtime, c.contextid, count(value) as cnt, SUM((value + 1)/2) as value
                   FROM {analytics_indicator_calc} c
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
-                 WHERE c.timecreated > :runlast
+                 WHERE c.timecreated > :runlast '. $onlyacesql .'
                        AND sampleorigin = \'user_enrolments\'
                        AND (indicator like \'%cognitive_depth\' 
                             OR indicator like \'%social_breadth\'
