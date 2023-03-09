@@ -41,7 +41,7 @@ $timeperiods = $DB->get_recordset_sql($sql, ['timestart' => $timestart, 'display
 foreach ($timeperiods as $period) {
     mtrace("fix for timeperiod:". $period->starttime);
     // For each course I care about (start date later than 1st Jan, enddate greater than our timestart setting, and only courseregex courses.)
-    $sql = "shortname ~ :cregx AND enddate > :timestart AND startdate > 1672615440";
+    $sql = "shortname ~ :cregx AND enddate > :timestart AND startdate > 1672615440 AND visible = 1";
     $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart, 'cregx' => get_config('local_ace', 'courseregex')]);
     $coursecount = 0;
     foreach ($courses as $course) {
