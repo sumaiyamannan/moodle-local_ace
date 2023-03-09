@@ -29,16 +29,12 @@ require_once($CFG->libdir.'/clilib.php');
 
 $calclifetime = get_config('analytics', 'calclifetime');
 $from = time() - ($calclifetime * DAYSECS);
-mtrace("Analytics set to delete". $calclifetime ." days");
-$displayperiod = get_config('local_ace', 'displayperiod');
-$DB->delete_records_select('local_ace_samples', 'starttime > ? AND endtime - starttime = ?', [$from, $displayperiod]);
-$DB->delete_records_select('local_ace_contexts', 'starttime > ? AND endtime - starttime = ?', [$from, $displayperiod]);
-mtrace("deleted historical stats");
 set_config('statsrunlast', $from, 'local_ace');
 
 mtrace ("now manually trigger get stats call");
 $task = new \local_ace\task\get_stats();
 $task->insertemptyengagementrecords = false;
 $task->onlyaceperiod = true;
+$task->deleteexisting = true;
 $task->execute();
 mtrace("done.");

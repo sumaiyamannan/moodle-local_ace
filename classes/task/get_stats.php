@@ -35,6 +35,9 @@ class get_stats extends \core\task\scheduled_task {
 
     /** @var boolean $onlyaceperiod - should only the ace period stats be calculated. */
     public $onlyaceperiod = false;
+
+    /** @var boolean $deleteexisting - allows existing data to be cleared before regeneration. */
+    public $deleteexisting = false;
     /**
      * Returns the name of this task.
      */
@@ -48,6 +51,9 @@ class get_stats extends \core\task\scheduled_task {
     public function execute() {
         global $DB;
         $runlast = get_config('local_ace', 'statsrunlast');
+        $displayperiod = get_config('local_ace', 'displayperiod');
+        $calclifetime = get_config('analytics', 'calclifetime');
+
         if (empty($runlast)) {
             // Only do last 6 months of data for first run.
             $runlast = time() - (DAYSECS * 30 * 6);
@@ -76,6 +82,12 @@ class get_stats extends \core\task\scheduled_task {
               GROUP BY c.starttime, c.endtime, c.contextid, ue.userid, c.sampleid';
 
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
+
+        if ($this->deleteexisting) {
+            $from = $now - ($calclifetime * DAYSECS);
+            mtrace("Analytics set to delete ace samples". $calclifetime ." days");
+            $DB->delete_records_select('local_ace_samples', 'starttime > ? AND endtime - starttime = ?', [$from, $displayperiod]);
+        }
 
         $newsamples = array();
         foreach ($indicators as $indicator) {
@@ -119,6 +131,12 @@ class get_stats extends \core\task\scheduled_task {
               GROUP BY c.starttime, c.endtime, c.contextid';
 
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
+
+        if ($this->deleteexisting) {
+            mtrace("Analytics set to delete ace contexts". $calclifetime ." days");
+            $from = $now - ($calclifetime * DAYSECS);
+            $DB->delete_records_select('local_ace_contexts', 'starttime > ? AND endtime - starttime = ?', [$from, $displayperiod]);
+        }
 
         $newsamples = array();
         foreach ($indicators as $indicator) {
