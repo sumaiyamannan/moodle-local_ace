@@ -84,9 +84,13 @@ class get_stats extends \core\task\scheduled_task {
             } else {
                 $sample->value = floatval($indicator->value) / $indicator->cnt; // Get average percentage.
             }
-            $DB->insert_record('local_ace_samples', $sample);
+            $newsamples[] = $sample;
         }
         $indicators->close();
+
+        if (!empty($newsamples)) {
+            $DB->insert_records('local_ace_samples', $newsamples);
+        }
 
         // TODO: Does this really need to be a 2nd DB call? - or can we generate it from above?
 
@@ -118,9 +122,13 @@ class get_stats extends \core\task\scheduled_task {
             } else {
                 $sample->value = floatval($indicator->value) / $indicator->cnt; // Get average percentage.
             }
-            $DB->insert_record('local_ace_contexts', $sample);
+            $newsamples[] = $sample;
         }
         $indicators->close();
+
+        if (!empty($newsamples)) {
+            $DB->insert_records('local_ace_contexts', $newsamples);
+        }
 
         if ($this->insertemptyengagementrecords) {
             // Create empty records for all user enrolments with no analytics during that specified time period.
