@@ -85,6 +85,10 @@ class get_stats extends \core\task\scheduled_task {
                 $sample->value = floatval($indicator->value) / $indicator->cnt; // Get average percentage.
             }
             $newsamples[] = $sample;
+            if (count($newsamples) >= 1000) {
+                $DB->insert_records('local_ace_samples', $newsamples);
+                $newsamples = array();
+            }
         }
         $indicators->close();
 
@@ -123,6 +127,10 @@ class get_stats extends \core\task\scheduled_task {
                 $sample->value = floatval($indicator->value) / $indicator->cnt; // Get average percentage.
             }
             $newsamples[] = $sample;
+            if (count($newsamples) >= 1000) {
+                $DB->insert_records('local_ace_contexts', $newsamples);
+                $newsamples = array();
+            }
         }
         $indicators->close();
 
