@@ -123,7 +123,7 @@ foreach ($timeperiods as $period) {
                 $readaction->timecreated = $now;
                 $newrecords[] = $readaction;
             } else if ($record->value <> $readvalue) {
-                mtrace("update record with invalid readvalue". $record->id);
+                //mtrace("update record with invalid readvalue". $record->id);
                 $record->value = $readvalue;
                 $DB->update_record('analytics_indicator_calc', $record);
             }
