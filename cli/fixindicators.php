@@ -37,6 +37,7 @@ $sql = "SELECT DISTINCT starttime, endtime
          WHERE starttime > :timestart AND endtime - starttime = :displayperiod";
 
 $timeperiods = $DB->get_recordset_sql($sql, ['timestart' => $timestart, 'displayperiod' => $displayperiod]);
+
 foreach ($timeperiods as $period) {
     mtrace("fix for timeperiod:". $period->starttime);
     // For each course I care about (start date later than 1st Jan, enddate greater than our timestart setting, and only courseregex courses.)
@@ -51,7 +52,14 @@ foreach ($timeperiods as $period) {
                   JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid";      
         $userenrolments = $DB->get_recordset_sql($sql, ['courseid' => $course->id]);
         $newrecords = [];
-        $lastaccess = $DB->get_records('user_lastaccess', ['courseid' => $course->id], '', 'userid, timeaccess');
+        // We need to check if the users have any log entries during the time period to allow any course access to work.
+
+        $sql = "SELECT userid, max(timecreated)
+                  FROM {logstore_standard_log}
+                 WHERE courseid = :courseid AND timecreated > :timestart AND timecreated < :timeend AND anonymous = 0
+                 GROUP BY userid";
+
+        $lastaccess = $DB->get_records_sql($sql, ['courseid' => $course->id, 'timestart' => $period->starttime, 'timeend' => $period->endtime]);
         foreach ($userenrolments as $ue) {
             // Set up some data in the samples so it can find user/course in the analytics generation.
             $data = [];
