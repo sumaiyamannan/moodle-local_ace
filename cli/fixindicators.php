@@ -54,7 +54,7 @@ foreach ($timeperiods as $period) {
         $newrecords = [];
         // We need to check if the users have any log entries during the time period to allow any course access to work.
 
-        $sql = "SELECT userid, max(timecreated)
+        $sql = "SELECT userid, max(timecreated) as timeaccess
                   FROM {logstore_standard_log}
                  WHERE courseid = :courseid AND timecreated > :timestart AND timecreated < :timeend AND anonymous = 0
                  GROUP BY userid";
@@ -84,7 +84,6 @@ foreach ($timeperiods as $period) {
             $anycourseaccess->lastaccesses = $lastaccess;
             $anycourseaccess->add_sample_data($data);
 
-
             $ra = new ReflectionMethod($anycourseaccess, 'calculate_sample');
             $ra->setAccessible(true); 
 
@@ -112,13 +111,17 @@ foreach ($timeperiods as $period) {
             $readaction->contextid = context_course::instance($course->id)->id;
             $readaction->sampleorigin = 'user_enrolments';
             $readaction->indicator = '\core\analytics\indicator\any_course_access';
-            $readaction->value = $writevalue;
           
-            if (!$DB->record_exists('analytics_indicator_calc', (array) $readaction)) {
+            $record = $DB->get_record('analytics_indicator_calc', (array) $readaction);
+            if (empty($record)) {
+                $readaction->value = $readvalue;
                 $readaction->timecreated = $now;
                 $newrecords[] = $readaction;
+            } else if ($record->value <> $readvalue) {
+                mtrace("update record with invalid readvalue". $record->id);
+                $record->value = $readvalue;
+                $DB->update_record('analytics_indicator_calc', $record);
             }
-            
         }
         $userenrolments->close();
         mtrace("inserting ". count($newrecords). " new indicator values");
