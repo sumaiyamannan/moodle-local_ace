@@ -34,24 +34,29 @@ $now = time();
 mtrace ("fix indicators");
 $sql = "SELECT DISTINCT starttime, endtime
           FROM {analytics_indicator_calc}
-         WHERE starttime > :timestart AND endtime - starttime = :displayperiod";
+         WHERE starttime > :timestart AND endtime - starttime = :displayperiod order by starttime";
 
 $timeperiods = $DB->get_recordset_sql($sql, ['timestart' => $timestart, 'displayperiod' => $displayperiod]);
-
+$lastperiodstart = 0;
 foreach ($timeperiods as $period) {
+    // Skip periods that are less than 3 days apart.
+    if (!empty($lastperiodstart) && $period->starttime < ($lastperiodstart + (2 * DAYSECS))) {
+        mtrace('skipping period with starttime: '.$period->starttime);
+        continue;
+    }
+    $lastperiodstart = $period->starttime;
     mtrace("fix for timeperiod:". $period->starttime);
     // For each course I care about (start date later than 1st Jan, enddate greater than our timestart setting, and only courseregex courses.)
     $sql = "shortname ~ :cregx AND enddate > :timestart AND startdate > 1672615440 AND visible = 1";
     $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart, 'cregx' => get_config('local_ace', 'courseregex')]);
     $coursecount = 0;
+    $newrecords = [];
     foreach ($courses as $course) {
-        mtrace ("doing course". $course->shortname);
         // For each user enrolment in that course.
         $sql = "select ue.*
                   FROM {user_enrolments} ue 
-                  JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid";      
+                  JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid";
         $userenrolments = $DB->get_recordset_sql($sql, ['courseid' => $course->id]);
-        $newrecords = [];
         // We need to check if the users have any log entries during the time period to allow any course access to work.
 
         $sql = "SELECT userid, max(timecreated) as timeaccess
@@ -124,10 +129,12 @@ foreach ($timeperiods as $period) {
             }
         }
         $userenrolments->close();
-        mtrace("inserting ". count($newrecords). " new indicator values");
-        $DB->insert_records('analytics_indicator_calc', $newrecords);
     }
     $courses->close();
+
+    mtrace("inserting ". count($newrecords). " new indicator values");
+    $DB->insert_records('analytics_indicator_calc', $newrecords);
+
     mtrace("fixed for $coursecount courses");
 }
 $timeperiods->close();
