@@ -540,7 +540,7 @@ function local_ace_get_dedication($courseid) {
         $dedicationhistory = (empty($config->dedicationhistory)) ? WEEKSECS : $config->dedicationhistory;
         $timespent = \block_dedication\lib\utils::get_average($courseid, $dedicationhistory);
         $a = new stdClass();
-        $a->timespent = !empty($timespent['timespent']) ? $timespent['timespent'] : get_string('none');
+        $a->timespent = !empty($timespent['average']) ? $timespent['average'] : get_string('none');
         $a->days = $dedicationhistory / DAYSECS;
 
         $helper = '<a class="btn btn-link p-0" role="button" data-container="body" data-toggle="popover" data-placement="right" data-content="<p>'. get_string('averagetimespentincoursehelper', 'block_ace').'</p> "
