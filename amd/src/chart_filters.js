@@ -22,6 +22,7 @@
  */
 
 import Litepicker from 'local_ace/litepicker';
+import Notification from 'core/notification';
 import Ajax from 'core/ajax';
 
 const FILTER_ACTIVE = "active";
