@@ -27,6 +27,7 @@ import ModalEvents from "core/modal_events";
 import * as Str from 'core/str';
 import Ajax from 'core/ajax';
 import * as Toast from 'core/toast';
+import Notification from 'core/notification';
 
 export const init = () => {
     let strings = [

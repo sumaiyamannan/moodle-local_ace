@@ -27,7 +27,9 @@
  import * as Str from 'core/str';
  import Ajax from 'core/ajax';
  import * as Toast from 'core/toast';
- export const init = () => {
+import Notification from 'core/notification';
+
+export const init = () => {
      let strings = [
          {
              key: 'emailsend',
