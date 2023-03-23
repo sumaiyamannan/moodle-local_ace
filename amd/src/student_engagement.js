@@ -28,6 +28,7 @@ import Templates from 'core/templates';
 import ModalEvents from "core/modal_events";
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
+import Notification from 'core/notification';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
 let USER_ID = {};
@@ -49,7 +50,12 @@ let COLOURS = [];
 export const init = (parameters) => {
     USER_ID = parameters.userid;
     COLOURS = parameters.colours;
-    filtersInit(updateGraph);
+    // Init filters in a promise which we'll wait to complete,
+    // to prevent updating graph twice at the same time.
+    const filtersComplete = new Promise((resolve) => {
+        filtersInit(updateGraph);
+        resolve(1);
+    });
 
     // Hide the 'Show all courses' button on every tab except 'Overall' (course=0).
     let params = new URLSearchParams(new URL(window.location.href).search);
@@ -61,22 +67,22 @@ export const init = (parameters) => {
         document.querySelector('#show-courses-buttons').style.display = null;
     }
 
-    // Setup chart comparison control.
-    let chartComparisonButton = document.querySelector("#chart-comparison");
-    chartComparisonButton.addEventListener("click", createChartComparisonModal);
-    // Retrieve user preference and set our comparison option, then update the graph.
-    getComparisonMethodPreference().then(response => {
-        if (response.error) {
-            displayError(response.error);
-            return;
-        }
-        if (response.preferences[0].value !== null) {
-            COMPARISON_OPTION = response.preferences[0].value;
-        }
-        updateGraph();
-        return;
-    }).catch(Notification.exception);
-
+    // Wait for filters to be initialised before updating graph.
+    filtersComplete.then(() => {
+        // Setup chart comparison control.
+        let chartComparisonButton = document.querySelector("#chart-comparison");
+        chartComparisonButton.addEventListener("click", createChartComparisonModal);
+        // Retrieve user preference and set our comparison option, then update the graph.
+        getComparisonMethodPreference().then(response => {
+            if (response.error) {
+                displayError(response.error);
+            }
+            if (response.preferences[0].value !== null) {
+                COMPARISON_OPTION = response.preferences[0].value;
+            }
+            updateGraph();
+        }).catch(Notification.exception);
+    });
 
     document.querySelector("#show-all-courses").addEventListener("click", showAllCourses);
     document.querySelector("#show-your-course").addEventListener("click", showYourCourse);
