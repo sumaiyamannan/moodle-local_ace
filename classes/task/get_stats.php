@@ -79,6 +79,7 @@ class get_stats extends \core\task\scheduled_task {
                             OR indicator like \'%any_course_access\'
                             OR indicator like \'%read_actions\'
                             OR indicator like \'%local_echo360analytics%\')
+                       AND indicator not like \'%potential%\'
               GROUP BY c.starttime, c.endtime, c.contextid, ue.userid, c.sampleid';
 
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
@@ -128,6 +129,7 @@ class get_stats extends \core\task\scheduled_task {
                             OR indicator like \'%any_course_access\'
                             OR indicator like \'%read_actions\'
                             OR indicator like \'%local_echo360analytics%\')
+                       AND indicator not like \'%potential%\'
               GROUP BY c.starttime, c.endtime, c.contextid';
 
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
