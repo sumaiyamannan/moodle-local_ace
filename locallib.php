@@ -120,7 +120,7 @@ function local_ace_enrolled_courses_user_data(int $userid, ?int $period = null, 
  */
 function local_ace_get_individuals_course_data(int $userid, int $courseid, int $period = null, int $start = null,
     int $end = null): array {
-    global $DB;
+    global $DB, $CFG;
 
     $params = [
         'userid' => $userid,
@@ -136,10 +136,21 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
         $startendsql .= "AND endtime < :end ";
         $params['end'] = $end;
     }
+    
+    if ($CFG->dbtype !== 'pgsql') {
+        $timefields = " SELECT
+            round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(starttime), '%Y-%m-%d'))) as starttime,
+            round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(endtime), '%Y-%m-%d'))) as endtime,
+        ";
+    } else {
+        $timefields = " SELECT
+            EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
+            EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
+        ";
+    }    
 
     $sql = "WITH samples AS (
-                SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
-                       EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
+                " . $timefields ."
                        value,
                        userid
                 FROM {local_ace_samples} s
@@ -681,7 +692,7 @@ function local_ace_student_graph(int $userid, $courses, bool $showxtitles = true
  */
 function local_ace_student_graph_data(int $userid, $course, ?int $start = null, ?int $end = null, ?bool $showxtitles = true,
     string $comparison = 'average-course-engagement', bool $normalisevalues = true) {
-    global $DB;
+    global $DB, $CFG;
 
     $config = get_config('local_ace');
 
@@ -710,9 +721,21 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
 
     // Get the users stats.
     // Get the latest values first, so we always show the most recent data-set.
+    
+    if ($CFG->dbtype !== 'pgsql') {
+        $timefields = " SELECT
+            round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(starttime), '%Y-%m-%d'))) as starttime,
+            round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(endtime), '%Y-%m-%d'))) as endtime,
+        ";
+    } else {
+        $timefields = " SELECT
+            EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
+            EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
+        ";
+    }
+    
     $sql = "WITH samples AS (
-                SELECT EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
-                       EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
+               " . $timefields ."
                        value,
                        userid
                 FROM {local_ace_samples} s
