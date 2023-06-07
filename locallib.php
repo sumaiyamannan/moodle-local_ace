@@ -749,7 +749,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
             SELECT s.starttime, s.endtime, count(s.value) AS count, sum(s.value) AS value, a.avg AS avg, a.stddev AS stddev
               FROM samples s
               JOIN (
-                        SELECT starttime, endtime, stddev(value), avg(value)
+                        SELECT starttime, endtime, stddev(value) as stddev, avg(value) as avg
                         FROM samples s
                         GROUP BY starttime, endtime
                     ) a ON a.starttime = s.starttime AND a.endtime = a.endtime
