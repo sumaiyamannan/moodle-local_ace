@@ -586,6 +586,12 @@ function local_ace_get_user_courses(int $userid, ?int $courseid = 0): array {
     $period = get_config('local_ace', 'displayperiod');
 
     $activeenrolledcourses = enrol_get_users_courses($userid, true);
+    if (empty($activeenrolledcourses)) {
+        return array(
+            0 => 0,
+            1 => 0,
+        );
+    }
     list($sqlin, $params) = $DB->get_in_or_equal(array_keys($activeenrolledcourses), SQL_PARAMS_NAMED);
 
     // Get courses where analytics data exists.
@@ -1204,7 +1210,7 @@ function local_ace_get_course_helper() {
             if ($PAGE->context->contextlevel == CONTEXT_USER) {
                 // Get list of allowed courses.
                 list($courseid, $courses) = local_ace_get_user_courses($PAGE->context->instanceid, 0);
-                if (count($courses) == 1) {
+                if (isset($courses) && count($courses) == 1) {
                     return get_course($courseid);
                 }
             }
@@ -1234,7 +1240,7 @@ function local_ace_get_course_helper() {
                     if ($context->contextlevel == CONTEXT_USER) {
                         // Get list of allowed courses.
                         list($courseid, $courses) = local_ace_get_user_courses($context->instanceid, 0);
-                        if (count($courses) == 1) {
+                        if (isset($courses) && count($courses) == 1) {
                             return get_course($courseid);
                         }
                     }

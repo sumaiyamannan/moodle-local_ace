@@ -93,15 +93,19 @@ class myenrolledcourses extends \core_reportbuilder\local\filters\base {
         }
 
         $courses = enrol_get_my_courses('id', null, 0, [], $allaccessible);
-        $courseids = array_keys($courses);
+        // This user is not enrolled in any course. Ignore filter.
+        if (empty($courses)) {
+            return ['', []];
+        } else {
+            $courseids = array_keys($courses);
 
-        $fieldsql = $this->filter->get_field_sql();
-        $params = $this->filter->get_field_params();
+            $fieldsql = $this->filter->get_field_sql();
+            $params = $this->filter->get_field_params();
 
-        $paramprefix = database::generate_param_name() . '_';
-        [$courseselect, $courseparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, $paramprefix);
-
-        return ["{$fieldsql} $courseselect", array_merge($params, $courseparams)];
+            $paramprefix = database::generate_param_name() . '_';
+            [$courseselect, $courseparams] = $DB->get_in_or_equal($courseids, SQL_PARAMS_NAMED, $paramprefix);
+            return ["{$fieldsql} $courseselect", array_merge($params, $courseparams)];
+        }
     }
 
     /**
