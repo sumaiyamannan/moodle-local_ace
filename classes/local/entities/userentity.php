@@ -92,6 +92,7 @@ class userentity extends base {
      * @return column[]
      */
     protected function get_all_columns(): array {
+	global $PAGE;
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
             $courseid = $course->id;
@@ -129,7 +130,7 @@ class userentity extends base {
                                   ON {$this->logstorealias3}.courseid = {$coursealias}.id
                                  AND {$this->logstorealias3}.userid = {$usertablealias}.id";
 
-        if (method_exists($this, 'add_selectable_column')) {
+        if (method_exists($this, 'add_selectable_column') && isset($PAGE->context)) {
             $this->add_selectable_column('u');
         }
 
