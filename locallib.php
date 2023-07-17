@@ -136,7 +136,7 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
         $startendsql .= "AND endtime < :end ";
         $params['end'] = $end;
     }
-    
+
     if ($CFG->dbtype !== 'pgsql') {
         $timefields = " SELECT
             round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(starttime), '%Y-%m-%d'))) as starttime,
@@ -147,7 +147,7 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
             EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
             EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
         ";
-    }    
+    }
 
     $sql = "WITH samples AS (
                 " . $timefields ."
@@ -721,7 +721,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
 
     // Get the users stats.
     // Get the latest values first, so we always show the most recent data-set.
-    
+
     if ($CFG->dbtype !== 'pgsql') {
         $timefields = " SELECT
             round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(starttime), '%Y-%m-%d'))) as starttime,
@@ -733,7 +733,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
             EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
         ";
     }
-    
+
     $sql = "WITH samples AS (
                " . $timefields ."
                        value,
@@ -1095,8 +1095,9 @@ function local_ace_get_coursemodule_helper() {
     }
 
     $referrer = get_local_referer(false);
-    if (!empty($referrer) &&
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+    if (!empty($referrer) && (
+        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
@@ -1145,8 +1146,9 @@ function local_ace_get_user_helper() {
     }
 
     $referrer = get_local_referer(false);
-    if (!empty($referrer) &&
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+    if (!empty($referrer) && (
+        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
@@ -1219,8 +1221,9 @@ function local_ace_get_course_helper() {
 
     // Finally check if set in HTTP_REFERRER - will be a webservice call from the dashboard page.
     $referrer = get_local_referer(false);
-    if (!empty($referrer) &&
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+    if (!empty($referrer) && (
+        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
