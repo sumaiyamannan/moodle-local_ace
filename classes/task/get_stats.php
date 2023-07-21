@@ -124,7 +124,7 @@ class get_stats extends \core\task\scheduled_task {
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
                  WHERE c.timecreated > :runlast '. $onlyacesql .'
                        AND sampleorigin = \'user_enrolments\'
-                       AND (indicator like \'%cognitive_depth\' 
+                       AND (indicator like \'%cognitive_depth\'
                             OR indicator like \'%social_breadth\'
                             OR indicator like \'%any_course_access\'
                             OR indicator like \'%read_actions\'
@@ -173,9 +173,11 @@ class get_stats extends \core\task\scheduled_task {
                       JOIN {context} cx ON cx.id = sa.contextid AND cx.contextlevel = ". CONTEXT_COURSE. "
                       JOIN {enrol} e ON e.courseid = cx.instanceid
                       JOIN {user_enrolments} ue on ue.enrolid = e.id
-                      LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime AND saj.endtime = sa.endtime AND saj.contextid = sa.contextid AND saj.userid = ue.userid
+                      LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime 
+                      AND saj.endtime = sa.endtime AND saj.contextid = sa.contextid AND saj.userid = ue.userid
                      WHERE saj.id is null AND sa.starttime > :runlast AND sa.endtime - sa.starttime = :displayperiod";
-            $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
+            $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast, 
+            		  'displayperiod' => get_config('local_ace', 'displayperiod')]);
             $count = 0;
             $emptysamples = [];
             foreach ($recordset as $record) {

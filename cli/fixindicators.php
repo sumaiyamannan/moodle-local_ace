@@ -46,15 +46,17 @@ foreach ($timeperiods as $period) {
     }
     $lastperiodstart = $period->starttime;
     mtrace("fix for timeperiod:". $period->starttime);
-    // For each course I care about (start date later than 1st Jan, enddate greater than our timestart setting, and only courseregex courses.)
+    /* For each course I care about (start date later than 1st Jan, 
+    / enddate greater than our timestart setting, and only courseregex courses.) */
     $sql = "shortname ~ :cregx AND enddate > :timestart AND startdate > 1672615440 AND visible = 1";
-    $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart, 'cregx' => get_config('local_ace', 'courseregex')]);
+    $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart, 
+    		'cregx' => get_config('local_ace', 'courseregex')]);
     $coursecount = 0;
     $newrecords = [];
     foreach ($courses as $course) {
         // For each user enrolment in that course.
         $sql = "select ue.*
-                  FROM {user_enrolments} ue 
+                  FROM {user_enrolments} ue
                   JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid";
         $userenrolments = $DB->get_recordset_sql($sql, ['courseid' => $course->id]);
         // We need to check if the users have any log entries during the time period to allow any course access to work.
@@ -64,15 +66,15 @@ foreach ($timeperiods as $period) {
                  WHERE courseid = :courseid AND timecreated > :timestart AND timecreated < :timeend AND anonymous = 0
                  GROUP BY userid";
 
-        $lastaccess = $DB->get_records_sql($sql, ['courseid' => $course->id, 'timestart' => $period->starttime, 'timeend' => $period->endtime]);
+        $lastaccess = $DB->get_records_sql($sql, ['courseid' => $course->id, 
+                      'timestart' => $period->starttime, 'timeend' => $period->endtime]);
         foreach ($userenrolments as $ue) {
             // Set up some data in the samples so it can find user/course in the analytics generation.
             $data = [];
             $user = new stdClass();
             $user->id = $ue->userid;
             $data[$ue->id]['course'] = $course;
-            $data[$ue->id]['user'] = $user;
-            
+            $data[$ue->id]['user'] = $user;            
             // Generate the calcuated indicators.
 
             // Create the class and set the relevant data.
@@ -81,7 +83,7 @@ foreach ($timeperiods as $period) {
 
             // Use reflection to call private calculate method.
             $r = new ReflectionMethod('core\analytics\indicator\any_write_action_in_course', 'calculate_sample');
-            $r->setAccessible(true); 
+            $r->setAccessible(true);
             $writevalue = $r->invoke($anywriteaction, $ue->id, 'user_enrolments', $period->starttime, $period->endtime);
 
             // Generate the calcuated indicators.
@@ -90,7 +92,7 @@ foreach ($timeperiods as $period) {
             $anycourseaccess->add_sample_data($data);
 
             $ra = new ReflectionMethod($anycourseaccess, 'calculate_sample');
-            $ra->setAccessible(true); 
+            $ra->setAccessible(true);
 
             $readvalue = $ra->invoke($anycourseaccess, $ue->id, 'user_enrolments', $period->starttime, $period->endtime);
 
@@ -115,15 +117,14 @@ foreach ($timeperiods as $period) {
             $readaction->endtime = $period->endtime;
             $readaction->contextid = context_course::instance($course->id)->id;
             $readaction->sampleorigin = 'user_enrolments';
-            $readaction->indicator = '\core\analytics\indicator\any_course_access';
-          
+            $readaction->indicator = '\core\analytics\indicator\any_course_access';          
             $record = $DB->get_record('analytics_indicator_calc', (array) $readaction);
             if (empty($record)) {
                 $readaction->value = $readvalue;
                 $readaction->timecreated = $now;
                 $newrecords[] = $readaction;
             } else if ($record->value <> $readvalue) {
-                //mtrace("update record with invalid readvalue". $record->id);
+                // mtrace("update record with invalid readvalue". $record->id);
                 $record->value = $readvalue;
                 $DB->update_record('analytics_indicator_calc', $record);
             }
@@ -138,3 +139,4 @@ foreach ($timeperiods as $period) {
     mtrace("fixed for $coursecount courses");
 }
 $timeperiods->close();
+

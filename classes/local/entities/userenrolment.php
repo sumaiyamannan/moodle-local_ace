@@ -340,6 +340,7 @@ class userenrolment extends base {
         return "LEFT JOIN (SELECT grg.name, grgm.userid, grg.courseid
                            FROM {groups} grg
                            JOIN {groups_members} grgm on grgm.groupid = grg.id {$coursegroupjoin}) {$groupsalias} ON
-                           {$groupsalias}.courseid = {$enrolalias}.courseid AND {$groupsalias}.userid = {$userenrolmentsalias}.userid";
+                           {$groupsalias}.courseid = {$enrolalias}.courseid 
+                           AND {$groupsalias}.userid = {$userenrolmentsalias}.userid";
     }
 }

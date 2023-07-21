@@ -138,7 +138,7 @@ function local_ace_extend_navigation_course($navigation, $course, $context) {
  * @return bool
  */
 function local_ace_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
-    if (isguestuser() or !isloggedin()) {
+    if (isguestuser() || !isloggedin()) {
         return;
     }
 
