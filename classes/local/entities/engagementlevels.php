@@ -96,7 +96,8 @@ class engagementlevels extends base {
         // We make our own context alias as the course created one is only available in specific contexts.
         $currentengagement = "JOIN {context} {$contextalias} ON {$contextalias}.instanceid = {$coursealias}.id
                                 AND {$contextalias}.contextlevel = " . CONTEXT_COURSE . "
-                              INNER JOIN {local_ace_samples} {$samplesalias}  ON {$samplesalias}.userid = {$useralias}.id AND {$samplesalias}.id = (
+                              INNER JOIN {local_ace_samples} {$samplesalias} ON 
+                              {$samplesalias}.userid = {$useralias}.id AND {$samplesalias}.id = (
                                 SELECT
                                     s.id
                                 FROM

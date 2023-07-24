@@ -136,7 +136,6 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
         $startendsql .= "AND endtime < :end ";
         $params['end'] = $end;
     }
-    
     if ($CFG->dbtype !== 'pgsql') {
         $timefields = " SELECT
             round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(starttime), '%Y-%m-%d'))) as starttime,
@@ -147,8 +146,7 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
             EXTRACT('epoch' FROM date_trunc('day', to_timestamp(starttime))) AS starttime,
             EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
         ";
-    }    
-
+    }
     $sql = "WITH samples AS (
                 " . $timefields ."
                        value,
@@ -307,11 +305,10 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
             if (!empty($value->viewcountvalue)) {
                 $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
                 // Lets make the view count 50% of the displayed value for now - maybe change later?
-                $calcval = ($calcval + $viewcount) /2;
+                $calcval = ($calcval + $viewcount) / 2;
             }
             $series[$date] = $calcval;
             // Make sure we don't show overlapping periods.
-            $laststart = $value->starttime;
         }
         $tempvalues[$shortname] = array_reverse($series);
         $count = count($tempvalues[$shortname]);
@@ -453,7 +450,7 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
         if (!empty($value->viewcountvalue)) {
             $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
             // Lets make the view count 50% of the displayed value for now - maybe change later?
-            $calcval = ($calcval + $viewcount) /2;
+            $calcval = ($calcval + $viewcount) / 2;
         }
         $series[] = $calcval;
         // Make sure we don't show overlapping periods.
@@ -463,7 +460,6 @@ function local_ace_course_data(int $courseid, ?int $period = null, ?int $start =
     if (empty($series)) {
         return get_string('noanalyticsfoundcourse', 'local_ace');
     }
-
     $ylabels = local_ace_get_percentage_ylabels();
 
     return array(
@@ -554,12 +550,15 @@ function local_ace_get_dedication($courseid) {
         $a->timespent = !empty($timespent['average']) ? $timespent['average'] : get_string('none');
         $a->days = $dedicationhistory / DAYSECS;
 
-        $helper = '<a class="btn btn-link p-0" role="button" data-container="body" data-toggle="popover" data-placement="right" data-content="<p>'. get_string('averagetimespentincoursehelper', 'block_ace').'</p> "
-            data-html="true" tabindex="0" data-trigger="focus" data-original-title="" title="">
-            <i class="icon fa fa-question-circle text-info fa-fw " title="'. get_string('averagetimespentincoursehelper', 'block_ace').'" role="img" aria-label=""></i></a>';
+        $helper = '<a class="btn btn-link p-0" role="button" data-container="body" 
+        		data-toggle="popover" data-placement="right" data-content="<p>'.
+         	    	get_string('averagetimespentincoursehelper', 'block_ace').'</p>"
+            		data-html="true" tabindex="0" data-trigger="focus" data-original-title="" title="">
+            		<i class="icon fa fa-question-circle text-info fa-fw " title="'. 
+            		get_string('averagetimespentincoursehelper', 'block_ace').'" role="img" aria-label=""></i></a>';
 
         $output = html_writer::start_div('course_dedication');
-        $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a). $helper) ;
+        $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a). $helper);
         $output .= html_writer::end_div();
 
         return $output;
@@ -727,7 +726,6 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
 
     // Get the users stats.
     // Get the latest values first, so we always show the most recent data-set.
-    
     if ($CFG->dbtype !== 'pgsql') {
         $timefields = " SELECT
             round(UNIX_TIMESTAMP(DATE_FORMAT( FROM_UNIXTIME(starttime), '%Y-%m-%d'))) as starttime,
@@ -739,7 +737,6 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
             EXTRACT('epoch' FROM date_trunc('day', to_timestamp(endtime))) AS endtime,
         ";
     }
-    
     $sql = "WITH samples AS (
                " . $timefields ."
                        value,
@@ -800,7 +797,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         if (!empty($value->viewcountvalue)) {
             $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
             // Lets make the view count 50% of the displayed value for now - maybe change later?
-            $calcval = ($calcval + $viewcount) /2;
+            $calcval = ($calcval + $viewcount) / 2;
         }
         $series[] = $calcval;
         $a1 = 0;
@@ -810,8 +807,8 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
                 $navg = local_ace_normalise_value($value->vcavg, 0, 750);
                 $avg = local_ace_normalise_value($value->avg * 100, 0, 100);
                 $stddev = ($value->stddev / 2) * 100;
-                $a1 = round((($navg  + $avg) / 2) - $stddev);
-                $a2 = round((($navg  + $avg) / 2) + $stddev);
+                $a1 = round((($navg + $avg) / 2) - $stddev);
+                $a2 = round((($navg + $avg) / 2) + $stddev);
             } else {
                 $a1 = round(local_ace_normalise_value(($value->avg - ($value->stddev / 2)) * 100, 0, 100));
                 $a2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
@@ -1101,8 +1098,9 @@ function local_ace_get_coursemodule_helper() {
     }
 
     $referrer = get_local_referer(false);
-    if (!empty($referrer) &&
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+    if (!empty($referrer) && (
+        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
@@ -1151,8 +1149,9 @@ function local_ace_get_user_helper() {
     }
 
     $referrer = get_local_referer(false);
-    if (!empty($referrer) &&
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+    if (!empty($referrer) && (
+        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
@@ -1225,8 +1224,9 @@ function local_ace_get_course_helper() {
 
     // Finally check if set in HTTP_REFERRER - will be a webservice call from the dashboard page.
     $referrer = get_local_referer(false);
-    if (!empty($referrer) &&
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0) {
+    if (!empty($referrer) && (
+        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
+        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {

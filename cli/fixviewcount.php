@@ -51,3 +51,4 @@ foreach ($records as $record) {
 }
 $records->close();
 mtrace("updated $count records");
+

@@ -49,7 +49,7 @@ function local_ace_user_preferences() {
 
 /**
  * Callback for rendering navbar.
- * If viewing a ACE(vxg) dashboard and have the view other users analytics capability the 'My courses' breadcrumb
+ * If viewing a ACE(dboard) dashboard and have the view other users analytics capability the 'My courses' breadcrumb
  * is replaced with the teacher dashboard URL.
  *
  * @param renderer_base $renderer
@@ -58,7 +58,8 @@ function local_ace_user_preferences() {
 function local_ace_render_navbar_output(\renderer_base $renderer) {
     global $PAGE, $USER, $COURSE;
 
-    if (strpos($PAGE->url->get_path(), '/local/vxg_dashboard/index.php') !== 0) {
+    if ((strpos($PAGE->url->get_path(), '/local/dboard/index.php') !== 0) ||
+         strpos($PAGE->url->get_path(), '/local/vxg_dashboard/index.php')) {
         return;
     }
 
@@ -137,7 +138,7 @@ function local_ace_extend_navigation_course($navigation, $course, $context) {
  * @return bool
  */
 function local_ace_myprofile_navigation(core_user\output\myprofile\tree $tree, $user, $iscurrentuser, $course) {
-    if (isguestuser() or !isloggedin()) {
+    if (isguestuser() || !isloggedin()) {
         return;
     }
 
@@ -163,7 +164,8 @@ function local_ace_myprofile_navigation(core_user\output\myprofile\tree $tree, $
  */
 function local_ace_before_http_headers() {
     global $PAGE;
-    if (strpos($PAGE->url->get_path(), '/local/vxg_dashboard/index.php') !== 0) {
+    if ((strpos($PAGE->url->get_path(), '/local/dboard/index.php') !== 0) ||
+         strpos($PAGE->url->get_path(), '/local/vxg_dashboard/index.php')) {
         return;
     }
 
