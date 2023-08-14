@@ -377,6 +377,39 @@ function local_ace_course_graph(int $courseid): string {
 }
 
 /**
+ * Generate SQL based on filters.
+ *
+ * @param array $filtervalues
+ * @return array
+ */
+function local_ace_generate_filter_sql(array $filtervalues = []): array {
+    $joinsql = [];
+    $wheresql = [];
+    $params = [];
+
+    if (isset($filtervalues['aceuser:profilefield_ethnicity_operator']) && isset($filtervalues['aceuser:profilefield_ethnicity_value'])) {
+        if ($filtervalues['aceuser:profilefield_ethnicity_operator'] == 1) {
+            $joinsql[] = "JOIN {user_info_field} uifethnicity ON uifethnicity.shortname = 'ethnicity' " .
+                "JOIN {user_info_data} uidethnicity ON uidethnicity.fieldid = uifethnicity.id AND uidethnicity.userid = u.id";
+            $wheresql[] = "AND uidethnicity.data = :ethnicity";
+            $params['ethnicity'] = $filtervalues['aceuser:profilefield_ethnicity_value'];
+        }
+        if ($filtervalues['aceuser:profilefield_ethnicity_operator'] == 2) {
+            $joinsql[] = "JOIN {user_info_field} uifethnicity ON uifethnicity.shortname = 'ethnicity' " .
+                "JOIN {user_info_data} uidethnicity ON uidethnicity.fieldid = uifethnicity.id AND uidethnicity.userid = u.id";
+            $wheresql[] = "AND uidethnicity.data != :ethnicity";
+            $params['ethnicity'] = $filtervalues['aceuser:profilefield_ethnicity_value'];
+        }
+    }
+
+    return [
+        $joinsql,
+        $wheresql,
+        $params,
+    ];
+}
+
+/**
  * Returns series data for course engagement data.
  *
  * @param int $courseid
@@ -387,7 +420,7 @@ function local_ace_course_graph(int $courseid): string {
  * @throws dml_exception
  */
 function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null): array {
-    global $DB;
+    global $DB, $SESSION;
 
     $config = get_config('local_ace');
 
@@ -401,18 +434,33 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
 
     $context = context_course::instance($courseid);
 
-    $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
-              FROM {local_ace_contexts}
-              WHERE contextid = :context AND (endtime - starttime = :period) AND endtime > :start
-              " . ($end != null ? "AND endtime < :end " : "") . "
-              GROUP BY starttime, endtime
-              ORDER BY starttime DESC";
-
     $parameters = array(
         'context' => $context->id,
         'period' => $period,
         'start' => $start
     );
+
+    if (!empty($SESSION->local_ace_filtervalues)) {
+        list($joinsql, $wheresql, $params) = local_ace_generate_filter_sql($SESSION->local_ace_filtervalues);
+        $sql = "SELECT lap.starttime, lap.endtime, count(lap.value) as count, sum(lap.value) as value
+                FROM {local_ace_samples} lap
+                JOIN {user} u ON u.id = lap.userid
+                " . implode(" ", $joinsql) . "
+                WHERE lap.contextid = :context AND (lap.endtime - lap.starttime = :period) AND lap.endtime > :start
+                " . ($end != null ? "AND endtime < :end " : "") . "
+                " . implode(" ", $wheresql) . "
+                GROUP BY lap.starttime, lap.endtime
+                ORDER BY lap.starttime DESC";
+        $parameters = array_merge($parameters, $params);
+    } else {
+        $sql = "SELECT starttime, endtime, count(value) as count, sum(value) as value
+              FROM {local_ace_contexts}
+              WHERE contextid = :context AND (endtime - starttime = :period) AND endtime > :start
+              " . ($end != null ? "AND endtime < :end " : "") . "
+              GROUP BY starttime, endtime
+              ORDER BY starttime DESC";
+    }
+
     if ($end != null) {
         $parameters['end'] = $end;
     }
