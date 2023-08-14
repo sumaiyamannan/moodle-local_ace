@@ -24,14 +24,14 @@
 
 define('CLI_SCRIPT', true);
 
-require(__DIR__.'/../../../config.php');
-require_once($CFG->libdir.'/clilib.php');
+require(__DIR__ . '/../../../config.php');
+require_once($CFG->libdir . '/clilib.php');
 
 $calclifetime = get_config('analytics', 'calclifetime');
 $timestart = time() - ($calclifetime * DAYSECS);
 $displayperiod = get_config('local_ace', 'displayperiod');
 $now = time();
-mtrace ("fix indicators");
+mtrace("fix indicators");
 $sql = "SELECT DISTINCT starttime, endtime
           FROM {analytics_indicator_calc}
          WHERE starttime > :timestart AND endtime - starttime = :displayperiod order by starttime";
@@ -41,16 +41,16 @@ $lastperiodstart = 0;
 foreach ($timeperiods as $period) {
     // Skip periods that are less than 3 days apart.
     if (!empty($lastperiodstart) && $period->starttime < ($lastperiodstart + (2 * DAYSECS))) {
-        mtrace('skipping period with starttime: '.$period->starttime);
+        mtrace('skipping period with starttime: ' . $period->starttime);
         continue;
     }
     $lastperiodstart = $period->starttime;
-    mtrace("fix for timeperiod:". $period->starttime);
-    /* For each course I care about (start date later than 1st Jan, 
+    mtrace("fix for timeperiod:" . $period->starttime);
+    /* For each course I care about (start date later than 1st Jan,
     / enddate greater than our timestart setting, and only courseregex courses.) */
     $sql = "shortname ~ :cregx AND enddate > :timestart AND startdate > 1672615440 AND visible = 1";
-    $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart, 
-    		'cregx' => get_config('local_ace', 'courseregex')]);
+    $courses = $DB->get_recordset_select('course', $sql, ['timestart' => $timestart,
+        'cregx' => get_config('local_ace', 'courseregex')]);
     $coursecount = 0;
     $newrecords = [];
     foreach ($courses as $course) {
@@ -66,15 +66,15 @@ foreach ($timeperiods as $period) {
                  WHERE courseid = :courseid AND timecreated > :timestart AND timecreated < :timeend AND anonymous = 0
                  GROUP BY userid";
 
-        $lastaccess = $DB->get_records_sql($sql, ['courseid' => $course->id, 
-                      'timestart' => $period->starttime, 'timeend' => $period->endtime]);
+        $lastaccess = $DB->get_records_sql($sql, ['courseid' => $course->id,
+            'timestart' => $period->starttime, 'timeend' => $period->endtime]);
         foreach ($userenrolments as $ue) {
             // Set up some data in the samples so it can find user/course in the analytics generation.
             $data = [];
             $user = new stdClass();
             $user->id = $ue->userid;
             $data[$ue->id]['course'] = $course;
-            $data[$ue->id]['user'] = $user;            
+            $data[$ue->id]['user'] = $user;
             // Generate the calcuated indicators.
 
             // Create the class and set the relevant data.
@@ -117,14 +117,13 @@ foreach ($timeperiods as $period) {
             $readaction->endtime = $period->endtime;
             $readaction->contextid = context_course::instance($course->id)->id;
             $readaction->sampleorigin = 'user_enrolments';
-            $readaction->indicator = '\core\analytics\indicator\any_course_access';          
+            $readaction->indicator = '\core\analytics\indicator\any_course_access';
             $record = $DB->get_record('analytics_indicator_calc', (array) $readaction);
             if (empty($record)) {
                 $readaction->value = $readvalue;
                 $readaction->timecreated = $now;
                 $newrecords[] = $readaction;
             } else if ($record->value <> $readvalue) {
-                // mtrace("update record with invalid readvalue". $record->id);
                 $record->value = $readvalue;
                 $DB->update_record('analytics_indicator_calc', $record);
             }
@@ -133,7 +132,7 @@ foreach ($timeperiods as $period) {
     }
     $courses->close();
 
-    mtrace("inserting ". count($newrecords). " new indicator values");
+    mtrace("inserting " . count($newrecords) . " new indicator values");
     $DB->insert_records('analytics_indicator_calc', $newrecords);
 
     mtrace("fixed for $coursecount courses");

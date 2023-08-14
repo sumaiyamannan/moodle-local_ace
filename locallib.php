@@ -148,7 +148,7 @@ function local_ace_get_individuals_course_data(int $userid, int $courseid, int $
         ";
     }
     $sql = "WITH samples AS (
-                " . $timefields ."
+                " . $timefields . "
                        value,
                        userid
                 FROM {local_ace_samples} s
@@ -387,7 +387,8 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
     $wheresql = [];
     $params = [];
 
-    if (isset($filtervalues['aceuser:profilefield_ethnicity_operator']) && isset($filtervalues['aceuser:profilefield_ethnicity_value'])) {
+    if (isset($filtervalues['aceuser:profilefield_ethnicity_operator']) &&
+        isset($filtervalues['aceuser:profilefield_ethnicity_value'])) {
         if ($filtervalues['aceuser:profilefield_ethnicity_operator'] == 1) {
             $joinsql[] = "JOIN {user_info_field} uifethnicity ON uifethnicity.shortname = 'ethnicity' " .
                 "JOIN {user_info_data} uidethnicity ON uidethnicity.fieldid = uifethnicity.id AND uidethnicity.userid = u.id";
@@ -586,7 +587,7 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
  * Helper function to print average time spent in course from dedication plugin.
  *
  * @param [type] $courseid
- * @return void
+ * @return string
  */
 function local_ace_get_dedication($courseid) {
     $config = get_config('local_ace');
@@ -598,15 +599,15 @@ function local_ace_get_dedication($courseid) {
         $a->timespent = !empty($timespent['average']) ? $timespent['average'] : get_string('none');
         $a->days = $dedicationhistory / DAYSECS;
 
-        $helper = '<a class="btn btn-link p-0" role="button" data-container="body" 
-        		data-toggle="popover" data-placement="right" data-content="<p>'.
-         	    	get_string('averagetimespentincoursehelper', 'block_ace').'</p>"
+        $helper = '<a class="btn btn-link p-0" role="button" data-container="body"
+        		data-toggle="popover" data-placement="right" data-content="<p>' .
+            get_string('averagetimespentincoursehelper', 'block_ace') . '</p>"
             		data-html="true" tabindex="0" data-trigger="focus" data-original-title="" title="">
-            		<i class="icon fa fa-question-circle text-info fa-fw " title="'. 
-            		get_string('averagetimespentincoursehelper', 'block_ace').'" role="img" aria-label=""></i></a>';
+            		<i class="icon fa fa-question-circle text-info fa-fw " title="' .
+            get_string('averagetimespentincoursehelper', 'block_ace') . '" role="img" aria-label=""></i></a>';
 
         $output = html_writer::start_div('course_dedication');
-        $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a). $helper);
+        $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a) . $helper);
         $output .= html_writer::end_div();
 
         return $output;
@@ -786,7 +787,7 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
         ";
     }
     $sql = "WITH samples AS (
-               " . $timefields ."
+               " . $timefields . "
                        value,
                        userid
                 FROM {local_ace_samples} s
@@ -1147,8 +1148,8 @@ function local_ace_get_coursemodule_helper() {
 
     $referrer = get_local_referer(false);
     if (!empty($referrer) && (
-        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
+            strpos($referrer, $CFG->wwwroot . '/local/dboard/index.php') === 0 ||
+            strpos($referrer, $CFG->wwwroot . '/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
@@ -1198,8 +1199,8 @@ function local_ace_get_user_helper() {
 
     $referrer = get_local_referer(false);
     if (!empty($referrer) && (
-        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
+            strpos($referrer, $CFG->wwwroot . '/local/dboard/index.php') === 0 ||
+            strpos($referrer, $CFG->wwwroot . '/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
@@ -1273,14 +1274,14 @@ function local_ace_get_course_helper() {
     // Finally check if set in HTTP_REFERRER - will be a webservice call from the dashboard page.
     $referrer = get_local_referer(false);
     if (!empty($referrer) && (
-        strpos($referrer, $CFG->wwwroot.'/local/dboard/index.php') === 0 ||
-        strpos($referrer, $CFG->wwwroot.'/local/vxg_dashboard/index.php') === 0)) {
+            strpos($referrer, $CFG->wwwroot . '/local/dboard/index.php') === 0 ||
+            strpos($referrer, $CFG->wwwroot . '/local/vxg_dashboard/index.php') === 0)) {
 
         $urlcomponents = parse_url($referrer);
         if (!empty($urlcomponents['query'])) {
             parse_str($urlcomponents['query'], $params);
             if (!empty($params['course']) && $params['course'] != SITEID) {
-                $course = get_course((int)$params['course']);
+                $course = get_course((int) $params['course']);
                 return $course;
             } else if (!empty($params['contextid'])) {
                 $context = context::instance_by_id($params['contextid'], IGNORE_MISSING);

@@ -18,16 +18,15 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
-
-use lang_string;
+use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\filters\text;
+use core_reportbuilder\local\helpers\format;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
-use core_reportbuilder\local\entities\base;
-use core_reportbuilder\local\helpers\format;
+use lang_string;
 use local_ace\local\filters\acedate;
-use local_ace\local\filters\pagecontextcourse;
 use local_ace\local\filters\myenrolledcourses;
+use local_ace\local\filters\pagecontextcourse;
 
 /**
  * Userenrolment entity class implementation.
@@ -120,7 +119,7 @@ class userenrolment extends base {
             $coursejoin = " AND {$enrolalias}.courseid = {$course->id}";
         }
 
-        $this->add_join("INNER JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid".$coursejoin);
+        $this->add_join("INNER JOIN {enrol} {$enrolalias} ON {$enrolalias}.id = {$userenrolmentsalias}.enrolid" . $coursejoin);
 
         $this->add_join("JOIN {context} {$contextalias} ON {$contextalias}.instanceid = {$enrolalias}.courseid
                         AND {$contextalias}.contextlevel = " . CONTEXT_COURSE . "
@@ -196,14 +195,14 @@ class userenrolment extends base {
             ->set_callback([format::class, 'userdate']);
 
         $columns[] = (new column(
-                'groups',
-                new lang_string('groups', 'local_ace'),
-                $this->get_entity_name()
-            ))
-                ->add_joins($this->get_joins())
-                ->add_join($this->get_group_join())
-                ->set_is_sortable(true)
-                ->add_fields("{$groupsalias}.name");
+            'groups',
+            new lang_string('groups', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($this->get_group_join())
+            ->set_is_sortable(true)
+            ->add_fields("{$groupsalias}.name");
 
         return $columns;
     }
@@ -340,7 +339,7 @@ class userenrolment extends base {
         return "LEFT JOIN (SELECT grg.name, grgm.userid, grg.courseid
                            FROM {groups} grg
                            JOIN {groups_members} grgm on grgm.groupid = grg.id {$coursegroupjoin}) {$groupsalias} ON
-                           {$groupsalias}.courseid = {$enrolalias}.courseid 
+                           {$groupsalias}.courseid = {$enrolalias}.courseid
                            AND {$groupsalias}.userid = {$userenrolmentsalias}.userid";
     }
 }

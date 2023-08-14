@@ -31,8 +31,6 @@ use local_ace\local\filters\pagecontextcourse;
 use local_ace\local\filters\myenrolledcourses;
 use local_ace\local\filters\courseregex;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Course entity class implementation
  *

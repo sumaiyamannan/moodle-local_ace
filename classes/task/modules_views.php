@@ -24,8 +24,6 @@
 
 namespace local_ace\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Used to get stats for logs to use in reports.
  */
