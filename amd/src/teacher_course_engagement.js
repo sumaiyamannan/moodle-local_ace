@@ -26,8 +26,8 @@ import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import Notification from 'core/notification';
 import ModalFactory from 'core/modal_factory';
-import ModalEvents from "core/modal_events";
-import Templates from "core/templates";
+import ModalEvents from 'core/modal_events';
+import Templates from 'core/templates';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
 // List of course shortnames hidden on the graph.
