@@ -26,9 +26,6 @@ use core_reportbuilder\local\report\filter;
 use core_reportbuilder\local\entities\base;
 use lang_string;
 
-defined('MOODLE_INTERNAL') || die();
-
-
 /**
  * acesamples entity class implementation
  *

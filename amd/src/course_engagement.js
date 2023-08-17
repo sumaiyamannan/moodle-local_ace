@@ -28,6 +28,9 @@ import {init as filtersInit} from 'local_ace/chart_filters';
 
 let COURSE_ID = 0;
 let COURSE_REPORT_LINE_COLOUR;
+// Stores the current time method, allowing us to update the graph without supplying values.
+let START_TIME = null;
+let END_TIME = null;
 
 /**
  * Initialise the course engagement graph
@@ -41,6 +44,14 @@ export const init = (parameters) => {
     COURSE_ID = parameters.courseid;
     COURSE_REPORT_LINE_COLOUR = parameters.colourteachercoursehistory;
     filtersInit(updateGraph);
+
+    document.addEventListener(
+        "local_ace-graph-reload",
+        () => {
+            updateGraph(START_TIME, END_TIME);
+        },
+        false,
+    );
 };
 
 /**
@@ -61,6 +72,13 @@ const displayError = (langString) => {
  * @param {Number|null} endDateTime
  */
 const updateGraph = (startDatetime, endDateTime) => {
+    if (START_TIME !== startDatetime) {
+        START_TIME = startDatetime;
+    }
+    if (END_TIME !== endDateTime) {
+        END_TIME = endDateTime;
+    }
+
     let engagementData = getCourseEngagementData(null, startDatetime, endDateTime).then((response) => {
         if (response.error !== null || response.series.length === 0) {
             displayError(response.error);

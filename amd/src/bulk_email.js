@@ -23,7 +23,7 @@
 
 import ModalFactory from 'core/modal_factory';
 import Templates from 'core/templates';
-import ModalEvents from "core/modal_events";
+import ModalEvents from 'core/modal_events';
 import * as Str from 'core/str';
 import Ajax from 'core/ajax';
 import * as Toast from 'core/toast';

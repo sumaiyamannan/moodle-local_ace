@@ -27,8 +27,6 @@ namespace local_ace\privacy;
 use core_privacy\local\metadata\collection;
 use core_privacy\local\request\{approved_contextlist, approved_userlist, contextlist, transform, userlist, writer};
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * Privacy Subsystem for local_ace implementing provider.
  *

@@ -24,7 +24,7 @@ use lang_string;
 
 defined('MOODLE_INTERNAL') || die();
 
-require_once($CFG->dirroot.'/local/ace/locallib.php');
+require_once($CFG->dirroot . '/local/ace/locallib.php');
 
 /**
  * User entity class implementation.
@@ -92,7 +92,8 @@ class userentity extends base {
      * @return column[]
      */
     protected function get_all_columns(): array {
-	global $PAGE;
+        global $PAGE;
+
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
             $courseid = $course->id;

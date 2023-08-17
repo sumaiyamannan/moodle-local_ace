@@ -24,8 +24,6 @@
 
 namespace local_ace\task;
 
-defined('MOODLE_INTERNAL') || die();
-
 /**
  * get_stats class, used to get stats for indicators.
  */
@@ -38,6 +36,7 @@ class get_stats extends \core\task\scheduled_task {
 
     /** @var boolean $deleteexisting - allows existing data to be cleared before regeneration. */
     public $deleteexisting = false;
+
     /**
      * Returns the name of this task.
      */
@@ -45,6 +44,7 @@ class get_stats extends \core\task\scheduled_task {
         // Shown in admin screens.
         return get_string('getstats', 'local_ace');
     }
+
     /**
      * Executes task.
      */
@@ -61,7 +61,7 @@ class get_stats extends \core\task\scheduled_task {
         $now = time();
         $onlyacesql = '';
         if ($this->onlyaceperiod) {
-            $onlyacesql = " AND c.endtime - c.starttime = ". get_config('local_ace', 'displayperiod');
+            $onlyacesql = " AND c.endtime - c.starttime = " . get_config('local_ace', 'displayperiod');
         }
         // Get user stats for each context (course) for indicators that we care about.
         // cognitive and social breadth are stored as values between-1 -> 1
@@ -72,7 +72,7 @@ class get_stats extends \core\task\scheduled_task {
         $sql = 'SELECT DISTINCT c.starttime, c.endtime, c.contextid, ue.userid, count(value) as cnt, SUM((value + 1)/2) as value
                   FROM {analytics_indicator_calc} c
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
-                 WHERE c.timecreated > :runlast '. $onlyacesql .'
+                 WHERE c.timecreated > :runlast ' . $onlyacesql . '
                        AND sampleorigin = \'user_enrolments\'
                        AND (indicator like \'%cognitive_depth\'
                             OR indicator like \'%social_breadth\'
@@ -86,7 +86,7 @@ class get_stats extends \core\task\scheduled_task {
 
         if ($this->deleteexisting) {
             $from = $now - ($calclifetime * DAYSECS);
-            mtrace("Analytics set to delete ace samples". $calclifetime ." days");
+            mtrace("Analytics set to delete ace samples" . $calclifetime . " days");
             $DB->delete_records_select('local_ace_samples', 'starttime > ? AND endtime - starttime = ?', [$from, $displayperiod]);
         }
 
@@ -122,7 +122,7 @@ class get_stats extends \core\task\scheduled_task {
         $sql = 'SELECT c.starttime, c.endtime, c.contextid, count(value) as cnt, SUM((value + 1)/2) as value
                   FROM {analytics_indicator_calc} c
                   JOIN {user_enrolments} ue on ue.id = c.sampleid
-                 WHERE c.timecreated > :runlast '. $onlyacesql .'
+                 WHERE c.timecreated > :runlast ' . $onlyacesql . '
                        AND sampleorigin = \'user_enrolments\'
                        AND (indicator like \'%cognitive_depth\'
                             OR indicator like \'%social_breadth\'
@@ -135,7 +135,7 @@ class get_stats extends \core\task\scheduled_task {
         $indicators = $DB->get_recordset_sql($sql, array('runlast' => $runlast));
 
         if ($this->deleteexisting) {
-            mtrace("Analytics set to delete ace contexts". $calclifetime ." days");
+            mtrace("Analytics set to delete ace contexts" . $calclifetime . " days");
             $from = $now - ($calclifetime * DAYSECS);
             $DB->delete_records_select('local_ace_contexts', 'starttime > ? AND endtime - starttime = ?', [$from, $displayperiod]);
         }
@@ -170,14 +170,14 @@ class get_stats extends \core\task\scheduled_task {
             // Get unique course and timestart timeend records for users that are not already listed.
             $sql = "SELECT DISTINCT sa.starttime, sa.endtime, sa.contextid, ue.userid as userid
                       FROM {local_ace_samples} sa
-                      JOIN {context} cx ON cx.id = sa.contextid AND cx.contextlevel = ". CONTEXT_COURSE. "
+                      JOIN {context} cx ON cx.id = sa.contextid AND cx.contextlevel = " . CONTEXT_COURSE . "
                       JOIN {enrol} e ON e.courseid = cx.instanceid
                       JOIN {user_enrolments} ue on ue.enrolid = e.id
-                      LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime 
+                      LEFT JOIN {local_ace_samples} saj ON saj.starttime = sa.starttime
                       AND saj.endtime = sa.endtime AND saj.contextid = sa.contextid AND saj.userid = ue.userid
                      WHERE saj.id is null AND sa.starttime > :runlast AND sa.endtime - sa.starttime = :displayperiod";
-            $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast, 
-            		  'displayperiod' => get_config('local_ace', 'displayperiod')]);
+            $recordset = $DB->get_recordset_sql($sql, ['runlast' => $runlast,
+                'displayperiod' => get_config('local_ace', 'displayperiod')]);
             $count = 0;
             $emptysamples = [];
             foreach ($recordset as $record) {
@@ -197,45 +197,6 @@ class get_stats extends \core\task\scheduled_task {
                 mtrace("Added $count empty user enrolment values");
             }
         }
-        /* DISABLE Viewcount queries for now.
-        // For each timeframe that we have null entries
-        $sql = "SELECT DISTINCT starttime, endtime
-                  FROM {local_ace_samples}
-                 WHERE viewcount is null AND starttime > :runlast AND endtime - starttime = :displayperiod";
-        $periods = $DB->get_records_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
-        foreach ($periods as $period) {
-            $sql = "UPDATE {local_ace_samples}
-                       SET viewcount = subquery.vcount
-                      FROM (SELECT cx.id as cxid, l.userid as vuserid, count(l.id) as vcount
-                            FROM {logstore_standard_log} l
-                            JOIN {context} cx on cx.instanceid = l.courseid AND cx.contextlevel = ". CONTEXT_COURSE. "
-                            WHERE (origin = 'web' OR origin = 'ws') AND timecreated > :starttime1 AND timecreated < :endtime1
-                            GROUP BY cx.id, l.userid) AS subquery
-                    WHERE viewcount is null AND starttime = :starttime and endtime = :endtime AND contextid = subquery.cxid AND userid = subquery.vuserid";
-
-            $DB->execute($sql, ['starttime1' => $period->starttime, 'starttime' => $period->starttime,
-                                'endtime' => $period->endtime, 'endtime1' => $period->endtime]);
-            // Set remaining null values for this time period to 0 views.
-            $sql = "UPDATE {local_ace_samples}
-                       SET viewcount = 0
-                       WHERE viewcount is null AND starttime = :starttime and endtime = :endtime";
-            $DB->execute($sql, ['starttime' => $period->starttime, 'endtime' => $period->endtime]);
-        }
-        $sql = "SELECT DISTINCT starttime, endtime
-                  FROM {local_ace_contexts}
-                 WHERE viewcount is null AND starttime > :runlast AND endtime - starttime = :displayperiod";
-        $periods = $DB->get_records_sql($sql, ['runlast' => $runlast, 'displayperiod' => get_config('local_ace', 'displayperiod')]);
-        // Now add those total counts calcuated above to the local_ace_contexts table.
-        foreach ($periods as $period) {
-            $sql = "UPDATE {local_ace_contexts}
-                       SET viewcount = ROUND(subquery.vcount)
-                       FROM (SELECT starttime as vstart, endtime as vend, contextid as vcx, AVG(viewcount) as vcount
-                               FROM {local_ace_samples}
-                              WHERE starttime = :starttime and endtime = :endtime
-                               GROUP BY starttime, endtime, contextid) subquery
-                      WHERE viewcount is null AND starttime = subquery.vstart AND endtime = subquery.vend AND contextid = subquery.vcx";
-            $DB->execute($sql, ['starttime' => $period->starttime, 'endtime' => $period->endtime]);
-        }*/
 
         set_config('statsrunlast', $now, 'local_ace');
     }

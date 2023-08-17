@@ -25,7 +25,7 @@ import Ajax from 'core/ajax';
 import {get_string as getString} from 'core/str';
 import ModalFactory from 'core/modal_factory';
 import Templates from 'core/templates';
-import ModalEvents from "core/modal_events";
+import ModalEvents from 'core/modal_events';
 import ChartBuilder from 'core/chart_builder';
 import ChartJSOutput from 'core/chart_output_chartjs';
 import Notification from 'core/notification';
