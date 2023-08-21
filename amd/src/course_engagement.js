@@ -86,23 +86,17 @@ const updateGraph = (startDatetime, endDateTime) => {
 
         let legendContainer = document.getElementById('local_ace-graph-series-legend');
         legendContainer.innerHTML = '';
+        let warningsContainer = document.getElementById('local_ace-graph-warnings');
+        warningsContainer.innerHTML = '';
 
         response.series.forEach((series) => {
-            let seriesData = {
+            data.series.push({
                 "label": series.label,
-                "labels": null,
-                "type": null,
                 "values": series.values,
                 "colors": [series.colour],
-                "fill": null,
-                "axes": {
-                    "x": null,
-                    "y": null,
-                },
-                "urls": [],
-                "smooth": null
-            };
-            data.series.push(seriesData);
+                "axes": {},
+            });
+            // Add legend boxes.
             let legendBox = document.createElement("span");
             legendBox.className = 'legendbox';
             legendBox.style.cssText = 'background-color: ' + series.colour;
@@ -111,6 +105,10 @@ const updateGraph = (startDatetime, endDateTime) => {
             legendText.className = 'legendtext';
             legendText.innerText = series.legend;
             legendContainer.appendChild(legendText);
+            // Add warnings.
+            if (series.warning !== null) {
+                warningsContainer.append(series.warning);
+            }
         });
 
         data.labels = response.xlabels;

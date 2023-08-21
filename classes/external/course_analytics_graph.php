@@ -65,7 +65,7 @@ class course_analytics_graph extends external_api {
      * @throws invalid_parameter_exception
      */
     public static function get_course_analytics_graph(int $courseid, ?int $period, ?int $start, ?int $end) {
-        global $DB;
+        global $DB, $SESSION;
 
         self::validate_parameters(
             self::get_course_analytics_graph_parameters(),
@@ -87,7 +87,8 @@ class course_analytics_graph extends external_api {
             );
         }
 
-        $data = local_ace_course_data($courseid, $period, $start, $end);
+        // Don't filter as we always need unfiltered current engagement data.
+        $data = local_ace_course_data($courseid, $period, $start, $end, false);
         if (!is_array($data)) {
             return array(
                 'error' => $data,
@@ -98,29 +99,66 @@ class course_analytics_graph extends external_api {
         }
 
         $config = get_config('local_ace');
-        $series = [
-            [
-                'legend' => get_string('courseengagement', 'local_ace'),
-                'label' => 'Engagement',
-                'colour' => $config->colourteachercoursehistory,
-                'values' => $data['series'],
-            ]
+        $series = [];
+        $length = count($data['series']);
+
+        // Add filtered engagement series.
+        if (!empty($SESSION->local_ace_filtervalues)) {
+            $filtereddata = local_ace_course_data($courseid, $period, $start, $end);
+
+            // Swap out labels for the filtered axes.
+            $data['xlabels'] = $filtereddata['xlabels'];
+
+            // We may need to lengthen or shorten series as they don't often align between current and filtered data.
+            $length = count($filtereddata['series']);
+            if (count($data['series']) < $length) {
+                $data['series'] = array_pad($data['series'], $length, 0);
+            } else if (count($data['series']) > $length) {
+                // Limit values of current engagement series as they won't align with filtered data.
+                $data['series'] = array_slice($data['series'], 0, $length);
+            }
+
+            $series[] = [
+                'legend' => get_string('filteredcourseengagement', 'local_ace'),
+                'label' => 'Filtered Engagement',
+                'colour' => $config->colourfilteredengagement,
+                'values' => $filtereddata['series'],
+            ];
+        }
+
+        // Add the current series second so if the view is filtered the filtered line appears on top.
+        $series[] = [
+            'legend' => get_string('courseengagement', 'local_ace'),
+            'label' => 'Engagement',
+            'colour' => $config->colourteachercoursehistory,
+            'values' => $data['series'],
         ];
+
         // Get previous year course shortname.
         $shortname = $DB->get_field('course', 'shortname', ['id' => $courseid], MUST_EXIST);
         if (preg_match($config->courseshortnameyearregex, $shortname, $matches)) {
+            // A year was found in the shortname, lets reassemble the shortname, find last years course & retrieve data.
             $year = $matches[2] - 1;
-            // A year was found in the shortname, let's get the inverse so we can reassemble last years shortname.
             $lastyearshortname = $matches[1] . $year . $matches[3];
+
             if ($course = $DB->get_record('course', ['shortname' => $lastyearshortname], 'id')) {
-                $lastyeardata = local_ace_course_data($course->id, $period, $start - 3.154e+7, $end); // start is set to a year ago.
+                $lastyeardata =
+                    local_ace_course_data($course->id, $period, $start - 3.154e+7, $end, false); // start is set to a year ago.
+
                 if (is_array($lastyeardata)) {
-                    $max = count($data['series']);
+                    // We may need to lengthen or shorten series as they don't often align between last years and current data.
+                    if (count($lastyeardata['series']) < $length) {
+                        $lastyeardata['series'] = array_pad($lastyeardata['series'], $length, 0);
+                    } else if (count($lastyeardata['series']) > $length) {
+                        $lastyeardata['series'] = array_slice($lastyeardata['series'], 0, $length);
+                    }
+
                     $series[] = [
                         'legend' => get_string('lastyearsengagement', 'local_ace'),
                         'label' => 'Last Year',
-                        'colour' => '#eb4034',
-                        'values' => array_slice($lastyeardata['series'], 0, $max),
+                        'colour' => $config->colourlastyeardata,
+                        'values' => $lastyeardata['series'],
+                        'warning' => get_string('lastyearsengagementdatealignment', 'local_ace'),
                     ];
                 }
             }
@@ -149,6 +187,7 @@ class course_analytics_graph extends external_api {
                     'values' => new external_multiple_structure(
                         new external_value(PARAM_FLOAT, 'Series value')
                     ),
+                    'warning' => new external_value(PARAM_TEXT, 'Warning text displayed at the bottom of the graph', false),
                 ]),
                 'List of series to be displayed on the graph',
             ),

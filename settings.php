@@ -165,11 +165,25 @@ if ($hassiteconfig) {
         new lang_string('studentrole', 'local_ace'),
         new lang_string('studentrole_desc', 'local_ace'), $default, $choices));
 
-        $settings->add(new admin_Setting_configtext(
+        $settings->add(new admin_setting_configtext(
             'local_ace/courseshortnameyearregex',
             new lang_string('courseshortnameyearregex', 'local_ace'),
             new lang_string('courseshortnameyearregex_desc', 'local_ace'),
             '/^([A-Z0-9]+-)([0-9]+)([A-Z][0-9])$/',
+        ));
+
+        $settings->add(new admin_setting_configcolourpicker(
+            'local_ace/colourlastyeardata',
+            new lang_string('colourlastyeardata', 'local_ace'),
+            new lang_string('colourlastyeardata_desc', 'local_ace'),
+            '#D6C1FD'
+        ));
+
+        $settings->add(new admin_Setting_configcolourpicker(
+            'local_ace/colourfilteredengagement',
+            new lang_string('colourfilteredengagement', 'local_ace'),
+            new lang_string('colourfilteredengagement_desc', 'local_ace'),
+            '#fcba03'
         ));
     }
     $ADMIN->add('localplugins', $settings);
