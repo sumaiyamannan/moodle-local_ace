@@ -65,6 +65,8 @@ class course_analytics_graph extends external_api {
      * @throws invalid_parameter_exception
      */
     public static function get_course_analytics_graph(int $courseid, ?int $period, ?int $start, ?int $end) {
+        global $DB;
+
         self::validate_parameters(
             self::get_course_analytics_graph_parameters(),
             array(
@@ -95,7 +97,40 @@ class course_analytics_graph extends external_api {
             );
         }
 
-        return $data;
+        $config = get_config('local_ace');
+        $series = [
+            [
+                'legend' => get_string('courseengagement', 'local_ace'),
+                'label' => 'Engagement',
+                'colour' => $config->colourteachercoursehistory,
+                'values' => $data['series'],
+            ]
+        ];
+        // Get previous year course shortname.
+        $shortname = $DB->get_field('course', 'shortname', ['id' => $courseid], MUST_EXIST);
+        if (preg_match($config->courseshortnameyearregex, $shortname, $matches)) {
+            $year = $matches[2] - 1;
+            // A year was found in the shortname, let's get the inverse so we can reassemble last years shortname.
+            $lastyearshortname = $matches[1] . $year . $matches[3];
+            if ($course = $DB->get_record('course', ['shortname' => $lastyearshortname], 'id')) {
+                $lastyeardata = local_ace_course_data($course->id, $period, $start - 3.154e+7, $end); // start is set to a year ago.
+                if (is_array($lastyeardata)) {
+                    $max = count($data['series']);
+                    $series[] = [
+                        'legend' => get_string('lastyearsengagement', 'local_ace'),
+                        'label' => 'Last Year',
+                        'colour' => '#eb4034',
+                        'values' => array_slice($lastyeardata['series'], 0, $max),
+                    ];
+                }
+            }
+        }
+
+        return [
+            'series' => $series,
+            'xlabels' => $data['xlabels'],
+            'ylabels' => $data['ylabels'],
+        ];
     }
 
     /**
@@ -107,7 +142,15 @@ class course_analytics_graph extends external_api {
         return new external_single_structure([
             'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working', false),
             'series' => new external_multiple_structure(
-                new external_value(PARAM_FLOAT, 'Series value')
+                new external_single_structure([
+                    'legend' => new external_value(PARAM_TEXT, 'Series legend'),
+                    'label' => new external_value(PARAM_TEXT, 'Series label'),
+                    'colour' => new external_value(PARAM_TEXT, 'Series line colour'),
+                    'values' => new external_multiple_structure(
+                        new external_value(PARAM_FLOAT, 'Series value')
+                    ),
+                ]),
+                'List of series to be displayed on the graph',
             ),
             'xlabels' => new external_multiple_structure(
                 new external_value(PARAM_TEXT, 'Formatted date string labels')

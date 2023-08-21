@@ -76,6 +76,8 @@ $string['completionratefilter'] = 'Number of completions';
 $string['courseregex'] = 'Course shortname regex';
 $string['courseregex_desc'] =
     'Regex to cover courses we want to be included in the analytics. The data entered here will be compared against the course shortname.';
+$string['courseshortnameyearregex'] = 'Course shortname year regex';
+$string['courseshortnameyearregex_desc'] = 'Regex to select the year from the course shortname. Must have 3 groups, first is the prefix, second is the year, third is the suffix.';
 $string['colours'] = 'Engagement line colours';
 $string['colours_desc'] = 'Comma separated list of hex colour codes, preceded with a hash.';
 $string['highengagementcutoff'] = 'High Engagement Cutoff';
@@ -91,6 +93,7 @@ $string['none'] = 'None';
 $string['averageengagement'] = 'Average engagement';
 $string['getstats'] = 'Generate indicator stats';
 $string['courseengagement'] = 'Course engagement';
+$string['lastyearsengagement'] = 'Last years engagement';
 $string['noanalyticsfoundcourse'] = 'No analytics were found for this course';
 $string['showaveragecourseengagement'] = 'Show average course engagement (+/- 15%)';
 $string['showoptimumcourseengagementline'] = 'Show optimum course engagement line';

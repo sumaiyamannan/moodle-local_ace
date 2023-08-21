@@ -359,10 +359,7 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
 function local_ace_course_graph(int $courseid): string {
     global $PAGE;
 
-    $config = get_config('local_ace');
-
     $context = array(
-        'colourteachercoursehistory' => $config->colourteachercoursehistory,
         'courseid' => $courseid
     );
 

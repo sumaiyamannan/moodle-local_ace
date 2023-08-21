@@ -164,6 +164,13 @@ if ($hassiteconfig) {
         $settings->add(new admin_setting_configselect('local_ace/studentrole',
         new lang_string('studentrole', 'local_ace'),
         new lang_string('studentrole_desc', 'local_ace'), $default, $choices));
+
+        $settings->add(new admin_Setting_configtext(
+            'local_ace/courseshortnameyearregex',
+            new lang_string('courseshortnameyearregex', 'local_ace'),
+            new lang_string('courseshortnameyearregex_desc', 'local_ace'),
+            '/^([A-Z0-9]+-)([0-9]+)([A-Z][0-9])$/',
+        ));
     }
     $ADMIN->add('localplugins', $settings);
 }
