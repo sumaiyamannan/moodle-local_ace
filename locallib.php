@@ -359,10 +359,7 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
 function local_ace_course_graph(int $courseid): string {
     global $PAGE;
 
-    $config = get_config('local_ace');
-
     $context = array(
-        'colourteachercoursehistory' => $config->colourteachercoursehistory,
         'courseid' => $courseid
     );
 
@@ -417,10 +414,11 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
  * @param int|null $period
  * @param int|null $start
  * @param int|null $end
+ * @param bool $allowfilters If filters should be used on selecting data
  * @return array
  * @throws dml_exception
  */
-function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null): array {
+function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null, bool $allowfilters = true): array {
     global $DB, $SESSION;
 
     $config = get_config('local_ace');
@@ -441,7 +439,7 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
         'start' => $start
     );
 
-    if (!empty($SESSION->local_ace_filtervalues)) {
+    if (!empty($SESSION->local_ace_filtervalues) && $allowfilters) {
         list($joinsql, $wheresql, $params) = local_ace_generate_filter_sql($SESSION->local_ace_filtervalues);
         $sql = "SELECT lap.starttime, lap.endtime, count(lap.value) as count, sum(lap.value) as value
                 FROM {local_ace_samples} lap
@@ -475,12 +473,13 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
  * @param int|null $period
  * @param int|null $start
  * @param int|null $end
+ * @param bool $allowfilters If filters should be used on selecting data
  * @return array|string
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_course_data(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null) {
-    $values = local_ace_course_data_values($courseid, $period, $start, $end);
+function local_ace_course_data(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null, bool $allowfilters = true) {
+    $values = local_ace_course_data_values($courseid, $period, $start, $end, $allowfilters);
 
     $labels = array();
     $series = array();

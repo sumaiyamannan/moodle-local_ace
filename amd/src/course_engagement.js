@@ -27,7 +27,6 @@ import ChartJSOutput from 'core/chart_output_chartjs';
 import {init as filtersInit} from 'local_ace/chart_filters';
 
 let COURSE_ID = 0;
-let COURSE_REPORT_LINE_COLOUR;
 // Stores the current time method, allowing us to update the graph without supplying values.
 let START_TIME = null;
 let END_TIME = null;
@@ -42,7 +41,6 @@ export const init = (parameters) => {
         return;
     }
     COURSE_ID = parameters.courseid;
-    COURSE_REPORT_LINE_COLOUR = parameters.colourteachercoursehistory;
     filtersInit(updateGraph);
 
     document.addEventListener(
@@ -85,7 +83,34 @@ const updateGraph = (startDatetime, endDateTime) => {
             return null;
         }
         let data = getGraphDataPlaceholder();
-        data.series[0].values = response.series;
+
+        let legendContainer = document.getElementById('local_ace-graph-series-legend');
+        legendContainer.innerHTML = '';
+        let warningsContainer = document.getElementById('local_ace-graph-warnings');
+        warningsContainer.innerHTML = '';
+
+        response.series.forEach((series) => {
+            data.series.push({
+                "label": series.label,
+                "values": series.values,
+                "colors": [series.colour],
+                "axes": {},
+            });
+            // Add legend boxes.
+            let legendBox = document.createElement("span");
+            legendBox.className = 'legendbox';
+            legendBox.style.cssText = 'background-color: ' + series.colour;
+            legendContainer.appendChild(legendBox);
+            let legendText = document.createElement("span");
+            legendText.className = 'legendtext';
+            legendText.innerText = series.legend;
+            legendContainer.appendChild(legendText);
+            // Add warnings.
+            if (series.warning !== null) {
+                warningsContainer.append(series.warning);
+            }
+        });
+
         data.labels = response.xlabels;
         data.axes.y[0].max = 100;
         data.axes.y[0].stepSize = 25;
@@ -119,20 +144,6 @@ const getGraphDataPlaceholder = () => {
     return {
         "type": "line",
         "series": [
-            {
-                "label": "Engagement",
-                "labels": null,
-                "type": null,
-                "values": null,
-                "colors": [COURSE_REPORT_LINE_COLOUR],
-                "fill": null,
-                "axes": {
-                    "x": null,
-                    "y": null
-                },
-                "urls": [],
-                "smooth": null
-            },
         ],
         "labels": null,
         "title": null,
