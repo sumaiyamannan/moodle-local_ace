@@ -368,7 +368,7 @@ function local_ace_course_graph(int $courseid): string {
     $PAGE->requires->js_call_amd('local_ace/course_engagement', 'init', [$context]);
     $PAGE->requires->css('/local/ace/styles.css');
 
-    $output .= local_ace_get_dedication($courseid);
+    $output .= html_writer::div(local_ace_get_dedication($courseid), '', ['id' => 'local_ace-course-dedication']);
 
     return $output;
 }
@@ -589,6 +589,8 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
  * @return string
  */
 function local_ace_get_dedication($courseid) {
+    global $SESSION;
+
     $config = get_config('local_ace');
 
     if (class_exists("\block_dedication\lib\utils") && !empty($courseid)) {
@@ -607,6 +609,15 @@ function local_ace_get_dedication($courseid) {
 
         $output = html_writer::start_div('course_dedication');
         $output .= html_writer::tag('p', get_string('averagetimespentincourse', 'local_ace', $a) . $helper);
+
+        if (!empty($SESSION->local_ace_filtervalues)) {
+            $filtertimespent = \block_dedication\lib\utils::get_average($courseid, $dedicationhistory, true);
+            $filtera = new stdClass();
+            $filtera->timespent = !empty($filtertimespent['average']) ? $filtertimespent['average'] : get_string('none');
+            $filtera->days = $dedicationhistory / DAYSECS;
+            $output .= html_writer::tag('p', get_string('averagetimespentincoursefiltered', 'local_ace', $filtera) . $helper);
+        }
+
         $output .= html_writer::end_div();
 
         return $output;

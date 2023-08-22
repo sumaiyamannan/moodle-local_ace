@@ -207,6 +207,7 @@ $string['groups'] = 'Groups';
 $string['modulesviews'] = 'Used to generate stats on logs table for most viewed course modules';
 $string['position'] = 'Activity position';
 $string['averagetimespentincourse'] = 'Average time spent in course in last {$a->days} days: {$a->timespent}';
+$string['averagetimespentincoursefiltered'] = 'Average time spent in course in last {$a->days} days with filter: {$a->timespent}';
 $string['dedicationhistory'] = 'Dedication block timeframe';
 $string['dedicationhistory_help'] = 'How long to use in duration when displaying average time spent in course under ACE graphs';
 $string['totalviewsrecenthide'] = 'Total views recent (hide value)';

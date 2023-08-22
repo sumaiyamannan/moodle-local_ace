@@ -105,6 +105,14 @@ class course_analytics_graph extends external_api {
         // Add filtered engagement series.
         if (!empty($SESSION->local_ace_filtervalues)) {
             $filtereddata = local_ace_course_data($courseid, $period, $start, $end);
+            if (!is_array($filtereddata)) {
+                return array(
+                    'error' => $filtereddata,
+                    'series' => [],
+                    'xlabels' => [],
+                    'ylabels' => []
+                );
+            }
 
             // Swap out labels for the filtered axes.
             $data['xlabels'] = $filtereddata['xlabels'];
@@ -164,10 +172,13 @@ class course_analytics_graph extends external_api {
             }
         }
 
+        $dedicationhtml = local_ace_get_dedication($courseid);
+
         return [
             'series' => $series,
             'xlabels' => $data['xlabels'],
             'ylabels' => $data['ylabels'],
+            'dedicationhtml' => $dedicationhtml,
         ];
     }
 
@@ -199,7 +210,8 @@ class course_analytics_graph extends external_api {
                     'value' => new external_value(PARAM_FLOAT, 'Engagement Value'),
                     'label' => new external_value(PARAM_TEXT, 'Engagement Label')
                 ])
-            )
+            ),
+            'dedicationhtml' => new external_value(PARAM_RAW, 'Dedication block HTML content', false),
         ]);
     }
 
