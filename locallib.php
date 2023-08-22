@@ -414,6 +414,7 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
  * @param int|null $period
  * @param int|null $start
  * @param int|null $end
+ * @param bool $allowfilters If filters should be used on selecting data
  * @return array
  * @throws dml_exception
  */
@@ -472,6 +473,7 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
  * @param int|null $period
  * @param int|null $start
  * @param int|null $end
+ * @param bool $allowfilters If filters should be used on selecting data
  * @return array|string
  * @throws coding_exception
  * @throws dml_exception
