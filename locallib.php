@@ -376,9 +376,9 @@ function local_ace_course_graph(int $courseid): string {
 /**
  * Generate SQL used for select filters.
  *
- * @param $filtervalues array Filter values
- * @param $filterkey string Filter name
- * @param $studentattribute string Student attribute column name
+ * @param array $filtervalues Filter values
+ * @param string $filterkey Filter name
+ * @param string $studentattribute Student attribute column name
  * @return array
  */
 function local_ace_filter_sql_select(array $filtervalues, string $filterkey, string $studentattribute) {
@@ -404,9 +404,9 @@ function local_ace_filter_sql_select(array $filtervalues, string $filterkey, str
 /**
  * Generate SQL used for number filters.
  *
- * @param $filtervalues array Filter values
- * @param $filterkey string Filter name
- * @param $studentattribute string Student attribute column name
+ * @param array $filtervalues Filter values
+ * @param string $filterkey Filter name
+ * @param string $studentattribute Student attribute column name
  * @return array
  */
 function local_ace_filter_sql_number(array $filtervalues, string $filterkey, string $studentattribute) {
@@ -463,9 +463,9 @@ function local_ace_filter_sql_number(array $filtervalues, string $filterkey, str
 /**
  * Generate SQL used for text filters.
  *
- * @param $filtervalues array Filter values
- * @param $filterkey string Filter name
- * @param $studentattribute string Student attribute column name
+ * @param array $filtervalues Filter values
+ * @param string $filterkey Filter name
+ * @param string $studentattribute Student attribute column name
  * @return array
  */
 function local_ace_filter_sql_text(array $filtervalues, string $filterkey, string $studentattribute) {
