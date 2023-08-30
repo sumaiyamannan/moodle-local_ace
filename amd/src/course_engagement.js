@@ -120,6 +120,11 @@ const updateGraph = (startDatetime, endDateTime) => {
         });
         data.axes.y[0].labels = yLabels;
 
+        if (response.dedicationhtml !== null) {
+            let dedicationContainer = document.getElementById('local_ace-course-dedication');
+            dedicationContainer.innerHTML = response.dedicationhtml;
+        }
+
         return data;
     }).catch(() => {
         displayError("API Error");
