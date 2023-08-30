@@ -211,6 +211,14 @@ $string['averagetimespentincoursefiltered'] = 'Average time spent in course in l
 $string['dedicationhistory'] = 'Dedication block timeframe';
 $string['dedicationhistory_help'] = 'How long to use in duration when displaying average time spent in course under ACE graphs';
 $string['totalviewsrecenthide'] = 'Total views recent (hide value)';
+$string['gender'] = 'Gender';
+$string['ethnicity'] = 'Ethnicity';
+$string['firstinfamily'] = 'First in Whanau';
+$string['programme'] = 'Programme';
+$string['fullfee'] = 'Domestic/International';
+$string['fullpart'] = 'Full time/Part time';
+$string['schooldecile'] = 'School Decile';
+$string['firstyearkaitoko'] = 'First year Kaitoko';
 
 $string['activitycompletion'] = 'Activity Completion';
 $string['completedon'] = 'Completed on';

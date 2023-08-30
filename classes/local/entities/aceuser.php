@@ -18,10 +18,15 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
+use core_reportbuilder\local\filters\boolean_select;
+use core_reportbuilder\local\filters\number;
+use core_reportbuilder\local\filters\select;
+use core_reportbuilder\local\filters\text;
+use core_reportbuilder\local\report\column;
+use core_reportbuilder\local\report\filter;
+use core_user\fields;
 use lang_string;
 use moodle_url;
-use core_user\fields;
-use core_reportbuilder\local\report\column;
 
 /**
  * User entity class implementation.
@@ -42,11 +47,13 @@ class aceuser extends \core_reportbuilder\local\entities\user {
     protected function get_default_table_aliases(): array {
         $aliases = parent::get_default_table_aliases();
         $aliases['course'] = 'c';
+        $aliases['ucdw_studentattributes'] = 'studentattributes';
         return $aliases;
     }
 
     /**
      * Get all columns
+     *
      * @return array
      */
     protected function get_all_columns(): array {
@@ -105,10 +112,233 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                     $row->{$namefield} = $row->{$namefield} ?? '';
                 }
                 $url = new moodle_url('/report/log/index.php', ['id' => $row->courseid, 'user' => $row->id,
-                                      'modid' => $row->cmid, 'logreader' => 'logstore_standard', 'chooselog' => 1]);
+                    'modid' => $row->cmid, 'logreader' => 'logstore_standard', 'chooselog' => 1]);
                 return \html_writer::link($url, fullname($row, $viewfullnames));
             });
 
+        $studentattralias = $this->get_table_alias('ucdw_studentattributes');
+        $attributesjoin =
+            "LEFT JOIN {ucdw_studentattributes} {$studentattralias} ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
+
+        $columns[] = (new column(
+            'gender',
+            new lang_string('gender', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.gender")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'ethnicity',
+            new lang_string('ethnicity', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.etnicitypriority")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'firstinfamily',
+            new lang_string('firstinfamily', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.firstinfamily")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'programme',
+            new lang_string('programme', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.programmecode1")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'fullfee',
+            new lang_string('fullfee', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.fullfee")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'fullpart',
+            new lang_string('fullpart', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.fullpart")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'schooldecile',
+            new lang_string('schooldecile', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.schooldecile")
+            ->set_type(column::TYPE_INTEGER)
+            ->set_is_sortable(true);
+
+        $columns[] = (new column(
+            'firstyearkaitoko',
+            new lang_string('firstyearkaitoko', 'local_ace'),
+            $this->get_entity_name()
+        ))
+            ->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
+            ->add_field("{$studentattralias}.firstyearkaitoko")
+            ->set_type(column::TYPE_TEXT)
+            ->set_is_sortable(true);
+
         return $columns;
+    }
+
+    /**
+     * Return list of all available filters
+     *
+     * @return filter[]
+     */
+    protected function get_all_filters(): array {
+        $filters = parent::get_all_filters();
+
+        $studentattralias = $this->get_table_alias('ucdw_studentattributes');
+
+        $filters[] = (new filter(
+            select::class,
+            'gender',
+            new lang_string('gender', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.gender"
+        ))->add_joins($this->get_joins())
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $genders = $DB->get_records_sql("
+                    SELECT DISTINCT gender
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->gender;
+                }, $genders);
+            });
+
+        $filters[] = (new filter(
+            select::class,
+            'ethnicity',
+            new lang_string('ethnicity', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.etnicitypriority"
+        ))->add_joins($this->get_joins())
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $ethnicites = $DB->get_records_sql("
+                    SELECT DISTINCT etnicitypriority
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->etnicitypriority;
+                }, $ethnicites);
+            });
+
+        $filters[] = (new filter(
+            select::class,
+            'firstinfamily',
+            new lang_string('firstinfamily', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.firstinfamily"
+        ))->add_joins($this->get_joins())
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $firstinfamily = $DB->get_records_sql("
+                    SELECT DISTINCT firstinfamily
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->firstinfamily;
+                }, $firstinfamily);
+            });
+
+        $filters[] = (new filter(
+            text::class,
+            'programme',
+            new lang_string('programme', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.programmecode1"
+        ))->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            select::class,
+            'fullfee',
+            new lang_string('fullfee', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.fullfee"
+        ))->add_joins($this->get_joins())
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $fullfee = $DB->get_records_sql("
+                    SELECT DISTINCT fullfee
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->fullfee;
+                }, $fullfee);
+            });
+
+        $filters[] = (new filter(
+            select::class,
+            'fullpart',
+            new lang_string('fullpart', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.fullpart"
+        ))->add_joins($this->get_joins())
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $fullpart = $DB->get_records_sql("
+                    SELECT DISTINCT fullpart
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->fullpart;
+                }, $fullpart);
+            });
+
+        $filters[] = (new filter(
+            number::class,
+            'schooldecile',
+            new lang_string('schooldecile', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.schooldecile"
+        ))->add_joins($this->get_joins());
+
+        $filters[] = (new filter(
+            select::class,
+            'firstyearkaitoko',
+            new lang_string('firstyearkaitoko', 'local_ace'),
+            $this->get_entity_name(),
+            "{$studentattralias}.firstyearkaitoko"
+        ))->add_joins($this->get_joins())
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $firstyearkaitoko = $DB->get_records_sql("
+                    SELECT DISTINCT firstyearkaitoko
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->firstyearkaitoko;
+                }, $firstyearkaitoko);
+            });
+
+        return $filters;
     }
 }
