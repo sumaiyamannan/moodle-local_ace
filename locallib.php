@@ -374,6 +374,161 @@ function local_ace_course_graph(int $courseid): string {
 }
 
 /**
+ * Generate SQL used for select filters.
+ *
+ * @param array $filtervalues Filter values
+ * @param string $filterkey Filter name
+ * @param string $studentattribute Student attribute column name
+ * @return array
+ */
+function local_ace_filter_sql_select(array $filtervalues, string $filterkey, string $studentattribute) {
+    $wheresql = [];
+    $params = [];
+
+    if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
+        $params[$studentattribute] = $filtervalues[$filterkey . '_value'];
+        if ($filtervalues[$filterkey . '_operator'] == 1) {
+            $wheresql[] = "AND studentattributes.$studentattribute = :$studentattribute";
+        }
+        if ($filtervalues[$filterkey . '_operator'] == 2) {
+            $wheresql[] = "AND studentattributes.$studentattribute != :$studentattribute";
+        }
+    }
+
+    return [
+        $wheresql,
+        $params
+    ];
+}
+
+/**
+ * Generate SQL used for number filters.
+ *
+ * @param array $filtervalues Filter values
+ * @param string $filterkey Filter name
+ * @param string $studentattribute Student attribute column name
+ * @return array
+ */
+function local_ace_filter_sql_number(array $filtervalues, string $filterkey, string $studentattribute) {
+    $wheresql = [];
+    $params = [];
+
+    if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value1'])) {
+        $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
+        $value1 = $filtervalues[$filterkey . '_value1'];
+        $value2 = $filtervalues[$filterkey . '_value2'] ?? 0;
+        switch ($operator) {
+            case 1:
+                $wheresql[] = "AND COALESCE(studentattributes.$studentattribute, 0) <> 0";
+                break;
+            case 2:
+                $wheresql[] = "AND COALESCE(studentattributes.$studentattribute, 0) = 0";
+                break;
+            case 3:
+                $wheresql[] = "AND studentattributes.$studentattribute < :{$studentattribute}1";
+                $params[$studentattribute . '1'] = $value1;
+                break;
+            case 4:
+                $wheresql[] = "AND studentattributes.$studentattribute > :{$studentattribute}1";
+                $params[$studentattribute . '1'] = $value1;
+                break;
+            case 5:
+                $wheresql[] = "AND studentattributes.$studentattribute = :{$studentattribute}1";
+                $params[$studentattribute . '1'] = $value1;
+                break;
+            case 6:
+                $wheresql[] = "AND studentattributes.$studentattribute <= :{$studentattribute}1";
+                $params[$studentattribute . '1'] = $value1;
+                break;
+            case 7:
+                $wheresql[] = "AND studentattributes.$studentattribute >= :{$studentattribute}1";
+                $params[$studentattribute . '1'] = $value1;
+                break;
+            case 8:
+                $wheresql[] = "AND studentattributes.$studentattribute BETWEEN :{$studentattribute}1 AND :{$studentattribute}2";
+                $params[$studentattribute . '1'] = $value1;
+                $params[$studentattribute . '2'] = $value2;
+                break;
+            default:
+                break;
+        }
+    }
+
+    return [
+        $wheresql,
+        $params
+    ];
+}
+
+/**
+ * Generate SQL used for text filters.
+ *
+ * @param array $filtervalues Filter values
+ * @param string $filterkey Filter name
+ * @param string $studentattribute Student attribute column name
+ * @return array
+ */
+function local_ace_filter_sql_text(array $filtervalues, string $filterkey, string $studentattribute) {
+    global $DB;
+
+    $wheresql = [];
+    $params = [];
+
+    if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
+        $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
+        $value = $filtervalues[$filterkey . '_value'];
+
+        switch ($operator) {
+            case 1:
+                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $value = $DB->sql_like_escape($value);
+                $params[$studentattribute] = "%$value%";
+                break;
+            case 2:
+                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $value = $DB->sql_like_escape($value);
+                $params[$studentattribute] = "%$value%";
+                break;
+            case 3:
+                $wheresql[] = 'AND ' . $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $params[$studentattribute] = $value;
+                break;
+            case 4:
+                $wheresql[] = 'AND ' . $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $params[$studentattribute] = $value;
+                break;
+            case 5:
+                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $value = $DB->sql_like_escape($value);
+                $params[$studentattribute] = "$value%";
+                break;
+            case 6:
+                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $value = $DB->sql_like_escape($value);
+                $params[$studentattribute] = "%$value";
+                break;
+            case 7:
+                $paramempty = $studentattribute . 'empty';
+                $wheresql = "AND COALESCE(studentattributes.{$studentattribute}, :{$paramempty}) = :{$studentattribute}";
+                $params[$paramempty] = $params[$studentattribute] = '';
+                break;
+            case 8:
+                $paramempty = $studentattribute . 'empty';
+                $wheresql = "AND COALESCE(studentattributes.{$studentattribute}, :{$paramempty}) != :{$studentattribute}";
+                $params[$paramempty] = $params[$studentattribute] = '';
+                break;
+            default:
+                break;
+        }
+    }
+
+    return [
+        $wheresql,
+        $params
+    ];
+}
+
+/**
  * Generate SQL based on filters.
  *
  * @param array $filtervalues
@@ -384,20 +539,38 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
     $wheresql = [];
     $params = [];
 
-    if (isset($filtervalues['aceuser:profilefield_ethnicity_operator']) &&
-        isset($filtervalues['aceuser:profilefield_ethnicity_value'])) {
-        if ($filtervalues['aceuser:profilefield_ethnicity_operator'] == 1) {
-            $joinsql[] = "JOIN {user_info_field} uifethnicity ON uifethnicity.shortname = 'ethnicity' " .
-                "JOIN {user_info_data} uidethnicity ON uidethnicity.fieldid = uifethnicity.id AND uidethnicity.userid = u.id";
-            $wheresql[] = "AND uidethnicity.data = :ethnicity";
-            $params['ethnicity'] = $filtervalues['aceuser:profilefield_ethnicity_value'];
-        }
-        if ($filtervalues['aceuser:profilefield_ethnicity_operator'] == 2) {
-            $joinsql[] = "JOIN {user_info_field} uifethnicity ON uifethnicity.shortname = 'ethnicity' " .
-                "JOIN {user_info_data} uidethnicity ON uidethnicity.fieldid = uifethnicity.id AND uidethnicity.userid = u.id";
-            $wheresql[] = "AND uidethnicity.data != :ethnicity";
-            $params['ethnicity'] = $filtervalues['aceuser:profilefield_ethnicity_value'];
-        }
+    $joinsql[] = "JOIN {ucdw_studentattributes} studentattributes ON cast(studentattributes.studentidentifier as varchar) = u.idnumber";
+
+    $selectfilters = [
+        ['aceuser:gender', 'gender'],
+        ['aceuser:ethnicity', 'etnicitypriority'],
+        ['aceuser:firstinfamily', 'firstinfamily'],
+        ['aceuser:fullfee', 'fullfee'],
+        ['aceuser:fullpart', 'fullpart'],
+        ['aceuser:firstyearkaitoko', 'firstyearkaitoko'],
+    ];
+    foreach ($selectfilters as $filter) {
+        list($filterwhere, $filterparams) = local_ace_filter_sql_select($filtervalues, $filter[0], $filter[1]);
+        $wheresql = array_merge($wheresql, $filterwhere);
+        $params = array_merge($params, $filterparams);
+    }
+
+    $numfilters = [
+        ['aceuser:schooldecile', 'schooldecile'],
+    ];
+    foreach ($numfilters as $filter) {
+        list($filterwhere, $filterparams) = local_ace_filter_sql_number($filtervalues, $filter[0], $filter[1]);
+        $wheresql = array_merge($wheresql, $filterwhere);
+        $params = array_merge($params, $filterparams);
+    }
+
+    $textfilters = [
+        ['aceuser:programme', 'programmecode1'],
+    ];
+    foreach ($textfilters as $filter) {
+        list($filterwhere, $filterparams) = local_ace_filter_sql_text($filtervalues, $filter[0], $filter[1]);
+        $wheresql = array_merge($wheresql, $filterwhere);
+        $params = array_merge($params, $filterparams);
     }
 
     return [
