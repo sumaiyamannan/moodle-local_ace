@@ -70,6 +70,7 @@ const displayError = (langString) => {
  * @param {Number|null} endDateTime
  */
 const updateGraph = (startDatetime, endDateTime) => {
+    document.getElementById('local_ace-graph-loading').style.display = 'block';
     if (START_TIME !== startDatetime) {
         START_TIME = startDatetime;
     }
@@ -138,6 +139,7 @@ const updateGraph = (startDatetime, endDateTime) => {
         let chartImage = chartArea.querySelector('.chart-image');
         chartImage.innerHTML = "";
         ChartBuilder.make(data).then((chart) => {
+            document.getElementById('local_ace-graph-loading').style.display = 'none';
             new ChartJSOutput(chartImage, chart);
             return;
         }).catch();
