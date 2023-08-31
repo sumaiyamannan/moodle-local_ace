@@ -220,6 +220,9 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         $filters = parent::get_all_filters();
 
         $studentattralias = $this->get_table_alias('ucdw_studentattributes');
+        $usertablealias = $this->get_table_alias('user');
+        $attributesjoin =
+            "LEFT JOIN {ucdw_studentattributes} {$studentattralias} ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
 
         $filters[] = (new filter(
             select::class,
@@ -228,6 +231,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.gender"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $genders = $DB->get_records_sql("
@@ -245,6 +249,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.etnicitypriority"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $ethnicites = $DB->get_records_sql("
@@ -262,6 +267,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.firstinfamily"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $firstinfamily = $DB->get_records_sql("
@@ -278,7 +284,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             new lang_string('programme', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.programmecode1"
-        ))->add_joins($this->get_joins());
+        ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin);
 
         $filters[] = (new filter(
             select::class,
@@ -287,6 +294,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.fullfee"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $fullfee = $DB->get_records_sql("
@@ -304,6 +312,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.fullpart"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $fullpart = $DB->get_records_sql("
@@ -320,7 +329,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             new lang_string('schooldecile', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.schooldecile"
-        ))->add_joins($this->get_joins());
+        ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin);
 
         $filters[] = (new filter(
             select::class,
@@ -329,6 +339,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.firstyearkaitoko"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $firstyearkaitoko = $DB->get_records_sql("
