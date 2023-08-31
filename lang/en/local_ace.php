@@ -219,6 +219,7 @@ $string['fullfee'] = 'Domestic/International';
 $string['fullpart'] = 'Full time/Part time';
 $string['schooldecile'] = 'School Decile';
 $string['firstyearkaitoko'] = 'First year Kaitoko';
+$string['activityviewed'] = 'Activity Viewed';
 
 $string['activitycompletion'] = 'Activity Completion';
 $string['completedon'] = 'Completed on';
