@@ -80,6 +80,7 @@ const updateGraph = (startDatetime, endDateTime) => {
 
     let engagementData = getCourseEngagementData(null, startDatetime, endDateTime).then((response) => {
         if (response.error !== null || response.series.length === 0) {
+            document.getElementById('local_ace-graph-loading').style.display = 'none';
             displayError(response.error);
             return null;
         }
@@ -128,6 +129,7 @@ const updateGraph = (startDatetime, endDateTime) => {
 
         return data;
     }).catch(() => {
+        document.getElementById('local_ace-graph-loading').style.display = 'none';
         displayError("API Error");
     });
 
