@@ -195,11 +195,16 @@ function local_ace_get_enrolled_courses(int $userid, ?int $start = null): array 
     }
 
     $shortnameregs = $config->courseregex;
-    if (!empty($shortnameregs)) {
-        if (!isset($start)) {
-            $filtersql .= " AND ";
+    if ($DB->sql_regex_supported()) {
+        if (!empty($shortnameregs)) {
+            if (!isset($start)) {
+                $filtersql .= " AND ";
+            }
+
+            $filtersql .= "co.shortname " . $DB->sql_regex() . " '$shortnameregs'";
         }
-        $filtersql .= "co.shortname ~ '$shortnameregs'";
+    } else {
+        debugging('Cannot filter by shortname, database does not support regular expressions.');
     }
 
     // Only get enrolled courses, filter by shortname if required.
