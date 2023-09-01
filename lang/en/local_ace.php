@@ -98,7 +98,7 @@ $string['averageengagement'] = 'Average engagement';
 $string['getstats'] = 'Generate indicator stats';
 $string['courseengagement'] = 'Course engagement';
 $string['lastyearsengagement'] = 'Last years engagement';
-$string['lastyearsengagementdatealignment'] = 'Last years engagement levels dates are not exact.';
+$string['lastyearsengagementdatealignment'] = 'Last years engagement level dates are not exact.';
 $string['filteredcourseengagement'] = 'Filtered course engagement';
 $string['noanalyticsfoundcourse'] = 'No analytics were found for this course';
 $string['showaveragecourseengagement'] = 'Show average course engagement (+/- 15%)';
@@ -219,6 +219,7 @@ $string['fullfee'] = 'Domestic/International';
 $string['fullpart'] = 'Full time/Part time';
 $string['schooldecile'] = 'School Decile';
 $string['firstyearkaitoko'] = 'First year Kaitoko';
+$string['activityviewed'] = 'Activity Viewed';
 
 $string['activitycompletion'] = 'Activity Completion';
 $string['completedon'] = 'Completed on';

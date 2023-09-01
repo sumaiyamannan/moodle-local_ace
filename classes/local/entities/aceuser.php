@@ -26,6 +26,7 @@ use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_user\fields;
 use lang_string;
+use local_ace\local\filters\select_null;
 use moodle_url;
 
 /**
@@ -48,6 +49,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         $aliases = parent::get_default_table_aliases();
         $aliases['course'] = 'c';
         $aliases['ucdw_studentattributes'] = 'studentattributes';
+        $aliases['local_ace_log_summary'] = 'acelogsummary';
         return $aliases;
     }
 
@@ -220,6 +222,9 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         $filters = parent::get_all_filters();
 
         $studentattralias = $this->get_table_alias('ucdw_studentattributes');
+        $usertablealias = $this->get_table_alias('user');
+        $attributesjoin =
+            "LEFT JOIN {ucdw_studentattributes} {$studentattralias} ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
 
         $filters[] = (new filter(
             select::class,
@@ -228,6 +233,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.gender"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $genders = $DB->get_records_sql("
@@ -245,6 +251,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.etnicitypriority"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $ethnicites = $DB->get_records_sql("
@@ -262,6 +269,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.firstinfamily"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $firstinfamily = $DB->get_records_sql("
@@ -278,7 +286,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             new lang_string('programme', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.programmecode1"
-        ))->add_joins($this->get_joins());
+        ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin);
 
         $filters[] = (new filter(
             select::class,
@@ -287,6 +296,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.fullfee"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $fullfee = $DB->get_records_sql("
@@ -304,6 +314,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.fullpart"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $fullpart = $DB->get_records_sql("
@@ -320,7 +331,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             new lang_string('schooldecile', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.schooldecile"
-        ))->add_joins($this->get_joins());
+        ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin);
 
         $filters[] = (new filter(
             select::class,
@@ -329,6 +341,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $this->get_entity_name(),
             "{$studentattralias}.firstyearkaitoko"
         ))->add_joins($this->get_joins())
+            ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
                 $firstyearkaitoko = $DB->get_records_sql("
@@ -337,6 +350,46 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 return array_map(function($record) {
                     return $record->firstyearkaitoko;
                 }, $firstyearkaitoko);
+            });
+
+        $coursetablealias = $this->get_table_alias('course');
+        $acelogsummaryalias = $this->get_table_alias('local_ace_log_summary');
+        $logsummaryjoin =
+            "LEFT JOIN {local_ace_log_summary} {$acelogsummaryalias} ON {$acelogsummaryalias}.courseid = {$coursetablealias}.id
+            AND {$acelogsummaryalias}.userid = {$usertablealias}.id";
+
+        $filters[] = (new filter(
+            select_null::class,
+            'activityviewed',
+            new lang_string('activityviewed', 'local_ace'),
+            $this->get_entity_name(),
+            "{$acelogsummaryalias}.cmid"
+        ))->add_joins($this->get_joins())
+            ->add_join($logsummaryjoin)
+            ->set_options_callback(static function(): array {
+                global $DB;
+
+                $course = local_ace_get_course_helper();
+                if (!empty($course)) {
+                    $courseid = $course->id;
+                } else {
+                    return [1 => 'Fake Module']; // Add fake module so the filter is listed as an option in the global filter block.
+                }
+
+                $coursemodules = [];
+                $cmids = $DB->get_records_sql("
+                    SELECT cm.id, m.name, cm.instance
+                    FROM {course_modules} cm
+                    JOIN {modules} m ON m.id = cm.module
+                    WHERE cm.course = {$courseid}");
+                foreach ($cmids as $record) {
+                    $module = $DB->get_record_sql("SELECT dm.name
+                        FROM {{$record->name}} dm
+                        WHERE dm.id = {$record->instance}");
+                    $coursemodules[$record->id] = $module->name;
+                }
+
+                return $coursemodules;
             });
 
         return $filters;
