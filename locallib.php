@@ -485,30 +485,36 @@ function local_ace_filter_sql_text(array $filtervalues, string $filterkey, strin
 
         switch ($operator) {
             case 1:
-                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $like = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $wheresql[] = 'AND ' . $like;
                 $value = $DB->sql_like_escape($value);
                 $params[$studentattribute] = "%$value%";
                 break;
             case 2:
-                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $notlike = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $wheresql[] = 'AND ' . $notlike;
                 $value = $DB->sql_like_escape($value);
                 $params[$studentattribute] = "%$value%";
                 break;
             case 3:
-                $wheresql[] = 'AND ' . $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $equal = $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $wheresql[] = 'AND ' . $equal;
                 $params[$studentattribute] = $value;
                 break;
             case 4:
-                $wheresql[] = 'AND ' . $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $notequal = $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $wheresql[] = 'AND ' . $notequal;
                 $params[$studentattribute] = $value;
                 break;
             case 5:
-                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $like = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $wheresql[] = 'AND ' . $like;
                 $value = $DB->sql_like_escape($value);
                 $params[$studentattribute] = "$value%";
                 break;
             case 6:
-                $wheresql[] = 'AND ' . $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $like = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $wheresql[] = 'AND ' . $like;
                 $value = $DB->sql_like_escape($value);
                 $params[$studentattribute] = "%$value";
                 break;
@@ -544,7 +550,8 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
     $wheresql = [];
     $params = [];
 
-    $joinsql[] = "JOIN {ucdw_studentattributes} studentattributes ON cast(studentattributes.studentidentifier as varchar) = u.idnumber";
+    $joinsql[] = "JOIN {ucdw_studentattributes} studentattributes
+                       ON cast(studentattributes.studentidentifier as varchar) = u.idnumber";
 
     $selectfilters = [
         ['aceuser:gender', 'gender'],
@@ -596,7 +603,13 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
  * @return array
  * @throws dml_exception
  */
-function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null, bool $allowfilters = true): array {
+function local_ace_course_data_values(
+    int $courseid,
+    ?int $period = null,
+    ?int $start = null,
+    ?int $end = null,
+    bool $allowfilters = true
+): array {
     global $DB, $SESSION;
 
     $config = get_config('local_ace');
@@ -656,7 +669,13 @@ function local_ace_course_data_values(int $courseid, ?int $period = null, ?int $
  * @throws coding_exception
  * @throws dml_exception
  */
-function local_ace_course_data(int $courseid, ?int $period = null, ?int $start = null, ?int $end = null, bool $allowfilters = true) {
+function local_ace_course_data(
+    int $courseid,
+    ?int $period = null,
+    ?int $start = null,
+    ?int $end = null,
+    bool $allowfilters = true
+) {
     $values = local_ace_course_data_values($courseid, $period, $start, $end, $allowfilters);
 
     $labels = array();
