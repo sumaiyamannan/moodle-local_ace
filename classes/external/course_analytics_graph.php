@@ -151,7 +151,7 @@ class course_analytics_graph extends external_api {
 
             if ($course = $DB->get_record('course', ['shortname' => $lastyearshortname], 'id')) {
                 $lastyeardata =
-                    local_ace_course_data($course->id, $period, $start - 3.154e+7, $end, false); // start is set to a year ago.
+                    local_ace_course_data($course->id, $period, $start - 3.154e+7, $end, false); // Start is set to a year ago.
 
                 if (is_array($lastyeardata)) {
                     // We may need to lengthen or shorten series as they don't often align between last years and current data.

@@ -120,7 +120,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
 
         $studentattralias = $this->get_table_alias('ucdw_studentattributes');
         $attributesjoin =
-            "LEFT JOIN {ucdw_studentattributes} {$studentattralias} ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
+            "LEFT JOIN {ucdw_studentattributes} {$studentattralias}
+                       ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
 
         $columns[] = (new column(
             'gender',
@@ -224,7 +225,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         $studentattralias = $this->get_table_alias('ucdw_studentattributes');
         $usertablealias = $this->get_table_alias('user');
         $attributesjoin =
-            "LEFT JOIN {ucdw_studentattributes} {$studentattralias} ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
+            "LEFT JOIN {ucdw_studentattributes} {$studentattralias}
+                       ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
 
         $filters[] = (new filter(
             select::class,
