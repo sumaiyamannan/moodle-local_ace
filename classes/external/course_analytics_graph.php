@@ -127,8 +127,7 @@ class course_analytics_graph extends external_api {
             }
 
             $series[] = [
-                'legend' => get_string('filteredcourseengagement', 'local_ace'),
-                'label' => 'Filtered Engagement',
+                'label' => get_string('filteredcourseengagement', 'local_ace'),
                 'colour' => $config->colourfilteredengagement,
                 'values' => $filtereddata['series'],
             ];
@@ -136,8 +135,7 @@ class course_analytics_graph extends external_api {
 
         // Add the current series second so if the view is filtered the filtered line appears on top.
         $series[] = [
-            'legend' => get_string('courseengagement', 'local_ace'),
-            'label' => 'Engagement',
+            'label' => get_string('courseengagement', 'local_ace'),
             'colour' => $config->colourteachercoursehistory,
             'values' => $data['series'],
         ];
@@ -162,8 +160,7 @@ class course_analytics_graph extends external_api {
                     }
 
                     $series[] = [
-                        'legend' => get_string('lastyearsengagement', 'local_ace'),
-                        'label' => 'Last Year',
+                        'label' => get_string('lastyearsengagement', 'local_ace'),
                         'colour' => $config->colourlastyeardata,
                         'values' => $lastyeardata['series'],
                         'warning' => get_string('lastyearsengagementdatealignment', 'local_ace'),
@@ -192,7 +189,6 @@ class course_analytics_graph extends external_api {
             'error' => new external_value(PARAM_TEXT, 'Lang string of error, empty if working', false),
             'series' => new external_multiple_structure(
                 new external_single_structure([
-                    'legend' => new external_value(PARAM_TEXT, 'Series legend'),
                     'label' => new external_value(PARAM_TEXT, 'Series label'),
                     'colour' => new external_value(PARAM_TEXT, 'Series line colour'),
                     'values' => new external_multiple_structure(

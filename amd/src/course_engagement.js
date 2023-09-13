@@ -86,8 +86,6 @@ const updateGraph = (startDatetime, endDateTime) => {
         }
         let data = getGraphDataPlaceholder();
 
-        let legendContainer = document.getElementById('local_ace-graph-series-legend');
-        legendContainer.innerHTML = '';
         let warningsContainer = document.getElementById('local_ace-graph-warnings');
         warningsContainer.innerHTML = '';
 
@@ -98,15 +96,6 @@ const updateGraph = (startDatetime, endDateTime) => {
                 "colors": [series.colour],
                 "axes": {},
             });
-            // Add legend boxes.
-            let legendBox = document.createElement("span");
-            legendBox.className = 'legendbox';
-            legendBox.style.cssText = 'background-color: ' + series.colour;
-            legendContainer.appendChild(legendBox);
-            let legendText = document.createElement("span");
-            legendText.className = 'legendtext';
-            legendText.innerText = series.legend;
-            legendContainer.appendChild(legendText);
             // Add warnings.
             if (series.warning !== null) {
                 warningsContainer.append(series.warning);
@@ -168,9 +157,6 @@ const getGraphDataPlaceholder = () => {
                     "stepSize": null
                 }
             ]
-        },
-        "legend_options": {
-            "display": false
         },
         "config_colorset": null,
         "smooth": true
