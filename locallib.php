@@ -470,10 +470,10 @@ function local_ace_filter_sql_number(array $filtervalues, string $filterkey, str
  *
  * @param array $filtervalues Filter values
  * @param string $filterkey Filter name
- * @param string $studentattribute Student attribute column name
+ * @param string $field SQL table and field snippet, e.g. mdl_user.idnumber
  * @return array
  */
-function local_ace_filter_sql_text(array $filtervalues, string $filterkey, string $studentattribute) {
+function local_ace_filter_sql_text(array $filtervalues, string $filterkey, string $field) {
     global $DB;
 
     $wheresql = [];
@@ -482,51 +482,52 @@ function local_ace_filter_sql_text(array $filtervalues, string $filterkey, strin
     if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
         $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
         $value = $filtervalues[$filterkey . '_value'];
+        $param = core_reportbuilder\local\helpers\database::generate_param_name();
 
         switch ($operator) {
             case 1:
-                $like = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $like = $DB->sql_like("$field", ":$param", false, false);
                 $wheresql[] = 'AND ' . $like;
                 $value = $DB->sql_like_escape($value);
-                $params[$studentattribute] = "%$value%";
+                $params[$param] = "%$value%";
                 break;
             case 2:
-                $notlike = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $notlike = $DB->sql_like("$field", ":$param", false, false, true);
                 $wheresql[] = 'AND ' . $notlike;
                 $value = $DB->sql_like_escape($value);
-                $params[$studentattribute] = "%$value%";
+                $params[$param] = "%$value%";
                 break;
             case 3:
-                $equal = $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $equal = $DB->sql_equal("$field", ":$param", false, false);
                 $wheresql[] = 'AND ' . $equal;
-                $params[$studentattribute] = $value;
+                $params[$param] = $value;
                 break;
             case 4:
-                $notequal = $DB->sql_equal("studentattributes.$studentattribute", ":$studentattribute", false, false, true);
+                $notequal = $DB->sql_equal("$field", ":$param", false, false, true);
                 $wheresql[] = 'AND ' . $notequal;
-                $params[$studentattribute] = $value;
+                $params[$param] = $value;
                 break;
             case 5:
-                $like = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $like = $DB->sql_like("$field", ":$param", false, false);
                 $wheresql[] = 'AND ' . $like;
                 $value = $DB->sql_like_escape($value);
-                $params[$studentattribute] = "$value%";
+                $params[$param] = "$value%";
                 break;
             case 6:
-                $like = $DB->sql_like("studentattributes.$studentattribute", ":$studentattribute", false, false);
+                $like = $DB->sql_like("$field", ":$param", false, false);
                 $wheresql[] = 'AND ' . $like;
                 $value = $DB->sql_like_escape($value);
-                $params[$studentattribute] = "%$value";
+                $params[$param] = "%$value";
                 break;
             case 7:
-                $paramempty = $studentattribute . 'empty';
-                $wheresql = "AND COALESCE(studentattributes.{$studentattribute}, :{$paramempty}) = :{$studentattribute}";
-                $params[$paramempty] = $params[$studentattribute] = '';
+                $paramempty = $param . 'empty';
+                $wheresql = "AND COALESCE($field, :{$paramempty}) = :{$param}";
+                $params[$paramempty] = $params[$param] = '';
                 break;
             case 8:
-                $paramempty = $studentattribute . 'empty';
-                $wheresql = "AND COALESCE(studentattributes.{$studentattribute}, :{$paramempty}) != :{$studentattribute}";
-                $params[$paramempty] = $params[$studentattribute] = '';
+                $paramempty = $param . 'empty';
+                $wheresql = "AND COALESCE($field, :{$paramempty}) != :{$param}";
+                $params[$paramempty] = $params[$param] = '';
                 break;
             default:
                 break;
@@ -550,7 +551,7 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
     $wheresql = [];
     $params = [];
 
-    $joinsql[] = "JOIN {ucdw_studentattributes} studentattributes
+    $joinsql[] = "LEFT JOIN {ucdw_studentattributes} studentattributes
                        ON cast(studentattributes.studentidentifier as varchar) = u.idnumber";
 
     $selectfilters = [
@@ -576,13 +577,62 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
         $params = array_merge($params, $filterparams);
     }
 
+    [$fullnamesql, $fullnameparams] = core_user\fields::get_sql_fullname('u');
+
     $textfilters = [
-        ['aceuser:programme', 'programmecode1'],
+        ['aceuser:programme', 'studentattributes.programmecode1'],
+        ['aceuser:idnumber', 'u.idnumber'],
+        ['aceuser:fullname', "($fullnamesql)"]
     ];
     foreach ($textfilters as $filter) {
         list($filterwhere, $filterparams) = local_ace_filter_sql_text($filtervalues, $filter[0], $filter[1]);
         $wheresql = array_merge($wheresql, $filterwhere);
         $params = array_merge($params, $filterparams);
+    }
+
+    if (isset($filtervalues['aceuser:fullname_operator']) && isset($filtervalues['aceuser:fullname_value'])) {
+        $params = array_merge($params, $fullnameparams);
+    }
+
+    if (isset($filtervalues['aceuser:activityviewed_operator']) && isset($filtervalues['aceuser:activityviewed_value'])) {
+        $course = local_ace_get_course_helper();
+        if (!empty($course)) {
+            $courseid = $course->id;
+        } else {
+            $courseid = SITEID;
+        }
+        $joinsql[] =
+            'LEFT JOIN {local_ace_log_summary} acelogsummary ON acelogsummary.courseid = :activityviewedcourseid AND acelogsummary.userid = u.id';
+        $params['activityviewedcourseid'] = $courseid;
+        $params['activityviewedcmid'] = intval($filtervalues['aceuser:activityviewed_value']);
+
+        if ($filtervalues['aceuser:activityviewed_operator'] == 1) {
+            $wheresql[] = 'AND acelogsummary.cmid = :activityviewedcmid';
+        }
+        if ($filtervalues['aceuser:activityviewed_operator'] == 2) {
+            $wheresql[] = 'AND (acelogsummary.cmid <> :activityviewedcmid OR acelogsummary.cmid IS NULL)';
+        }
+    }
+    if (isset($filtervalues['aceuser:activitycompleted_operator']) && isset($filtervalues['aceuser:activitycompleted_value'])) {
+        $course = local_ace_get_course_helper();
+        if (!empty($course)) {
+            $courseid = $course->id;
+        } else {
+            $courseid = SITEID;
+        }
+
+        $joinsql[] = 'LEFT JOIN {course_modules} cm ON cm.course = :activitycompletedcourseid';
+        $joinsql[] = 'LEFT JOIN {course_modules_completion} cmc ON cmc.coursemoduleid = cm.id
+        AND cmc.userid = u.id AND cmc.completionstate in (1,2,3)';
+        $params['activitycompletedcourseid'] = $courseid;
+        $params['activitycompletedcmid'] = intval($filtervalues['aceuser:activitycompleted_value']);
+
+        if ($filtervalues['aceuser:activitycompleted_operator'] == 1) {
+            $wheresql[] = "AND cmc.coursemoduleid = :activitycompletedcmid";
+        }
+        if ($filtervalues['aceuser:activitycompleted_operator'] == 2) {
+            $wheresql[] = "AND (cmc.coursemoduleid <> :activitycompletedcmid OR cmc.coursemoduleid IS NULL)";
+        }
     }
 
     return [
