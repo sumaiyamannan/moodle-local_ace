@@ -50,6 +50,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         $aliases['course'] = 'c';
         $aliases['ucdw_studentattributes'] = 'studentattributes';
         $aliases['local_ace_log_summary'] = 'acelogsummary';
+        $aliases['course_modules'] = 'cm';
+        $aliases['course_modules_completion'] = 'cmc';
         return $aliases;
     }
 
@@ -368,6 +370,47 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             "{$acelogsummaryalias}.cmid"
         ))->add_joins($this->get_joins())
             ->add_join($logsummaryjoin)
+            ->set_options_callback(static function(): array {
+                global $DB;
+
+                $course = local_ace_get_course_helper();
+                if (!empty($course)) {
+                    $courseid = $course->id;
+                } else {
+                    return [1 => 'Fake Module']; // Add fake module so the filter is listed as an option in the global filter block.
+                }
+
+                $coursemodules = [];
+                $cmids = $DB->get_records_sql("
+                    SELECT cm.id, m.name, cm.instance
+                    FROM {course_modules} cm
+                    JOIN {modules} m ON m.id = cm.module
+                    WHERE cm.course = {$courseid}");
+                foreach ($cmids as $record) {
+                    $module = $DB->get_record_sql("SELECT dm.name
+                        FROM {{$record->name}} dm
+                        WHERE dm.id = {$record->instance}");
+                    $coursemodules[$record->id] = $module->name;
+                }
+
+                return $coursemodules;
+            });
+
+        $coursemodulealias = $this->get_table_alias('course_modules');
+        $modulecompletionalias = $this->get_table_alias('course_modules_completion');
+        $modulecompletionjoin =
+            "LEFT JOIN {course_modules} {$coursemodulealias} ON {$coursemodulealias}.course = {$coursetablealias}.id
+             LEFT JOIN {course_modules_completion} {$modulecompletionalias} ON {$modulecompletionalias}.coursemoduleid = {$coursemodulealias}.id
+             AND {$modulecompletionalias}.userid = {$usertablealias}.id AND {$modulecompletionalias}.completionstate IN (1,2,3)";
+
+        $filters[] = (new filter(
+            select_null::class,
+            'activitycompleted',
+            new lang_string('activitycompleted', 'local_ace'),
+            $this->get_entity_name(),
+            "{$modulecompletionalias}.coursemoduleid"
+        ))->add_joins($this->get_joins())
+            ->add_join($modulecompletionjoin)
             ->set_options_callback(static function(): array {
                 global $DB;
 

@@ -220,6 +220,7 @@ $string['fullpart'] = 'Full time/Part time';
 $string['schooldecile'] = 'School Decile';
 $string['firstyearkaitoko'] = 'First year Kaitoko';
 $string['activityviewed'] = 'Activity Viewed';
+$string['activitycompleted'] = 'Activity Completed';
 
 $string['activitycompletion'] = 'Activity Completion';
 $string['completedon'] = 'Completed on';
