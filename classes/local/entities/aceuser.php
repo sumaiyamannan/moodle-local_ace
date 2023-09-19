@@ -26,6 +26,7 @@ use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_user\fields;
 use lang_string;
+use local_ace\local\filters\multi_select;
 use local_ace\local\filters\select_null;
 use moodle_url;
 
@@ -285,13 +286,21 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             });
 
         $filters[] = (new filter(
-            text::class,
+            multi_select::class,
             'programme',
             new lang_string('programme', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.programmecode1"
         ))->add_joins($this->get_joins())
-            ->add_join($attributesjoin);
+            ->add_join($attributesjoin)->set_options_callback(static function(): array {
+                global $DB;
+                $programmecode = $DB->get_records_sql("
+                    SELECT DISTINCT programmecode1
+                      FROM {ucdw_studentattributes}");
+                return array_map(function($record) {
+                    return $record->programmecode1;
+                }, $programmecode);
+            });
 
         $filters[] = (new filter(
             select::class,
