@@ -18,14 +18,13 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
-use core_reportbuilder\local\filters\boolean_select;
 use core_reportbuilder\local\filters\number;
 use core_reportbuilder\local\filters\select;
-use core_reportbuilder\local\filters\text;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_user\fields;
 use lang_string;
+use local_ace\local\filters\multi_select;
 use local_ace\local\filters\select_null;
 use moodle_url;
 
@@ -242,7 +241,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 global $DB;
                 $genders = $DB->get_records_sql("
                     SELECT DISTINCT gender
-                      FROM {ucdw_studentattributes}");
+                      FROM {ucdw_studentattributes}
+                    ORDER BY gender");
                 return array_map(function($record) {
                     return $record->gender;
                 }, $genders);
@@ -260,7 +260,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 global $DB;
                 $ethnicites = $DB->get_records_sql("
                     SELECT DISTINCT etnicitypriority
-                      FROM {ucdw_studentattributes}");
+                      FROM {ucdw_studentattributes}
+                    ORDER BY etnicitypriority");
                 return array_map(function($record) {
                     return $record->etnicitypriority;
                 }, $ethnicites);
@@ -278,20 +279,30 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 global $DB;
                 $firstinfamily = $DB->get_records_sql("
                     SELECT DISTINCT firstinfamily
-                      FROM {ucdw_studentattributes}");
+                      FROM {ucdw_studentattributes}
+                    ORDER BY firstinfamily");
                 return array_map(function($record) {
                     return $record->firstinfamily;
                 }, $firstinfamily);
             });
 
         $filters[] = (new filter(
-            text::class,
+            multi_select::class,
             'programme',
             new lang_string('programme', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.programmecode1"
         ))->add_joins($this->get_joins())
-            ->add_join($attributesjoin);
+            ->add_join($attributesjoin)->set_options_callback(static function(): array {
+                global $DB;
+                $programmecode = $DB->get_records_sql("
+                    SELECT DISTINCT programmecode1
+                      FROM {ucdw_studentattributes}
+                    ORDER BY programmecode1");
+                return array_map(function($record) {
+                    return $record->programmecode1;
+                }, $programmecode);
+            });
 
         $filters[] = (new filter(
             select::class,
@@ -305,7 +316,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 global $DB;
                 $fullfee = $DB->get_records_sql("
                     SELECT DISTINCT fullfee
-                      FROM {ucdw_studentattributes}");
+                      FROM {ucdw_studentattributes}
+                    ORDER BY fullfee");
                 return array_map(function($record) {
                     return $record->fullfee;
                 }, $fullfee);
@@ -323,7 +335,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 global $DB;
                 $fullpart = $DB->get_records_sql("
                     SELECT DISTINCT fullpart
-                      FROM {ucdw_studentattributes}");
+                      FROM {ucdw_studentattributes}
+                    ORDER BY fullpart");
                 return array_map(function($record) {
                     return $record->fullpart;
                 }, $fullpart);
@@ -350,7 +363,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                 global $DB;
                 $firstyearkaitoko = $DB->get_records_sql("
                     SELECT DISTINCT firstyearkaitoko
-                      FROM {ucdw_studentattributes}");
+                      FROM {ucdw_studentattributes}
+                    ORDER BY firstyearkaitoko");
                 return array_map(function($record) {
                     return $record->firstyearkaitoko;
                 }, $firstyearkaitoko);
