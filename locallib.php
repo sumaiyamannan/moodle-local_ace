@@ -547,6 +547,8 @@ function local_ace_filter_sql_text(array $filtervalues, string $filterkey, strin
  * @return array
  */
 function local_ace_generate_filter_sql(array $filtervalues = []): array {
+    global $DB;
+
     $joinsql = [];
     $wheresql = [];
     $params = [];
@@ -580,7 +582,6 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
     [$fullnamesql, $fullnameparams] = core_user\fields::get_sql_fullname('u');
 
     $textfilters = [
-        ['aceuser:programme', 'studentattributes.programmecode1'],
         ['aceuser:idnumber', 'u.idnumber'],
         ['aceuser:fullname', "($fullnamesql)"]
     ];
@@ -613,6 +614,7 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
             $wheresql[] = 'AND (acelogsummary.cmid <> :activityviewedcmid OR acelogsummary.cmid IS NULL)';
         }
     }
+
     if (isset($filtervalues['aceuser:activitycompleted_operator']) && isset($filtervalues['aceuser:activitycompleted_value'])) {
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
@@ -632,6 +634,21 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
         }
         if ($filtervalues['aceuser:activitycompleted_operator'] == 2) {
             $wheresql[] = "AND (cmc.coursemoduleid <> :activitycompletedcmid OR cmc.coursemoduleid IS NULL)";
+        }
+    }
+
+    if (isset($filtervalues['aceuser:programme_operator']) && isset($filtervalues['aceuser:programme_value'])) {
+        if ($filtervalues['aceuser:programme_operator'] == 1) {
+            list($sql, $inparams) =
+                $DB->get_in_or_equal($filtervalues['aceuser:programme_value'], SQL_PARAMS_NAMED, 'multiselectparam');
+            $wheresql[] = "AND studentattributes.programmecode1 " . $sql;
+            $params = array_merge($params, $inparams);
+        }
+        if ($filtervalues['aceuser:programme_operator'] == 2) {
+            list($sql, $inparams) =
+                $DB->get_in_or_equal($filtervalues['aceuser:programme_value'], SQL_PARAMS_NAMED, 'multiselectparam', false);
+            $wheresql[] = "AND studentattributes.programmecode1 " . $sql;
+            $params = array_merge($params, $inparams);
         }
     }
 
