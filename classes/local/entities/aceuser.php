@@ -406,6 +406,13 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         return $filters;
     }
 
+    /**
+     * Returns an array of student attribute options based on the given column name.
+     * Selects from users enrolled in the current course context if course is found.
+     *
+     * @param string $column
+     * @return array
+     */
     public static function get_studentattribute_options(string $column): array {
         global $DB;
 
