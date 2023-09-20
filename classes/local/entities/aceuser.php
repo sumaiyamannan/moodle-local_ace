@@ -343,13 +343,23 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             });
 
         $filters[] = (new filter(
-            number::class,
+            multi_select::class,
             'schooldecile',
             new lang_string('schooldecile', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.schooldecile"
         ))->add_joins($this->get_joins())
-            ->add_join($attributesjoin);
+            ->add_join($attributesjoin)
+            ->set_options_callback(static function(): array {
+                global $DB;
+                $schooldecile = $DB->get_records_sql("
+                    SELECT DISTINCT schooldecile
+                      FROM {ucdw_studentattributes}
+                    ORDER BY schooldecile");
+                return array_map(function($record) {
+                    return $record->schooldecile;
+                }, $schooldecile);
+            });
 
         $filters[] = (new filter(
             select::class,
@@ -377,7 +387,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             AND {$acelogsummaryalias}.userid = {$usertablealias}.id";
 
         $filters[] = (new filter(
-            select_null::class,
+            multi_select::class,
             'activityviewed',
             new lang_string('activityviewed', 'local_ace'),
             $this->get_entity_name(),
@@ -418,7 +428,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
              AND {$modulecompletionalias}.userid = {$usertablealias}.id AND {$modulecompletionalias}.completionstate IN (1,2,3)";
 
         $filters[] = (new filter(
-            select_null::class,
+            multi_select::class,
             'activitycompleted',
             new lang_string('activitycompleted', 'local_ace'),
             $this->get_entity_name(),
