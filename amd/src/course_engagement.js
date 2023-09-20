@@ -79,6 +79,11 @@ const updateGraph = (startDatetime, endDateTime) => {
     }
 
     let engagementData = getCourseEngagementData(null, startDatetime, endDateTime).then((response) => {
+        if (response.dedicationhtml !== null) {
+            let dedicationContainer = document.getElementById('local_ace-course-dedication');
+            dedicationContainer.innerHTML = response.dedicationhtml;
+        }
+
         if (response.error !== null || response.series.length === 0) {
             document.getElementById('local_ace-graph-loading').style.display = 'none';
             displayError(response.error);
@@ -110,11 +115,6 @@ const updateGraph = (startDatetime, endDateTime) => {
             yLabels[element.value] = element.label;
         });
         data.axes.y[0].labels = yLabels;
-
-        if (response.dedicationhtml !== null) {
-            let dedicationContainer = document.getElementById('local_ace-course-dedication');
-            dedicationContainer.innerHTML = response.dedicationhtml;
-        }
 
         return data;
     }).catch(() => {

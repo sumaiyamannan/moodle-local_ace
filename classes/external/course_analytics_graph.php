@@ -87,6 +87,8 @@ class course_analytics_graph extends external_api {
             );
         }
 
+        $dedicationhtml = local_ace_get_dedication($courseid);
+
         // Don't filter as we always need unfiltered current engagement data.
         $data = local_ace_course_data($courseid, $period, $start, $end, false);
         if (!is_array($data)) {
@@ -94,7 +96,8 @@ class course_analytics_graph extends external_api {
                 'error' => $data,
                 'series' => [],
                 'xlabels' => [],
-                'ylabels' => []
+                'ylabels' => [],
+                'dedicationhtml' => $dedicationhtml,
             );
         }
 
@@ -110,7 +113,8 @@ class course_analytics_graph extends external_api {
                     'error' => $filtereddata,
                     'series' => [],
                     'xlabels' => [],
-                    'ylabels' => []
+                    'ylabels' => [],
+                    'dedicationhtml' => $dedicationhtml,
                 );
             }
 
@@ -168,8 +172,6 @@ class course_analytics_graph extends external_api {
                 }
             }
         }
-
-        $dedicationhtml = local_ace_get_dedication($courseid);
 
         return [
             'series' => $series,

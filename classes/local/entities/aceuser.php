@@ -18,14 +18,12 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
-use core_reportbuilder\local\filters\number;
 use core_reportbuilder\local\filters\select;
 use core_reportbuilder\local\report\column;
 use core_reportbuilder\local\report\filter;
 use core_user\fields;
 use lang_string;
 use local_ace\local\filters\multi_select;
-use local_ace\local\filters\select_null;
 use moodle_url;
 
 /**
@@ -238,14 +236,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
-                global $DB;
-                $genders = $DB->get_records_sql("
-                    SELECT DISTINCT gender
-                      FROM {ucdw_studentattributes}
-                    ORDER BY gender");
-                return array_map(function($record) {
-                    return $record->gender;
-                }, $genders);
+                return aceuser::get_studentattribute_options('gender');
             });
 
         $filters[] = (new filter(
@@ -257,14 +248,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
-                global $DB;
-                $ethnicites = $DB->get_records_sql("
-                    SELECT DISTINCT etnicitypriority
-                      FROM {ucdw_studentattributes}
-                    ORDER BY etnicitypriority");
-                return array_map(function($record) {
-                    return $record->etnicitypriority;
-                }, $ethnicites);
+                return aceuser::get_studentattribute_options('etnicitypriority');
             });
 
         $filters[] = (new filter(
@@ -276,14 +260,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
-                global $DB;
-                $firstinfamily = $DB->get_records_sql("
-                    SELECT DISTINCT firstinfamily
-                      FROM {ucdw_studentattributes}
-                    ORDER BY firstinfamily");
-                return array_map(function($record) {
-                    return $record->firstinfamily;
-                }, $firstinfamily);
+                return aceuser::get_studentattribute_options('firstinfamily');
             });
 
         $filters[] = (new filter(
@@ -294,14 +271,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             "{$studentattralias}.programmecode1"
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)->set_options_callback(static function(): array {
-                global $DB;
-                $programmecode = $DB->get_records_sql("
-                    SELECT DISTINCT programmecode1
-                      FROM {ucdw_studentattributes}
-                    ORDER BY programmecode1");
-                return array_map(function($record) {
-                    return $record->programmecode1;
-                }, $programmecode);
+                return aceuser::get_studentattribute_options('programmecode1');
             });
 
         $filters[] = (new filter(
@@ -313,14 +283,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
-                global $DB;
-                $fullfee = $DB->get_records_sql("
-                    SELECT DISTINCT fullfee
-                      FROM {ucdw_studentattributes}
-                    ORDER BY fullfee");
-                return array_map(function($record) {
-                    return $record->fullfee;
-                }, $fullfee);
+                return aceuser::get_studentattribute_options('fullfee');
             });
 
         $filters[] = (new filter(
@@ -332,24 +295,20 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
-                global $DB;
-                $fullpart = $DB->get_records_sql("
-                    SELECT DISTINCT fullpart
-                      FROM {ucdw_studentattributes}
-                    ORDER BY fullpart");
-                return array_map(function($record) {
-                    return $record->fullpart;
-                }, $fullpart);
+                return aceuser::get_studentattribute_options('fullpart');
             });
 
         $filters[] = (new filter(
-            number::class,
+            multi_select::class,
             'schooldecile',
             new lang_string('schooldecile', 'local_ace'),
             $this->get_entity_name(),
             "{$studentattralias}.schooldecile"
         ))->add_joins($this->get_joins())
-            ->add_join($attributesjoin);
+            ->add_join($attributesjoin)
+            ->set_options_callback(static function(): array {
+                return aceuser::get_studentattribute_options('schooldecile');
+            });
 
         $filters[] = (new filter(
             select::class,
@@ -360,14 +319,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         ))->add_joins($this->get_joins())
             ->add_join($attributesjoin)
             ->set_options_callback(static function(): array {
-                global $DB;
-                $firstyearkaitoko = $DB->get_records_sql("
-                    SELECT DISTINCT firstyearkaitoko
-                      FROM {ucdw_studentattributes}
-                    ORDER BY firstyearkaitoko");
-                return array_map(function($record) {
-                    return $record->firstyearkaitoko;
-                }, $firstyearkaitoko);
+                return aceuser::get_studentattribute_options('firstyearkaitoko');
             });
 
         $coursetablealias = $this->get_table_alias('course');
@@ -377,7 +329,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             AND {$acelogsummaryalias}.userid = {$usertablealias}.id";
 
         $filters[] = (new filter(
-            select_null::class,
+            multi_select::class,
             'activityviewed',
             new lang_string('activityviewed', 'local_ace'),
             $this->get_entity_name(),
@@ -418,7 +370,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
              AND {$modulecompletionalias}.userid = {$usertablealias}.id AND {$modulecompletionalias}.completionstate IN (1,2,3)";
 
         $filters[] = (new filter(
-            select_null::class,
+            multi_select::class,
             'activitycompleted',
             new lang_string('activitycompleted', 'local_ace'),
             $this->get_entity_name(),
@@ -452,5 +404,36 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             });
 
         return $filters;
+    }
+
+    /**
+     * Returns an array of student attribute options based on the given column name.
+     * Selects from users enrolled in the current course context if course is found.
+     *
+     * @param string $column
+     * @return array
+     */
+    public static function get_studentattribute_options(string $column): array {
+        global $DB;
+
+        $course = local_ace_get_course_helper();
+        if (!empty($course)) {
+            $courseid = $course->id;
+            $options = $DB->get_records_sql("
+                    SELECT DISTINCT sa.$column
+                      FROM {ucdw_studentattributes} sa
+                      JOIN {user} u ON u.idnumber = CAST(sa.studentidentifier AS VARCHAR)
+                      JOIN {user_enrolments} ue ON ue.userid = u.id
+                      JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid
+                    ORDER BY {$column}", ['courseid' => $courseid]);
+        } else {
+            $options = $DB->get_records_sql("
+                    SELECT DISTINCT $column
+                      FROM {ucdw_studentattributes}
+                    ORDER BY {$column}");
+        }
+        return array_map(function($record) use($column) {
+            return $record->$column;
+        }, $options);
     }
 }
