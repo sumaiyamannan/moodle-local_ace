@@ -495,7 +495,7 @@ function local_ace_filter_sql_multiselect(array $filtervalues, string $filterkey
     $wheresql = [];
     $params = [];
 
-    if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
+    if (isset($filtervalues[$filterkey . '_operator']) && !empty($filtervalues[$filterkey . '_value'])) {
         $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
         $value = $filtervalues[$filterkey . '_value'];
         switch ($operator) {
@@ -576,7 +576,7 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
         $params = array_merge($params, $fullnameparams);
     }
 
-    if (isset($filtervalues['aceuser:activityviewed_operator']) && isset($filtervalues['aceuser:activityviewed_value'])) {
+    if ($filtervalues['aceuser:activityviewed_operator'] != 0 && !empty($filtervalues['aceuser:activityviewed_value'])) {
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
             $courseid = $course->id;
@@ -601,7 +601,7 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
         }
     }
 
-    if (isset($filtervalues['aceuser:activitycompleted_operator']) && isset($filtervalues['aceuser:activitycompleted_value'])) {
+    if ($filtervalues['aceuser:activitycompleted_operator'] != 0 && !empty($filtervalues['aceuser:activitycompleted_value'])) {
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
             $courseid = $course->id;
@@ -622,7 +622,8 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
         }
         if ($filtervalues['aceuser:activitycompleted_operator'] == 2) {
             list($sql, $inparams) =
-                $DB->get_in_or_equal($filtervalues['aceuser:activitycompleted_value'], SQL_PARAMS_NAMED, 'activitycompletedparam', false);
+                $DB->get_in_or_equal($filtervalues['aceuser:activitycompleted_value'], SQL_PARAMS_NAMED, 'activitycompletedparam',
+                    false);
             $wheresql[] = "AND cmc.coursemoduleid " . $sql;
             $params = array_merge($params, $inparams);
         }
@@ -820,6 +821,32 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
     $output .= local_ace_get_dedication($courseid);
 
     return $output;
+}
+
+/**
+ * Returns the number of users enrolled in the given course after applying filters.
+ *
+ * @param int $courseid
+ * @return int
+ */
+function local_ace_get_num_users_with_filters_applied(int $courseid): int {
+    global $DB, $SESSION;
+
+    $context = context_course::instance($courseid);
+
+    list($filterjoinsql, $filterwheresql, $filterparams) = local_ace_generate_filter_sql($SESSION->local_ace_filtervalues);
+
+    $sql = "SELECT COUNT(u.id)
+            FROM {user} u
+            JOIN {user_enrolments} ue ON ue.userid = u.id
+            JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid
+            JOIN {role_assignments} ra ON ra.contextid = :contextid AND ra.userid = u.id
+            JOIN {role} r ON r.id = ra.roleid AND r.shortname = 'student'
+            " . implode(" ", $filterjoinsql) . "
+            WHERE 1=1 " . implode(" ", $filterwheresql);
+    $params = array_merge(['courseid' => $courseid, 'contextid' => $context->id], $filterparams);
+
+    return $DB->count_records_sql($sql, $params);
 }
 
 /**
