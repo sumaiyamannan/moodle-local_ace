@@ -114,6 +114,7 @@ $string['showcumulative'] = 'Show cumulative';
 $string['showdailyaccess'] = 'Show daily access';
 $string['submissionratefilter'] = 'Number of submissions';
 $string['acedashboard'] = 'ACE Dashboard';
+$string['filteredusercount'] = 'Showing data for {$a} users after applying filters';
 
 $string['privacy:metadata:local_ace'] = 'Summary of user analytics data';
 $string['privacy:metadata:local_ace_log_summary'] = 'User activity log summary';

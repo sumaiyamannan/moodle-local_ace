@@ -84,6 +84,13 @@ const updateGraph = (startDatetime, endDateTime) => {
             dedicationContainer.innerHTML = response.dedicationhtml;
         }
 
+        let userCountContainer = document.getElementById('local_ace-graph-filteredusercount');
+        if (response.filteredusercounttext !== null) {
+            userCountContainer.innerText = response.filteredusercounttext;
+        } else {
+            userCountContainer.innerText = '';
+        }
+
         if (response.error !== null || response.series.length === 0) {
             document.getElementById('local_ace-graph-loading').style.display = 'none';
             displayError(response.error);

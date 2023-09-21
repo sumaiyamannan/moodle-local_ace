@@ -107,6 +107,9 @@ class course_analytics_graph extends external_api {
 
         // Add filtered engagement series.
         if (!empty($SESSION->local_ace_filtervalues)) {
+            $filteredusercounttext =
+                get_string('filteredusercount', 'local_ace', local_ace_get_num_users_with_filters_applied($courseid));
+
             $filtereddata = local_ace_course_data($courseid, $period, $start, $end);
             if (!is_array($filtereddata)) {
                 return array(
@@ -178,6 +181,7 @@ class course_analytics_graph extends external_api {
             'xlabels' => $data['xlabels'],
             'ylabels' => $data['ylabels'],
             'dedicationhtml' => $dedicationhtml,
+            'filteredusercounttext' => $filteredusercounttext ?? null,
         ];
     }
 
@@ -210,6 +214,8 @@ class course_analytics_graph extends external_api {
                 ])
             ),
             'dedicationhtml' => new external_value(PARAM_RAW, 'Dedication block HTML content', false),
+            'filteredusercounttext' => new external_value(PARAM_TEXT,
+                'Text describing the number of users shown in the filtered graph', false),
         ]);
     }
 

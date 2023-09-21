@@ -207,7 +207,8 @@
     padding-bottom: 20px;
 }
 
-#local_ace-graph-warnings {
+#local_ace-graph-warnings,
+#local_ace-graph-filteredusercount {
     text-align: center;
 }
 
