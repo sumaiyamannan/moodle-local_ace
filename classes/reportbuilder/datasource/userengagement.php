@@ -87,6 +87,14 @@ class userengagement extends datasource {
             $this->add_conditions_from_entity($dedication->get_entity_name());
         }
 
+        if (class_exists('\local_acep\local\entities\usergrades')) {
+            $usergrades = new \local_acep\local\entities\usergrades;
+            $this->add_entity($usergrades->add_join($coursejoin));
+            $this->add_columns_from_entity($usergrades->get_entity_name());
+            $this->add_filters_from_entity($usergrades->get_entity_name());
+            $this->add_conditions_from_entity($usergrades->get_entity_name());
+        }
+
         $this->add_columns_from_entity($usercore->get_entity_name());
         $this->add_columns_from_entity($enrolmententity->get_entity_name());
         $this->add_columns_from_entity($courseentity->get_entity_name());
