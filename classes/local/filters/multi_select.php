@@ -132,7 +132,7 @@ class multi_select extends base {
      * @return bool
      */
     private function validate_filter_values(?int $operator, $value): bool {
-        return !($operator === null || $value === '');
+        return !($operator === null || empty($value));
     }
 
     /**
