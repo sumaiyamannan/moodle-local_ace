@@ -393,15 +393,12 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                     FROM {course_modules} cm
                     JOIN {modules} m ON m.id = cm.module
                     WHERE cm.course = {$courseid}");
-                foreach ($cmids as $record) {
-                    $cm = get_fast_modinfo($courseid)->get_cm($record->id);
+                $course = get_fast_modinfo($courseid);
+                foreach ($course->get_cms() as $cm) {
                     if ($cm->completion == COMPLETION_DISABLED) {
                         continue;
                     }
-                    $module = $DB->get_record_sql("SELECT dm.name
-                        FROM {{$record->name}} dm
-                        WHERE dm.id = {$record->instance}");
-                    $coursemodules[$record->id] = $module->name;
+                    $coursemodules[$cm->id] = $cm->name;
                 }
 
                 return $coursemodules;
