@@ -76,10 +76,8 @@ class multi_select extends base {
 
         // If a multi-dimensional array is passed, we need to use a different element type.
         $options = $this->get_select_options();
-        $element = (count($options) == count($options, COUNT_RECURSIVE) ? 'select' : 'selectgroups');
-        $elements['value'] = $mform->createElement($element, $this->name . '_value',
-            get_string('filterfieldvalue', 'core_reportbuilder', $this->get_header()), $options);
-        $elements['value']->setMultiple(true);
+        $elements['value'] = $mform->createElement('autocomplete', $this->name . '_value',
+            get_string('filterfieldvalue', 'core_reportbuilder', $this->get_header()), $options, ['multiple' => true]);
 
         $mform->addElement('group', $this->name . '_group', '', $elements, '', false);
 
@@ -134,7 +132,7 @@ class multi_select extends base {
      * @return bool
      */
     private function validate_filter_values(?int $operator, $value): bool {
-        return !($operator === null || $value === '');
+        return !($operator === null || empty($value));
     }
 
     /**

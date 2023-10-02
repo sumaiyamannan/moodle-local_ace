@@ -393,11 +393,12 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                     FROM {course_modules} cm
                     JOIN {modules} m ON m.id = cm.module
                     WHERE cm.course = {$courseid}");
-                foreach ($cmids as $record) {
-                    $module = $DB->get_record_sql("SELECT dm.name
-                        FROM {{$record->name}} dm
-                        WHERE dm.id = {$record->instance}");
-                    $coursemodules[$record->id] = $module->name;
+                $course = get_fast_modinfo($courseid);
+                foreach ($course->get_cms() as $cm) {
+                    if ($cm->completion == COMPLETION_DISABLED) {
+                        continue;
+                    }
+                    $coursemodules[$cm->id] = $cm->name;
                 }
 
                 return $coursemodules;
@@ -432,7 +433,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
                       FROM {ucdw_studentattributes}
                     ORDER BY {$column}");
         }
-        return array_map(function($record) use($column) {
+        return array_map(function($record) use ($column) {
             return $record->$column;
         }, $options);
     }
