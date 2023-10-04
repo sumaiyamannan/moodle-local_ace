@@ -169,7 +169,7 @@ if ($hassiteconfig) {
             'local_ace/courseshortnameyearregex',
             new lang_string('courseshortnameyearregex', 'local_ace'),
             new lang_string('courseshortnameyearregex_desc', 'local_ace'),
-            '/^([A-Z0-9]+-)([0-9]+)([A-Z][0-9])$/',
+            '/^([A-Z0-9]+-)([0-9]{2})([A-Z0-9]+)$/',
         ));
 
         $settings->add(new admin_setting_configcolourpicker(
