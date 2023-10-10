@@ -18,6 +18,7 @@ declare(strict_types=1);
 
 namespace local_ace\local\entities;
 
+use context_system;
 use core_reportbuilder\local\entities\base;
 use core_reportbuilder\local\report\column;
 use lang_string;
@@ -132,6 +133,12 @@ class userentity extends base {
                                  AND {$this->logstorealias3}.userid = {$usertablealias}.id";
 
         if (method_exists($this, 'add_selectable_column')) {
+            // Set page context as the reports are loaded via a webservice with no context set,
+            // and the select column uses the core renderer which needs context.
+            // Loading reports normally already has page context set.
+            if (!isset($PAGE->context)) {
+                $PAGE->set_context(context_system::instance());
+            }
             $this->add_selectable_column('u');
         }
 
