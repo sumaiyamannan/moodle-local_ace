@@ -58,6 +58,8 @@ class aceuser extends \core_reportbuilder\local\entities\user {
      * @return array
      */
     protected function get_all_columns(): array {
+        global $DB;
+
         $columns = parent::get_all_columns();
 
         $usertablealias = $this->get_table_alias('user');
@@ -120,7 +122,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
         $studentattralias = $this->get_table_alias('ucdw_studentattributes');
         $attributesjoin =
             "LEFT JOIN {ucdw_studentattributes} {$studentattralias}
-                       ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
+                       ON " . $DB->sql_cast_char2int("NULLIF({$usertablealias}.idnumber, '')") . " = {$studentattralias}.studentidentifier";
 
         $columns[] = (new column(
             'gender',
@@ -219,13 +221,15 @@ class aceuser extends \core_reportbuilder\local\entities\user {
      * @return filter[]
      */
     protected function get_all_filters(): array {
+        global $DB;
+
         $filters = parent::get_all_filters();
 
         $studentattralias = $this->get_table_alias('ucdw_studentattributes');
         $usertablealias = $this->get_table_alias('user');
         $attributesjoin =
             "LEFT JOIN {ucdw_studentattributes} {$studentattralias}
-                       ON cast({$studentattralias}.studentidentifier as varchar) = {$usertablealias}.idnumber";
+                       ON " . $DB->sql_cast_char2int("NULLIF({$usertablealias}.idnumber, '')") . " = {$studentattralias}.studentidentifier";
 
         $filters[] = (new filter(
             select::class,
@@ -423,7 +427,7 @@ class aceuser extends \core_reportbuilder\local\entities\user {
             $options = $DB->get_records_sql("
                     SELECT DISTINCT sa.$column
                       FROM {ucdw_studentattributes} sa
-                      JOIN {user} u ON u.idnumber = CAST(sa.studentidentifier AS VARCHAR)
+                      JOIN {user} u ON (CASE WHEN u.idnumber ~ '^\d+$' THEN " . $DB->sql_cast_char2int('u.idnumber') . " ELSE NULL END) = sa.studentidentifier
                       JOIN {user_enrolments} ue ON ue.userid = u.id
                       JOIN {enrol} e ON e.id = ue.enrolid AND e.courseid = :courseid
                     ORDER BY {$column}", ['courseid' => $courseid]);

@@ -534,7 +534,7 @@ function local_ace_generate_filter_sql(array $filtervalues = []): array {
     $params = [];
 
     $joinsql[] = "LEFT JOIN {ucdw_studentattributes} studentattributes
-                       ON cast(studentattributes.studentidentifier as varchar) = u.idnumber";
+                       ON (CASE WHEN u.idnumber ~ '^\d+$' THEN " . $DB->sql_cast_char2int('u.idnumber') . " ELSE NULL END) = studentattributes.studentidentifier";
 
     $selectfilters = [
         ['aceuser:gender', 'gender'],
