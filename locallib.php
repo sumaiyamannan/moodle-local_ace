@@ -362,10 +362,11 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
  * @throws moodle_exception
  */
 function local_ace_course_graph(int $courseid): string {
-    global $PAGE;
+    global $PAGE, $USER;
 
     $context = array(
-        'courseid' => $courseid
+        'courseid' => $courseid,
+        'defaultchartfilter' => get_user_preferences('local_ace_default_chart_filter', null, $USER->id),
     );
 
     $renderer = $PAGE->get_renderer('core');
