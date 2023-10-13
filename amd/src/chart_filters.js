@@ -40,35 +40,52 @@ let updateFunc = null;
  * Retrieves data from the local_ace webservice to populate an engagement graph
  *
  * @param {Function} providedFunc graph function
+ * @param {Object} providedDefaultFilter default filter to load
  */
-export const init = (providedFunc) => {
+export const init = (providedFunc, providedDefaultFilter = null) => {
     updateFunc = providedFunc;
     // Set default filter, update display, set handlers
     let filter = getActiveFilter();
     if (filter === null) {
-        // Get the user preference, attempt to set the filter. Fall back to the course to date filter.
-        getChartFilterPreference().then(response => {
-            if (response.error) {
-                return;
-            }
-            if (response.preferences[0].value !== null) {
-                // Set the filter based on the filter node that matches the given filter ID.
-                getFilterNodes().forEach((element) => {
-                    if (element.id === response.preferences[0].value) {
-                        if (element.id === 'last-12-days') {
-                            set12DaysFilter();
-                        } else if (element.id === 'course-to-date') {
-                            setCourseToDateFilter();
-                        }
+        if (providedDefaultFilter !== null) {
+            getFilterNodes().forEach((element) => {
+                if (element.id === providedDefaultFilter) {
+                    if (element.id === 'last-12-days') {
+                        set12DaysFilter();
+                    } else if (element.id === 'course-to-date') {
+                        setCourseToDateFilter();
                     }
-                });
-            }
-        }).then(() => {
+                }
+            });
             // If setting via user preference fails we set the default.
             if (getActiveFilter() === null) {
                 setCourseToDateFilter();
             }
-        });
+        } else {
+            // Get the user preference, attempt to set the filter. Fall back to the course to date filter.
+            getChartFilterPreference().then(response => {
+                if (response.error) {
+                    return;
+                }
+                if (response.preferences[0].value !== null) {
+                    // Set the filter based on the filter node that matches the given filter ID.
+                    getFilterNodes().forEach((element) => {
+                        if (element.id === response.preferences[0].value) {
+                            if (element.id === 'last-12-days') {
+                                set12DaysFilter();
+                            } else if (element.id === 'course-to-date') {
+                                setCourseToDateFilter();
+                            }
+                        }
+                    });
+                }
+            }).then(() => {
+                // If setting via user preference fails we set the default.
+                if (getActiveFilter() === null) {
+                    setCourseToDateFilter();
+                }
+            });
+        }
     }
 
     setupFilters();

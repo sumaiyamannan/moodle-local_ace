@@ -41,7 +41,7 @@ export const init = (parameters) => {
         return;
     }
     COURSE_ID = parameters.courseid;
-    filtersInit(updateGraph);
+    filtersInit(updateGraph, parameters.defaultchartfilter ?? null);
 
     document.addEventListener(
         "local_ace-graph-reload",

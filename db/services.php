@@ -43,7 +43,8 @@ $functions = array(
         'type' => 'read',
         'capabilities' => '',
         'ajax' => true,
-        'services' => array('local_ace_webservice')
+        'services' => array('local_ace_webservice'),
+        'readonlysession' => true,
     ),
     'local_ace_get_teacher_course_analytics_graph' => array(
         'classname' => 'teacher_course_analytics_graph',
