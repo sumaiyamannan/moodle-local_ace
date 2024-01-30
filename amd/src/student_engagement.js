@@ -50,12 +50,9 @@ let COLOURS = [];
 export const init = (parameters) => {
     USER_ID = parameters.userid;
     COLOURS = parameters.colours;
-    // Init filters in a promise which we'll wait to complete,
-    // to prevent updating graph twice at the same time.
-    const filtersComplete = new Promise((resolve) => {
-        filtersInit(updateGraph);
-        resolve(1);
-    });
+    COMPARISON_OPTION = parameters.chartcomparisonmethod;
+
+    filtersInit(updateGraph, parameters.defaultchartfilter ?? 'course-to-date');
 
     // Hide the 'Show all courses' button on every tab except 'Overall' (course=0).
     let params = new URLSearchParams(new URL(window.location.href).search);
@@ -67,22 +64,8 @@ export const init = (parameters) => {
         document.querySelector('#show-courses-buttons').style.display = null;
     }
 
-    // Wait for filters to be initialised before updating graph.
-    filtersComplete.then(() => {
-        // Setup chart comparison control.
-        let chartComparisonButton = document.querySelector("#chart-comparison");
-        chartComparisonButton.addEventListener("click", createChartComparisonModal);
-        // Retrieve user preference and set our comparison option, then update the graph.
-        getComparisonMethodPreference().then(response => {
-            if (response.error) {
-                displayError(response.error);
-            }
-            if (response.preferences[0].value !== null) {
-                COMPARISON_OPTION = response.preferences[0].value;
-            }
-            updateGraph();
-        }).catch(Notification.exception);
-    });
+    let chartComparisonButton = document.querySelector("#chart-comparison");
+    chartComparisonButton.addEventListener("click", createChartComparisonModal);
 
     document.querySelector("#show-all-courses").addEventListener("click", showAllCourses);
     document.querySelector("#show-your-course").addEventListener("click", showYourCourse);
@@ -291,21 +274,6 @@ const updateComparisonMethodPreference = function() {
     };
 
     Ajax.call([request])[0].fail(Notification.exception);
-};
-
-/**
- * Return a promise for the comparison method user preference.
- *
- * @returns {Promise}
- */
-const getComparisonMethodPreference = function() {
-    let request = {
-        methodname: 'core_user_get_user_preferences',
-        args: {
-            name: 'local_ace_comparison_method'
-        }
-    };
-    return Ajax.call([request])[0];
 };
 
 /**

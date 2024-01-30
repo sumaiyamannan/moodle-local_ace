@@ -770,7 +770,7 @@ function local_ace_course_data(
  * @throws moodle_exception
  */
 function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
-    global $PAGE, $OUTPUT;
+    global $PAGE, $OUTPUT, $USER;
 
     list($courseid, $courses) = local_ace_get_user_courses($userid, $courseid);
     if (empty($courses)) {
@@ -812,6 +812,8 @@ function local_ace_student_full_graph(int $userid, ?int $courseid = 0): string {
         'colouruserhistory' => $config->colouruserhistory,
         'userid' => $userid,
         'colours' => explode(',', $config->colours),
+        'defaultchartfilter' => get_user_preferences('local_ace_default_chart_filter', null, $USER->id),
+        'chartcomparisonmethod' => get_user_preferences('local_ace_comparison_method', 'average-course-engagement', $USER->id),
     );
 
     $renderer = $PAGE->get_renderer('core');

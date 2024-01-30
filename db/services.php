@@ -34,6 +34,7 @@ $functions = array(
         'capabilities' => '', // Capabilities depend on content user is fetching, checked in webservice method.
         'ajax' => true,
         'services' => array('local_ace_webservice'),
+        'readonlysession' => true,
     ),
     'local_ace_get_course_analytics_graph' => array(
         'classname' => 'course_analytics_graph',
