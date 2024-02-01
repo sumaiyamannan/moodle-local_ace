@@ -107,22 +107,28 @@ function local_ace_get_module_types() {
 }
 
 /**
- * This function extends the navigation with the report items
+ * This function modifies the course navigation for ACE.
+ * Secondary menu is further modified in local/ace/classes/navigation/views/secondary
  *
  * @param navigation_node $navigation The navigation node to extend
  * @param stdClass $course The course to object for the report
  * @param stdClass $context The context of the course
  */
 function local_ace_extend_navigation_course($navigation, $course, $context) {
+    $adminoptions = course_get_user_administration_options($course, $context);
     $showonnavigation = has_capability('local/ace:view', $context);
     $coursedashboardurl = get_config('local_ace', 'coursedashboardurl');
-    if ($showonnavigation && !empty($coursedashboardurl)) {
+    if ($showonnavigation && !empty($coursedashboardurl) && $adminoptions->reports) {
+        // Force the reports link into the more menu.
         $reportnode = $navigation->get('coursereports');
+        $reportnode->set_force_into_more_menu(true);
+        // Add a new link for ACE course dashboard.
         $url = new moodle_url($coursedashboardurl, ['contextid' => $context->id]);
         $settingsnode = navigation_node::create(get_string('courseacedashboard', 'local_ace'), $url,
-                    navigation_node::TYPE_SETTING, null, null, new pix_icon('i/report', ''));
-        if (isset($settingsnode) && !empty($reportnode)) {
-            $reportnode->add_node($settingsnode);
+                            navigation_node::TYPE_CONTAINER, 'courseacedashboard', 'courseacedashboard',
+                            new pix_icon('i/report', ''));
+        if (isset($settingsnode) && !empty($navigation)) {
+            $navigation->add_node($settingsnode);
         }
     }
 }
