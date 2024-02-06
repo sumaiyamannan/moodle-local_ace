@@ -43,4 +43,9 @@ $capabilities = array(
         'contextlevel' => CONTEXT_SYSTEM,
         'archetypes' => array()
     ),
+    'local/ace:getpredictions'  => array(
+        'captype' => 'write',
+        'contextlevel' => CONTEXT_SYSTEM,
+        'archetypes' => array()
+    ),
 );

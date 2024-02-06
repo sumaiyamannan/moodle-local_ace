@@ -87,6 +87,16 @@ $functions = array(
         'ajax' => true,
         'services' => array('local_ace_webservice')
     ),
+    'local_ace_get_predictions' => [
+        'classname'   => 'local_ace\external\get_predictions',
+        'methodname'  => 'execute',
+        'classpath' => 'local/ace/classes/external/get_predictions.php',
+        'description' => 'Gets list of predictions.',
+        'type'        => 'read',
+        'ajax' => false,
+        'capabilities'  => 'local/ace:getpredictions',
+        'services' => []
+    ],
 );
 
 $services = array(
