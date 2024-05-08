@@ -310,7 +310,7 @@ function local_ace_get_matching_values_to_labels(array $coursevalues): array {
             if (!empty($value->viewcountvalue)) {
                 $viewcount = local_ace_normalise_value($value->viewcountvalue / $value->viewcount, 0, 750);
                 // Lets make the view count 50% of the displayed value for now - maybe change later?
-                $calcval = ($calcval + $viewcount) / 2;
+                $calcval = local_ace_nonegative_value(($calcval + $viewcount) / 2);
             }
             $series[$date] = $calcval;
             // Make sure we don't show overlapping periods.
@@ -1143,8 +1143,8 @@ function local_ace_student_graph_data(int $userid, $course, ?int $start = null, 
                 $a2 = round(local_ace_normalise_value(($value->avg + ($value->stddev / 2)) * 100, 0, 100));
             }
         }
-        $average1[] = $a1;
-        $average2[] = $a2;
+        $average1[] = local_ace_nonegative_value($a1);
+        $average2[] = local_ace_nonegative_value($a2);
 
         // Make sure we don't show overlapping periods.
         $laststart = $value->starttime;
@@ -1330,6 +1330,19 @@ function local_ace_course_module_engagement_data(int $cmid, ?int $start = null, 
  */
 function local_ace_normalise_value(float $value, float $min, float $max) {
     return min((($value - $min) / ($max - $min)) * 100, 100);
+}
+
+/**
+ * Return 0 for negative score.
+ *
+ * @param float $value
+ * @return int
+ */
+function local_ace_nonegative_value(float $value) {
+    if ($value < 0) {
+        return 0;
+    }
+    return $value;
 }
 
 /**
