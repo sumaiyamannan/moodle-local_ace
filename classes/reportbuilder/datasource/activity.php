@@ -45,7 +45,7 @@ class activity extends datasource {
      * Initialise report
      */
     protected function initialise(): void {
-        global $CFG;
+        global $CFG,$SESSION;
         require_once($CFG->dirroot.'/local/ace/locallib.php');
 
         $activityentity = new coursemodules();
@@ -64,7 +64,15 @@ class activity extends datasource {
         } else {
             $this->add_base_condition_sql("{$coursemodulealias}.course is null");
         }
-
+        // ACE panel filters to be applied to main query.
+        if (!empty($SESSION->local_ace_filtervalues)) {
+            list($joinsql, $wheresql) = local_ace_generate_filter_sql_column($SESSION->local_ace_filtervalues, 'module');
+            $filterjoin =  implode(" ", $wheresql);
+            $filterjoin = str_replace('tablealias', $coursemodulealias, $filterjoin);
+            if (!empty($filterjoin)) {
+                $this->add_base_condition_sql($filterjoin);
+            }
+        }
         $userentityname = $activityentity->get_entity_name();
 
         // Determine which user to use within the user specific columns - use $PAGE->context if user context or global $USER.

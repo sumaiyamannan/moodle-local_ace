@@ -385,19 +385,33 @@ function local_ace_course_graph(int $courseid): string {
  * @param array $filtervalues Filter values
  * @param string $filterkey Filter name
  * @param string $studentattribute Student attribute column name
+ * @param string $type value based on type; filter or column
  * @return array
  */
-function local_ace_filter_sql_select(array $filtervalues, string $filterkey, string $studentattribute) {
+function local_ace_filter_sql_select(array $filtervalues, string $filterkey, string $studentattribute, string $type = 'filter') {
     $wheresql = [];
     $params = [];
 
-    if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
-        $params[$studentattribute] = $filtervalues[$filterkey . '_value'];
-        if ($filtervalues[$filterkey . '_operator'] == 1) {
-            $wheresql[] = "AND studentattributes.$studentattribute = :$studentattribute";
+    if ($type == 'filter') {
+        if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
+            $params[$studentattribute] = $filtervalues[$filterkey . '_value'];
+            if ($filtervalues[$filterkey . '_operator'] == 1) {
+                $wheresql[] = "AND studentattributes.$studentattribute = :$studentattribute";
+            }
+            if ($filtervalues[$filterkey . '_operator'] == 2) {
+                $wheresql[] = "AND studentattributes.$studentattribute != :$studentattribute";
+            }
         }
-        if ($filtervalues[$filterkey . '_operator'] == 2) {
-            $wheresql[] = "AND studentattributes.$studentattribute != :$studentattribute";
+    } else if ($type == 'column') {
+        if (isset($filtervalues[$filterkey . '_operator']) && isset($filtervalues[$filterkey . '_value'])) {
+            $wheresql = '';
+            $value = $filtervalues[$filterkey . '_value'];
+            if ($filtervalues[$filterkey . '_operator'] == 1) {
+                $wheresql = "AND studentattributes.$studentattribute = '$value' ";
+            }
+            if ($filtervalues[$filterkey . '_operator'] == 2) {
+                $wheresql = "AND studentattributes.$studentattribute != '$value' ";
+            }
         }
     }
 
@@ -488,30 +502,79 @@ function local_ace_filter_sql_text(array $filtervalues, string $filterkey, strin
  * @param array $filtervalues Filter values
  * @param string $filterkey Filter name
  * @param string $studentattribute Student attribute column name
+ * @param string $type value based on type; filter or column or module
  * @return array
  */
-function local_ace_filter_sql_multiselect(array $filtervalues, string $filterkey, string $studentattribute) {
+function local_ace_filter_sql_multiselect(array $filtervalues, string $filterkey, string $studentattribute, string $type = 'filter') {
     global $DB;
 
     $wheresql = [];
     $params = [];
 
-    if (isset($filtervalues[$filterkey . '_operator']) && !empty($filtervalues[$filterkey . '_value'])) {
-        $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
-        $value = $filtervalues[$filterkey . '_value'];
-        switch ($operator) {
-            case 1:
-                list($sql, $params) =
-                    $DB->get_in_or_equal($value, SQL_PARAMS_NAMED, "{$studentattribute}param");
-                $wheresql[] = "AND studentattributes.$studentattribute " . $sql;
-                break;
-            case 2:
-                list($sql, $params) =
-                    $DB->get_in_or_equal($value, SQL_PARAMS_NAMED, "{$studentattribute}param", false);
-                $wheresql[] = "AND studentattributes.$studentattribute " . $sql;
-                break;
-            default:
-                break;
+    if ($type == 'filter') {
+        if (isset($filtervalues[$filterkey . '_operator']) && !empty($filtervalues[$filterkey . '_value'])) {
+            $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
+            $value = $filtervalues[$filterkey . '_value'];
+            switch ($operator) {
+                case 1:
+                    list($sql, $params) =
+                        $DB->get_in_or_equal($value, SQL_PARAMS_NAMED, "{$studentattribute}param");
+                    $wheresql[] = "AND studentattributes.$studentattribute " . $sql;
+                    break;
+                case 2:
+                    list($sql, $params) =
+                        $DB->get_in_or_equal($value, SQL_PARAMS_NAMED, "{$studentattribute}param", false);
+                    $wheresql[] = "AND studentattributes.$studentattribute " . $sql;
+                    break;
+                default:
+                    break;
+            }
+        }
+    } else if ($type == 'column') {
+        if (isset($filtervalues[$filterkey . '_operator']) && !empty($filtervalues[$filterkey . '_value'])) {
+            $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
+            $values = $filtervalues[$filterkey . '_value'];
+            $wheresql = '';
+            switch ($operator) {
+                case 1:
+                    foreach ($values as $value) {
+                        $wheresql .= " studentattributes.$studentattribute = '$value' OR ";
+                    }
+                    break;
+                case 2:
+                    foreach ($values as $value) {
+                        $wheresql .= " studentattributes.$studentattribute != '$value' AND ";
+                    }
+                    break;
+                default:
+                    break;
+            }
+            $wheresql = trim($wheresql, " OR ");
+            $wheresql = trim($wheresql, " AND ");
+            $wheresql = ' AND ( '.$wheresql.')';
+        }
+    }
+    else if ($type == 'module') {
+        if (isset($filtervalues[$filterkey . '_operator']) && !empty($filtervalues[$filterkey . '_value'])) {
+            $operator = (int) $filtervalues[$filterkey . '_operator'] ?? 0;
+            $values = $filtervalues[$filterkey . '_value'];
+            $wheresql = '';
+            switch ($operator) {
+                case 1:
+                    foreach ($values as $value) {
+                        $wheresql .= " tablealias.id = '$value' OR ";
+                    }
+                    break;
+                case 2:
+                    foreach ($values as $value) {
+                        $wheresql .= " tablealias.id != '$value' AND ";
+                    }
+                    break;
+                default:
+                    break;
+            }
+            $wheresql = trim($wheresql, " OR ");
+            $wheresql = trim($wheresql, " AND ");
         }
     }
 
@@ -519,6 +582,70 @@ function local_ace_filter_sql_multiselect(array $filtervalues, string $filterkey
         $wheresql,
         $params
     ];
+}
+
+/**
+ * Generate SQL based on filters column subquery values .
+ *
+ * @param array $filtervalues
+ * @param string $columntype user or module
+ * @return array
+ */
+function local_ace_generate_filter_sql_column(array $filtervalues = [], string $columntype = 'user'): array {
+    global $DB;
+    $type = 'column';
+    $joinsql = [];
+    $wheresql = [];
+
+    if ($columntype == 'user') {
+        $joinsql[] = "JOIN {ucdw_studentattributes} studentattributes
+        ON (CASE WHEN u.idnumber ~ '^\d+$' THEN " . $DB->sql_cast_char2int("u.idnumber") . " ELSE NULL END) = studentattributes.studentidentifier";
+
+        $selectfilters = [
+            ['aceuser:gender', 'gender'],
+            ['aceuser:ethnicity', 'etnicitypriority'],
+            ['aceuser:firstinfamily', 'firstinfamily'],
+            ['aceuser:fullfee', 'fullfee'],
+            ['aceuser:fullpart', 'fullpart'],
+            ['aceuser:firstyearkaitoko', 'firstyearkaitoko'],
+        ];
+        foreach ($selectfilters as $filter) {
+            $value = local_ace_filter_sql_select($filtervalues, $filter[0], $filter[1], $type);
+            if (!empty($value[0])) {
+                $wheresql[] = $value[0];
+            }
+        }
+
+        $multiselectfilters = [
+            ['aceuser:schooldecile', 'schooldecile'],
+            ['aceuser:programme', 'programmecode1']
+        ];
+        foreach ($multiselectfilters as $filter) {
+            $value = local_ace_filter_sql_multiselect($filtervalues, $filter[0], $filter[1], $type);
+            if (!empty($value[0])) {
+                $wheresql[] = $value[0];
+            }
+        }
+    }
+
+    if ($columntype == 'module') {
+        $multiselectfilters = [
+            ['aceuser:activityviewed', 'activityviewed'],
+            ['aceuser:activitycompleted', 'activitycompleted']
+        ];
+        foreach ($multiselectfilters as $filter) {
+            $value = local_ace_filter_sql_multiselect($filtervalues, $filter[0], $filter[1], $columntype);
+            if (!empty($value[0])) {
+                $wheresql[] = $value[0];
+            }
+        }
+    }
+
+    return [
+        $joinsql,
+        $wheresql
+    ];
+
 }
 
 /**
@@ -1596,3 +1723,4 @@ function local_ace_get_course_helper() {
     }
     return false;
 }
+

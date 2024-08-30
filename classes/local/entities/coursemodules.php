@@ -131,6 +131,14 @@ class coursemodules extends base {
      * @return column[]
      */
     protected function get_all_columns(): array {
+        global $SESSION;
+        // ACE panel filters to be applied to column subquery.
+        $filterattributes = array('acefilters' => 1);
+        $filterjoin = '';
+        if (!empty($SESSION->local_ace_filtervalues)) {
+            list($joinsql, $wheresql) = local_ace_generate_filter_sql_column($SESSION->local_ace_filtervalues, 'user');
+            $filterjoin = implode(" ", $joinsql) . "  " . implode(" ", $wheresql);
+        }
         // Note this custom report source is restricted to showing activities.
         $course = local_ace_get_course_helper();
         if (!empty($course)) {
@@ -398,12 +406,13 @@ class coursemodules extends base {
                                     SELECT count(distinct userid) as countallusers, cmid
                                       FROM {local_ace_log_summary}
                                      WHERE courseid = $courseid AND userid IN (
-                                           SELECT casju.id
-                                             FROM {user} casju
+                                           SELECT u.id
+                                             FROM {user} u
+                                             {$filterjoin}
                                              JOIN {role_assignments} casjra ON casjra.contextid = {$coursecontextid}
-                                                  AND casjra.roleid = {$studentroleid} AND casjra.userid = casju.id)
-                                  GROUP BY cmid) {$this->logstorealias4} ON {$this->logstorealias4}.cmid = {$cmalias}.id";
-
+                                                  AND casjra.roleid = {$studentroleid} AND casjra.userid = u.id
+                                    )
+                                  GROUP BY cmid) {$this->logstorealias4} ON {$this->logstorealias4}.cmid = {$cmalias}.id ";
         $usercount = $this->get_usercount($courseid);
         $columns[] = (new column(
             'countallstudents',
@@ -415,6 +424,7 @@ class coursemodules extends base {
             ->set_is_sortable(true)
             ->set_type(column::TYPE_INTEGER)
             ->add_field("{$this->logstorealias4}.countallusers")
+            ->add_attributes($filterattributes)
             ->add_callback(static function(?int $value) use ($usercount): string {
                 if ($value === null) {
                     return '';
@@ -429,6 +439,7 @@ class coursemodules extends base {
                                         FROM {course_modules} cm
                                         JOIN {course_modules_completion} cmc ON cmc.coursemoduleid = cm.id
                                         JOIN {user} u ON u.id = cmc.userid
+                                        {$filterjoin}
                                         JOIN {role_assignments} ra ON ra.userid = u.id
                                         AND ra.contextid = $coursecontextid
                                         AND ra.roleid = $studentroleid
@@ -448,6 +459,7 @@ class coursemodules extends base {
             ->set_is_sortable(true)
             ->set_type(column::TYPE_INTEGER)
             ->add_field("{$this->logstorealias5}.completionrate")
+            ->add_attributes($filterattributes)
             ->add_callback(static function(?int $value) use ($usercount): string {
                 if ($value === null) {
                     $value = 0;
@@ -464,6 +476,7 @@ class coursemodules extends base {
                                         JOIN {modules} m ON m.id = cm.module AND m.name = 'assign'
                                         JOIN {assign_submission} asub ON asub.assignment = a.id
                                         JOIN {user} u ON u.id = asub.userid
+                                        {$filterjoin}
                                         JOIN {role_assignments} ra ON ra.userid = u.id
                                         AND ra.contextid = $coursecontextid
                                         AND ra.roleid = $studentroleid
@@ -483,6 +496,7 @@ class coursemodules extends base {
             ->set_is_sortable(true)
             ->set_type(column::TYPE_INTEGER)
             ->add_field("{$this->logstorealias6}.submissionrate")
+            ->add_attributes($filterattributes)
             ->add_callback(static function(?int $value) use ($usercount): string {
                 if ($value === null) {
                     $value = 0;
